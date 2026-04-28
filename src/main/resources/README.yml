@@ -1,0 +1,28 @@
+Donate ngân hàng để ủng hộ tác giả
+Techcombank
+5089206015240 
+NGUYEN CHI THIEN
+discord cache1236799
+nhận dev plugins theo yêu cầu
+--------------------- Giới Thiệu Plugins ------------------------
+Khác với các anh em về custom item plugins khác mmoitem v.v, tôi dùng ở đây PDC là chính
+với các plugins như mmoitem họ dùng NBT tuy nhiên 2 thằng NBT và PDC đều có điểm mạnh điểm 
+yếu riêng với PDC nó linh hoạt phiên bản như đã thấy myitem nó hoạt động cực kì nhiều ở các version
+mà không lỗi, nhưng nó gây lag khi onDamage phải regex PDC liên tục còn thằng NBT nó xử lí rất tốt về vấn
+đề hiệu năng này nhưng không được linh hoạt version có thể thấy mmoitem khi lệch 1 version nhỏ cuũng có thể gây
+lỗi, vì lẽ đó tôi tìm giải pháp nhiều lợi nhất cho user , đó là tôi nghĩ ngay tới ram cache nó sẽ giúp mượt như NBT
+trong lúc xài PDC , nhưng cái giá đánh đổi đó là chất xám của dev , logic phải nói là cực kì khó , khó vô cùng
+vì quá nhiều feature liên quan damage , chỉ cần ví dụ thằng stats PVP_damage lỗi thôi là cook luôn sát thương thật
+sau 1 ngày cuối cùng cũng đã xong cho việc tối ưu , và bạn cũng đừng ngạc nhiên khi vừa add stats hay bất kì ability
+element mà đánh chưa hoạt động là vì cache chưa cập nhật , bạn hãy đổi slot tay nhé,1 cái nữa mà PDC làm tốt đó là không 
+bị nhiễu NBT shopkeeper như mmoitem, cũng có thắc mắc thế PDC ngon vậy sao mmoitem không dùng, thật ra mmoitem xuất hiện thời
+chưa có PDC họ đã build 1 thư viện khổng lồ (mythiclib) , nếu họ qua PDC họ sẽ phải đại phẫu thuật plugins
+cực kì rắc rối nên họ chấp nhận đánh đổi những rủi ro hiện tại (bạn không tin thì có thể search AI về vấn đề này)
+và đây là câu trả lời từ chat GPT "👉 Nếu MMOItems được build ở thời đã có PDC, khả năng cao họ sẽ chọn PDC thay vì NBT trực tiếp."
+
+
+
+Anti Item
+Item bắn tia
+Anti đặt item
+Anti use item có lore

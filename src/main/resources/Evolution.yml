@@ -1,0 +1,20 @@
+# Evolution.yml - Hệ thống tiến hóa ThienNguyen
+settings:
+  # Định dạng Lore trên Item
+  lore-format: "&6⚡ &fTiến độ: &b{current}&7/&e{required} &8(&e{percent}%&8)"
+
+  # Tin nhắn riêng cho người chơi khi thành công (Dạng danh sách)
+  private-messages:
+    - "&b&m-------------------------------------------"
+    - "&a&l✔ &fTiến hóa thành công!"
+    - "&fVật phẩm: &7{item_old} &b➔ &e{item_new}"
+    - "&b&m-------------------------------------------"
+
+  # Thông báo toàn server
+  enable-broadcast: true
+  broadcast-message: "&6&l[Tiến Hóa] &e{player} &fđã nâng cấp &b{item} &fthành công!"
+
+  # Hiệu ứng
+  effects:
+    sound: "ENTITY_PLAYER_LEVELUP"
+    particle: "EXPLOSION_HUGE"

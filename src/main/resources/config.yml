@@ -1,0 +1,210 @@
+language: en.yml
+text-display:
+  enabled: true
+
+  # Vị trí hiển thị tổng quát
+  offset:
+    y-base: 1.2                     # Nâng cao hơn một chút để không bị đè vào thanh máu mob
+    side-x: 0.8                     # Độ lệch ngang rõ ràng hơn cho Né/Chặn
+    true-dmg-extra-y: 0.5           # True damage bay cao hơn sát thương thường để phân biệt
+    move-up-distance: 1.2           # Khoảng cách bay lên tổng cộng trong suốt quá trình fade
+
+    # Multi-element sphere (khi hiển thị riêng lẻ - merge: false)
+    element-sphere-radius: 1.2      # Thu nhỏ bán kính để các icon nguyên tố bao quanh victim gọn hơn
+    element-min-y: 1.5              # Bắt đầu từ tầm ngực mob
+    element-max-y: 2.5              # Kết thúc ở trên đầu mob
+    element-forward-bias: 0.8       # Ưu tiên hiển thị về phía người chơi (Attacker) để dễ nhìn
+
+  # Kích thước chữ (scale)
+  scale:
+    normal: 0.9                     # Sát thương thường để nhỏ vừa phải
+    critical: 1.4                   # Chí mạng to rõ rệt để tạo cảm giác "thốn"
+    true-damage: 1.2
+    element: 0.8                    # Các icon nguyên tố nhỏ xinh
+    dodge: 1.1                      # Chữ NÉ vừa đủ đọc
+    block: 1.1                      # Chữ CHẶN vừa đủ đọc
+    merged-elements: 0.9            # Khi gộp lại thì size vừa phải để không choán màn hình
+
+  # Thời gian animation (20 ticks = 1 giây)
+  animation:
+    appearance-ticks: 3             # Xuất hiện cực nhanh (0.15s) tạo hiệu ứng giật nảy (pop-up)
+    stay-ticks: 25                  # Giữ lại khoảng 1.25s để người chơi kịp đọc số
+    fade-ticks: 12                  # Biến mất dần trong 0.6s tạo độ mượt
+
+  # Định dạng hiển thị cơ bản
+  format:
+    normal: "§f-{value}"            # Thêm dấu trừ để giống game RPG
+    critical: "§6§lCrit §c§l{value} §e⚡"
+    true-damage: "§d§l{value} ✧"
+    dodge: "§a§l✘ NÉ"
+    block: "§7§l⛨ CHẶN"
+
+  # Icon mặc định cho nguyên tố
+  elements:
+    # Các nguyên tố bạn đã có
+    FIRE: "§c🔥 §e{value}"
+    STONE: "§8🪨 §7{value}"
+    LOI: "§e⚡ §f{value}"
+    BANG: "§b❄ §f{value}"
+    ICE: "§3🧊 §b{value}"
+    QUANG: "§e☀ §6{value}"
+    AM: "§5🌑 §d{value}"
+    PHONG: "§a🍃 §2{value}"
+    DAT: "§6⛰ §e{value}"
+
+    # Bổ sung các nguyên tố còn thiếu từ list Element.yml
+    LIGHTNING: "§f🌩 §e{value}"
+    WATER: "§9💧 §b{value}"
+    WIND: "§f🌬 §a{value}"
+    EARTH: "§6🌍 §e{value}"
+    POISON: "§2☠ §a{value}"
+    DARK: "§8🔮 §5{value}"
+    HOLY: "§f✨ §e{value}"
+    SHADOW: "§0👤 §8{value}"
+    LAVA: "§6🌋 §4{value}"
+    FROST: "§f🌬 §3{value}"
+    THUNDER: "§3🌩 §b{value}"
+    NATURE: "§2🌿 §a{value}"
+    VOID: "§4🕳 §0{value}"
+    PLASMA: "§d⚗ §f{value}"
+    ARCANE: "§d🔮 §5{value}"
+    BLOOD: "§4🩸 §c{value}"
+    SPIRIT: "§b👻 §f{value}"
+
+  # Cấu hình dành riêng cho multi-element
+  multi-element:
+    enabled: true
+    merge: false                     # Khuyên dùng true để tránh spam quá nhiều text gây lag
+    merge-format: "§7[ {elements} §7] §f-{total}"
+    merge-separator: " "            # Khoảng trắng nhẹ giữa các icon
+    merge-y: 2.3                    # Hiển thị trên cao nhất để không bị chồng lấp
+    merge-center-xz: true           # Giữ cố định ở giữa trục mob cho cân đối
+
+    # Vật lý (ném + rơi) - Tạo hiệu ứng rơi nhẹ nhàng
+    physics:
+      enabled: true
+      up-velocity-base: 0.18        # Nảy lên vừa phải
+      up-velocity-random: 0.05
+      side-spread: 0.1              # Không văng quá xa để người chơi dễ theo dõi
+      gravity: 0.015                # Trọng lực cực thấp giúp text "trôi" lơ lửng rất đẹp
+      air-drag: 0.92                # Giảm tốc mượt mà
+
+# =============================================================
+#                   CẤU HÌNH TRANG SỨC (Jewelry)
+# =============================================================
+jewelry:
+  enabled: true
+
+  # Cấu hình GUI khi mở lệnh /rpginv
+  gui:
+    title: "&6&l✦ Trang Sức Của Bạn ✦"
+    size: 54
+    filler-material: BLACK_STAINED_GLASS_PANE
+    filler-name: "&7None"  # Để trống nếu muốn làm nền thuần túy
+    filler-lore: []   # Hoặc thêm dòng mô tả nếu muốn
+    filler-model-id: 1000 # ID cho Resource Pack của bạn
+  # Placeholder cho ô trang sức khi TRỐNG (Nhẫn, Dây chuyền, Bùa...)
+  placeholder:
+    material: BARRIER
+    name: "&7[ Trống - %slot_name% ]"
+    lore:
+      - "&7Click để đặt trang sức"
+      - "&7Yêu cầu type: &e%slot_name%"
+      - "&7Shift-click để tháo"
+    model-id: 1001
+
+  # Vị trí hiển thị trang bị hiện tại của người chơi (Read-only)
+  gui.display-slots:
+    head: 4       # Mũ
+    chest: 13     # Áo
+    legs: 22      # Quần
+    feet: 31      # Giày
+    mainhand: 14  # Tay chính
+    offhand: 12   # Tay phụ (Đã thêm để khớp với render Offhand trong code)
+
+  # Icon gợi ý cho các ô trang bị khi người chơi KHÔNG mặc đồ
+  # Nếu thiếu phần này, các ô display-slots sẽ bị hiện BARRIER mặc định hoặc trống lỏ.
+  gui.display-placeholders:
+    head:
+      material: LEATHER_HELMET
+      name: "&e&lÔ Mũ Trống"
+      model-id: 10
+    chest:
+      material: LEATHER_CHESTPLATE
+      name: "&e&lÔ Áo Trống"
+      model-id: 11
+    legs:
+      material: LEATHER_LEGGINGS
+      name: "&e&lÔ Quần Trống"
+      model-id: 12
+    feet:
+      material: LEATHER_BOOTS
+      name: "&e&lÔ Giày Trống"
+      model-id: 13
+    mainhand:
+      material: IRON_SWORD
+      name: "&6&lTay Chính Trống"
+      model-id: 14
+    offhand:
+      material: SHIELD
+      name: "&6&lTay Phụ Trống"
+      model-id: 15
+
+  # Danh sách các slot trang sức (Sử dụng lệnh /rpginv type <key> để gán)
+  slots:
+    nhan-trai:
+      name: "&eNhẫn Tay Trái"
+      slot: 10
+    nhan-phai:
+      name: "&eNhẫn Tay Phải"
+      slot: 28
+    day-chuyen:
+      name: "&bDây Chuyền"
+      slot: 19
+    vong-tay:
+      name: "&aVòng Tay"
+      slot: 16
+    # Cách cấu hình nhiều slot cùng 1 loại (List)
+    amulet:
+      - { name: "&dBùa 1", slot: 47 }
+      - { name: "&dBùa 2", slot: 48 }
+      - { name: "&dBùa 3", slot: 49 }
+      - { name: "&dBùa 4", slot: 50 }
+      - { name: "&dBùa 5", slot: 51 }
+  enable-player-inventory: true
+   #material luôn là paper
+  # Định nghĩa các slot trên người (9-12 là hàng đầu túi đồ)
+  player-slots:
+    9:
+      type: "nhan"
+      name: "&a&lNhẫn"
+      model-data: 10115
+    10:
+      type: "nhan"
+      name: "&a&lNhẫn"
+      model-data: 10115
+    11:
+      type: "vong"
+      name: "&b&lVòng Tay"
+      model-data: 10116
+    12:
+      type: "day"
+      name: "&e&lDây Chuyền"
+      model-data: 10117
+  # Thông báo hệ thống
+  messages:
+    equipped: "&aĐã trang bị &f%item_name% &avào &e%slot_name%"
+    unequipped: "&cĐã tháo &f%item_name% &cra khỏi &e%slot_name%"
+    invalid-type: "&cVật phẩm này không phù hợp với slot &e%slot_name%&c! (yêu cầu type: %required_type%)"
+    invalid-level-class: "&cBạn không đủ cấp độ hoặc class để trang bị vật phẩm này!"
+    no-item-held: "&cBạn cần cầm vật phẩm trên tay để gán type!"
+    invalid-id: "&cID slot không tồn tại: &e%id%"
+    type-set-success: "&aĐã gán type '&e%id%&a' cho vật phẩm đang cầm!"
+
+  restrict-materials:
+    enabled: false
+    allowed:
+      - DIAMOND
+      - EMERALD
+      - NETHERITE_INGOT
+      - GOLD_INGOT

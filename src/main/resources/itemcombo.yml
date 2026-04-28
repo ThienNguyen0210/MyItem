@@ -1,0 +1,34 @@
+# ==========================================
+# Cấu hình bộ trang bị (Item Combo)
+# ==========================================
+
+# Bộ Thiên Ma - Yêu cầu mặc đủ 4 món: Mũ, Áo, Quần, Giày có ID 'ThienMa'
+ThienMa:
+  message: "&b[Combo] &fBạn đã kích hoạt sức mạnh bộ &6Thiên Ma&f!"
+  stats:
+    all_damage: 10.0      # Tăng 10% sát thương toàn phần
+    all_defense: 15.0     # Tăng 15% phòng thủ toàn phần
+    critical_chance: 5.0  # +5% tỷ lệ chí mạng (sử dụng key đúng trong hàm updateStat)
+    damage: 50.0          # +50 Sát thương cộng thêm
+    armor: 20.0           # +20 Giáp (vanilla)
+
+# Bộ Kiếm Ma - Chỉ yêu cầu Cầm trên tay Chính và tay Phụ
+KiemMa_Set:
+  message: "&c[Combo] &fSong kiếm hợp bích: &4Ma Kiếm Xuất Thế!"
+  require-slots:
+    - "mainhand"
+    - "offhand"
+  stats:
+    damage: 100.0
+    lifesteal: 2.0        # +2% Hút máu
+    penetration: 10.0     # +10 Xuyên giáp
+
+# Bộ Hộ Thân - Chỉ yêu cầu Áo và Khiên (Offhand)
+HoThan_Set:
+  message: "&e[Combo] &fLớp bảo hộ &6Kim Cang &fđã kích hoạt!"
+  require-slots:
+    - "chest"
+    - "offhand"
+  stats:
+    all_defense: 25.0
+    block_rate: 10.0      # +10% Tỷ lệ đỡ đòn

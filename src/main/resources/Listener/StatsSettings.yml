@@ -1,0 +1,52 @@
+# Cấu hình các slot được phép cộng chỉ số
+# Nếu một chỉ số không có trong danh sách này hoặc danh sách trống,
+# mặc định chỉ số đó sẽ được tính ở TẤT CẢ các slot.
+# tính năng đã lỗi thời không nên xài nữa giờ đã có slot rồi
+# nếu bạn xài nó sẽ áp duụng cho tất cả stats
+stats-slots:
+  # Chỉ số máu: chỉ cộng khi mặc trên người
+  health:
+    - HEAD
+    - CHEST
+    - LEGS
+    - FEET
+    - HAND
+    - OFF_HAND
+
+  # Chỉ số giáp: thường chỉ tính cho trang bị mặc
+  armor:
+    - HEAD
+    - CHEST
+    - LEGS
+    - FEET
+
+  # Chỉ số tốc đánh: thường chỉ tính khi cầm trên tay (Main Hand)
+  attack_speed:
+    - HAND
+
+  # Chỉ số tốc độ chạy: giày hoặc trang bị đặc biệt
+  movement_speed:
+    - FEET
+    - LEGS
+
+  # Các chỉ số Mana của MMOCore
+  max_mana:
+    - HEAD
+    - CHEST
+    - LEGS
+    - FEET
+    - HAND
+    - OFF_HAND
+
+  mana_regen:
+    - HEAD
+    - CHEST
+    - LEGS
+    - FEET
+    - HAND
+    - OFF_HAND
+
+  # Chỉ số sát thương (Dùng trong EventDamage)
+  damage:
+    - HAND
+    - OFF_HAND

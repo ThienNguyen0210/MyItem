@@ -1,0 +1,599 @@
+effects:
+  # ────────────────────────────────────────────────
+  # Khoa học / Vũ trụ / Năng lượng
+  # ────────────────────────────────────────────────
+  # ATOM: 3 quỹ đạo xoay quanh người như electron. Dùng fixed (false) để luôn ổn định quanh trục đứng.
+  science_aura:
+    particle: "SOUL_FIRE_FLAME"
+    arrangement: "ATOM"
+    radius: 1.2  # Bán kính quỹ đạo
+    speed: 0.0
+    frequency: 1.5  # Tốc độ xoay (cao hơn = nhanh hơn)
+    use-view-direction: false  # false: fixed quanh người (không lệch khi nhìn lên/xuống)
+
+  # ATOM với nhiều quỹ đạo hơn, offset lên cao như orb bay lơ lửng.
+  quantum_orbits:
+    particle: "ELECTRIC_SPARK"
+    arrangement: "ATOM"
+    radius: 1.4
+    points: 4  # Số quỹ đạo (thay đổi để nhiều/ít hơn)
+    forward-offset: 0.0  # Dịch theo hướng nhìn (0 = trung tâm)
+    upward-offset: 1.8  # Dịch lên cao (ngang đầu)
+    speed: 0.0
+    frequency: 2.2
+    use-view-direction: false  # fixed: orb luôn xoay ổn định
+
+  # SPHERE: Hạt phân bố đều trên cầu plasma, lấp lánh.
+  plasma_sphere:
+    particle: "GLOW"
+    arrangement: "SPHERE"
+    radius: 0.9
+    points: 18  # Số điểm trên cầu (cao hơn = mịn hơn, nhưng nặng server)
+    upward-offset: 1.6
+    speed: 0.05  # Tốc độ bay của hạt
+    frequency: 1.0
+    use-view-direction: false  # fixed: cầu luôn tròn đều
+
+  # ────────────────────────────────────────────────
+  # Thiên thần / Thần thánh / Ánh sáng
+  # ────────────────────────────────────────────────
+  # WINGS: Cánh thiên thần đập sau lưng. Fixed để cánh luôn đối xứng sau lưng.
+  divine_wings:
+    particle: "END_ROD"
+    arrangement: "WINGS"
+    radius: 1.5  # Độ dài sải cánh
+    forward-offset: -0.3  # Negative: sau lưng
+    upward-offset: 1.2  # Ngang vai
+    frequency: 1.0  # Tốc độ đập cánh
+    speed: 0.0
+    use-view-direction: false  # false: cánh không méo khi cúi/ngẩng đầu
+
+  # CIRCLE: Vòng hào quang trên đầu, xoay nhanh.
+  angelic_halo:
+    particle: "TOTEM_OF_UNDYING"
+    arrangement: "CIRCLE"
+    radius: 0.6
+    points: 24  # Số điểm trên vòng (cao = mịn)
+    upward-offset: 2.4  # Trên đầu
+    forward-offset: 0.0
+    speed: 0.02
+    frequency: 3.0  # Xoay rất nhanh
+    use-view-direction: false  # fixed: vòng luôn nằm ngang
+
+  # SPHERE: Aura thánh quang bao quanh.
+  holy_aura:
+    particle: "ENCHANT"
+    arrangement: "SPHERE"
+    radius: 1.1
+    points: 12
+    upward-offset: 1.0
+    speed: 0.0
+    frequency: 0.8
+    use-view-direction: false
+
+  # ────────────────────────────────────────────────
+  # Ma thuật / Phù thủy / Hắc ám
+  # ────────────────────────────────────────────────
+  # POLYGON: Tam giác ma thuật xoay dưới chân.
+  magic_triangle:
+    particle: "CRIT_MAGIC"
+    arrangement: "POLYGON"
+    edges: 3  # Số cạnh (3=tam giác, 5=ngôi sao, 6=lục giác)
+    radius: 1.5
+    upward-offset: 0.1  # Gần sát chân
+    frequency: 2.0
+    speed: 0.0
+    use-view-direction: false  # false: luôn phẳng dưới chân
+
+  # POLYGON ngôi sao 5 cánh (pentagram).
+  pentagram_star:
+    particle: "WITCH"
+    arrangement: "POLYGON"
+    edges: 5
+    radius: 1.3
+    upward-offset: 0.05
+    forward-offset: 0.0
+    frequency: 1.8
+    speed: 0.01
+    use-view-direction: false
+
+  # SPIRAL: Xoáy khói tối từ dưới lên.
+  dark_vortex:
+    particle: "SMOKE_NORMAL"
+    arrangement: "SPIRAL"
+    points: 5  # Số luồng xoáy
+    radius: 1.8
+    upward-offset: -0.5  # Bắt đầu từ dưới chân
+    speed: 0.03
+    frequency: 1.2
+    use-view-direction: false
+
+  # ────────────────────────────────────────────────
+  # Lửa / Địa ngục / Nóng bỏng
+  # ────────────────────────────────────────────────
+  # SPIRAL lốc lửa.
+  inferno_spiral:
+    particle: "FLAME"
+    arrangement: "SPIRAL"
+    points: 3
+    radius: 2.0  # Chiều cao/rộng lốc
+    upward-offset: 0.0
+    speed: 0.02
+    use-view-direction: false
+
+  # WINGS cánh lửa.
+  fire_wings:
+    particle: "SMALL_FLAME"
+    arrangement: "WINGS"
+    radius: 1.4
+    forward-offset: -0.4
+    upward-offset: 1.1
+    frequency: 1.3
+    speed: 0.04
+    use-view-direction: false  # fixed: cánh ổn định
+
+  # CIRCLE tim lava.
+  lava_heart:
+    particle: "DRIPPING_LAVA"
+    arrangement: "CIRCLE"
+    radius: 0.5
+    points: 16
+    upward-offset: 1.0
+    forward-offset: 0.0
+    speed: 0.0
+    frequency: 0.5
+    use-view-direction: false
+
+  # ────────────────────────────────────────────────
+  # Tình yêu / Dễ thương / Hearts
+  # ────────────────────────────────────────────────
+  # SINGLE: Tim bay ngẫu nhiên quanh người.
+  love_trail:
+    particle: "HEART"
+    arrangement: "SINGLE"
+    amount: 2  # Số hạt mỗi lần spawn
+    upward-offset: 0.8
+    forward-offset: 0.2
+    right-offset: 0.0  # Dịch sang phải/trái
+    dx: 0.15  # Độ lan rộng X (cho SINGLE)
+    dy: 0.1   # Độ lan rộng Y
+    dz: 0.15  # Độ lan rộng Z
+    speed: 0.0
+    use-view-direction: true  # true: tim bay theo hướng nhìn (như trail)
+
+  # SPIRAL tim xoáy.
+  heart_spiral:
+    particle: "HEART"
+    arrangement: "SPIRAL"
+    points: 4
+    radius: 0.8
+    upward-offset: 1.0
+    speed: 0.01
+    frequency: 1.5
+    use-view-direction: false
+
+  # ATOM tim bay lơ lửng.
+  floating_hearts:
+    particle: "HEART"
+    arrangement: "ATOM"
+    radius: 0.7
+    upward-offset: 1.5
+    speed: 0.0
+    frequency: 0.9
+    use-view-direction: false
+
+  # ────────────────────────────────────────────────
+  # Thiên nhiên / Mưa / Nước
+  # ────────────────────────────────────────────────
+  # CIRCLE mây mưa trên đầu.
+  rain_cloud:
+    particle: "FALLING_WATER"
+    arrangement: "CIRCLE"
+    radius: 1.0
+    points: 20
+    upward-offset: 2.8  # Cao trên đầu
+    forward-offset: 0.0
+    speed: 0.0
+    frequency: 0.4  # Chậm để như mưa rơi
+    use-view-direction: false
+
+  # SPHERE hoa anh đào rơi.
+  cherry_blossom:
+    particle: "FALLING_SPORE_BLOSSOM"
+    arrangement: "SPHERE"
+    radius: 1.2
+    points: 10
+    upward-offset: 1.8
+    speed: 0.0
+    frequency: 0.7
+    use-view-direction: false
+
+  # SPIRAL lá xoáy.
+  leaf_swirl:
+    particle: "FALLING_LEAVES"
+    arrangement: "SPIRAL"
+    points: 6
+    radius: 1.5
+    upward-offset: 0.5
+    speed: 0.02
+    frequency: 1.1
+    use-view-direction: false
+
+  # ────────────────────────────────────────────────
+  # Công nghệ / Neon / Cyber
+  # ────────────────────────────────────────────────
+  # CIRCLE vòng neon nhanh.
+  neon_ring:
+    particle: "ELECTRIC_SPARK"
+    arrangement: "CIRCLE"
+    radius: 1.0
+    points: 32  # Nhiều điểm cho mịn
+    upward-offset: 0.3
+    forward-offset: 0.0
+    speed: 0.1
+    frequency: 4.0  # Siêu nhanh
+    use-view-direction: false
+
+  # WINGS cánh cyber.
+  cyber_wings:
+    particle: "GLOW_SQUID_INK"
+    arrangement: "WINGS"
+    radius: 1.6
+    forward-offset: -0.5
+    upward-offset: 1.0
+    frequency: 1.4
+    speed: 0.05
+    use-view-direction: false
+
+  # POLYGON glitch lục giác.
+  glitch_aura:
+    particle: "SCRAPE"
+    arrangement: "POLYGON"
+    edges: 6
+    radius: 1.1
+    upward-offset: 1.2
+    frequency: 2.5
+    speed: 0.03
+    use-view-direction: false
+
+  # ────────────────────────────────────────────────
+  # Khác / Đặc biệt
+  # ────────────────────────────────────────────────
+  # SPIRAL helix máu.
+  blood_helix:
+    particle: "DAMAGE_INDICATOR"
+    arrangement: "SPIRAL"
+    points: 2
+    radius: 0.9
+    upward-offset: 1.0
+    speed: 0.04
+    frequency: 1.6
+    use-view-direction: false
+
+  # ATOM nốt nhạc.
+  music_notes:
+    particle: "NOTE"
+    arrangement: "ATOM"
+    radius: 0.8
+    upward-offset: 1.7
+    speed: 0.0
+    frequency: 2.0
+    use-view-direction: false
+
+  # SINGLE tuyết rơi.
+  snowflake_trail:
+    particle: "SNOWFLAKE"
+    arrangement: "SINGLE"
+    amount: 3
+    upward-offset: 0.5
+    dx: 0.2
+    dy: 0.15
+    dz: 0.2
+    speed: 0.0
+    use-view-direction: true  # true: tuyết bay theo gió hướng nhìn
+
+  # SPHERE portal ender.
+  ender_portal:
+    particle: "PORTAL"
+    arrangement: "SPHERE"
+    radius: 1.3
+    points: 14
+    upward-offset: 1.0
+    speed: 0.08
+    frequency: 0.6
+    use-view-direction: false
+
+  # SPIRAL hồn bay.
+  soul_trail:
+    particle: "SOUL"
+    arrangement: "SPIRAL"
+    points: 4
+    radius: 1.2
+    upward-offset: 0.2
+    speed: 0.01
+    frequency: 1.3
+    use-view-direction: false
+
+  # ────────────────────────────────────────────────
+  # Halloween / Ma quái / Bí ẩn
+  # ────────────────────────────────────────────────
+  # SPIRAL chổi phù thủy.
+  witch_broom_trail:
+    particle: "WITCH"
+    arrangement: "SPIRAL"
+    points: 4
+    radius: 0.8
+    upward-offset: 0.5
+    forward-offset: 0.3  # Phía trước như đuổi theo
+    speed: 0.03
+    frequency: 1.4
+    use-view-direction: true  # true: trail theo hướng di chuyển
+
+  # CIRCLE aura bí ngô.
+  pumpkin_aura:
+    particle: "FLAME"
+    arrangement: "CIRCLE"
+    radius: 0.7
+    points: 20
+    upward-offset: 1.8
+    speed: 0.0
+    frequency: 0.6
+    use-view-direction: false
+
+  # WINGS cánh ma.
+  ghostly_wings:
+    particle: "SOUL"
+    arrangement: "WINGS"
+    radius: 1.7
+    forward-offset: -0.6
+    upward-offset: 1.0
+    frequency: 0.8
+    speed: 0.02
+    use-view-direction: false
+
+  # POLYGON mạng nhện.
+  spider_web_circle:
+    particle: "COBWEB"  # Hoặc "WHITE_ASH" nếu COBWEB không hỗ trợ
+    arrangement: "POLYGON"
+    edges: 8
+    radius: 1.4
+    upward-offset: 0.2
+    frequency: 1.0
+    speed: 0.0
+    use-view-direction: false
+
+  # ────────────────────────────────────────────────
+  # Christmas / Giáng sinh / Tuyết
+  # ────────────────────────────────────────────────
+  # SPIRAL tuyết xoáy.
+  christmas_snow_trail:
+    particle: "SNOWFLAKE"
+    arrangement: "SPIRAL"
+    points: 5
+    radius: 1.0
+    upward-offset: 0.4
+    speed: 0.01
+    frequency: 0.9
+    use-view-direction: false
+
+  # ATOM chuông ông già Noel.
+  santa_bells:
+    particle: "NOTE"
+    arrangement: "ATOM"
+    radius: 0.6
+    upward-offset: 2.0
+    speed: 0.0
+    frequency: 2.5
+    use-view-direction: false
+
+  # WINGS ruy băng quà.
+  gift_ribbon_wings:
+    particle: "TOTEM_OF_UNDYING"
+    arrangement: "WINGS"
+    radius: 1.3
+    forward-offset: -0.2
+    upward-offset: 1.3
+    frequency: 1.1
+    speed: 0.04
+    use-view-direction: false
+
+  # SPHERE lấp lánh tiên.
+  elf_sparkle_sphere:
+    particle: "GLOW"
+    arrangement: "SPHERE"
+    radius: 0.8
+    points: 16
+    upward-offset: 1.5
+    speed: 0.05
+    frequency: 1.2
+    use-view-direction: false
+
+  # ────────────────────────────────────────────────
+  # Anime / Phong cách Nhật Bản / Sakura
+  # ────────────────────────────────────────────────
+  # SPIRAL cánh hoa rơi.
+  sakura_petals:
+    particle: "FALLING_SPORE_BLOSSOM"
+    arrangement: "SPIRAL"
+    points: 6
+    radius: 1.6
+    upward-offset: 0.8
+    speed: 0.015
+    frequency: 0.7
+    use-view-direction: false
+
+  # CIRCLE Sharingan.
+  sharingan_ring:
+    particle: "CRIT"
+    arrangement: "CIRCLE"
+    radius: 0.5
+    points: 12
+    upward-offset: 1.6
+    forward-offset: 0.0
+    speed: 0.1
+    frequency: 3.5
+    use-view-direction: false
+
+  # SPHERE chakra.
+  chakra_aura:
+    particle: "ENCHANT"
+    arrangement: "SPHERE"
+    radius: 1.0
+    points: 14
+    upward-offset: 1.2
+    speed: 0.0
+    frequency: 1.0
+    use-view-direction: false
+
+  # SINGLE hơi nóng ramen.
+  ramen_noodle_trail:
+    particle: "SMALL_FLAME"
+    arrangement: "SINGLE"
+    amount: 4
+    upward-offset: 0.7
+    dx: 0.18
+    dy: 0.12
+    dz: 0.18
+    speed: 0.02
+    use-view-direction: true  # true: hơi bay theo hướng
+
+  # ────────────────────────────────────────────────
+  # Superhero / Năng lượng / Điện
+  # ────────────────────────────────────────────────
+  # ATOM sét orb.
+  lightning_orb:
+    particle: "ELECTRIC_SPARK"
+    arrangement: "ATOM"
+    radius: 1.1
+    upward-offset: 1.4
+    speed: 0.08
+    frequency: 2.8
+    use-view-direction: false
+
+  # SPIRAL búa Thor.
+  thor_hammer_trail:
+    particle: "CRIT"
+    arrangement: "SPIRAL"
+    points: 3
+    radius: 1.2
+    upward-offset: 0.3
+    speed: 0.05
+    frequency: 1.5
+    use-view-direction: true  # true: trail theo hướng hammer
+
+  # WINGS repulsor Iron Man (phía trước).
+  iron_man_repulsor:
+    particle: "GLOW_SQUID_INK"
+    arrangement: "WINGS"
+    radius: 1.0
+    forward-offset: 0.4  # Positive: phía trước
+    upward-offset: 1.0
+    frequency: 1.6
+    speed: 0.06
+    use-view-direction: true  # true: bắn theo hướng nhìn
+
+  # SINGLE đường tốc độ Flash.
+  flash_speed_lines:
+    particle: "POOF"
+    arrangement: "SINGLE"
+    amount: 5
+    upward-offset: 0.5
+    dx: 0.3
+    dy: 0.1
+    dz: 0.3
+    speed: 0.1
+    use-view-direction: true  # true: lines theo hướng chạy
+
+  # ────────────────────────────────────────────────
+  # Fantasy / Rồng / Phép thuật cao cấp
+  # ────────────────────────────────────────────────
+  # SPIRAL hơi thở rồng.
+  dragon_breath:
+    particle: "DRAGON_BREATH"
+    arrangement: "SPIRAL"
+    points: 4
+    radius: 1.5
+    upward-offset: 0.0
+    speed: 0.03
+    frequency: 1.2
+    use-view-direction: false
+
+  # WINGS phượng hoàng.
+  phoenix_wings:
+    particle: "SMALL_FLAME"
+    arrangement: "WINGS"
+    radius: 1.8
+    forward-offset: -0.7
+    upward-offset: 1.1
+    frequency: 1.4
+    speed: 0.04
+    use-view-direction: false
+
+  # CIRCLE pha lê halo.
+  crystal_halo:
+    particle: "GLOW"
+    arrangement: "CIRCLE"
+    radius: 0.8
+    points: 28
+    upward-offset: 2.2
+    speed: 0.02
+    frequency: 2.0
+    use-view-direction: false
+
+  # ATOM bụi tiên.
+  fairy_dust:
+    particle: "ENCHANT"
+    arrangement: "ATOM"
+    radius: 0.9
+    upward-offset: 1.3
+    speed: 0.0
+    frequency: 1.8
+    use-view-direction: false
+
+  # ────────────────────────────────────────────────
+  # Misc / Vui nhộn / Khác
+  # ────────────────────────────────────────────────
+  # SPHERE quả cầu disco.
+  disco_ball:
+    particle: "NOTE"
+    arrangement: "SPHERE"
+    radius: 1.0
+    points: 20
+    upward-offset: 1.5
+    speed: 0.07
+    frequency: 4.0
+    use-view-direction: false
+
+  # SINGLE bong bóng vỡ.
+  bubble_pop_trail:
+    particle: "BUBBLE_POP"
+    arrangement: "SINGLE"
+    amount: 3
+    upward-offset: 0.6
+    dx: 0.2
+    dy: 0.15
+    dz: 0.2
+    speed: 0.0
+    use-view-direction: true
+
+  # POLYGON pháo giấy.
+  confetti_burst:
+    particle: "TOTEM_OF_UNDYING"
+    arrangement: "POLYGON"
+    edges: 12
+    radius: 0.7
+    upward-offset: 1.0
+    frequency: 0.5
+    speed: 0.05
+    use-view-direction: false
+
+  # SPIRAL cầu vồng (cần hỗ trợ DUST color sau).
+  rainbow_trail:
+    particle: "DUST"  # Cần update class để hỗ trợ màu
+    arrangement: "SPIRAL"
+    points: 8
+    radius: 0.6
+    upward-offset: 0.4
+    speed: 0.01
+    frequency: 2.2
+    use-view-direction: true  # true: trail theo hướng

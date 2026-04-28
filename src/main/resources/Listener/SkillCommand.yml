@@ -1,0 +1,11 @@
+Test:
+  command: "say Chào mừng %player_name% (Cấp độ PAPI: %player_level%) đã dùng skill!"
+  execute_as: "console"
+
+HealSelf:
+  command: "heal %player%"
+  execute_as: "op"
+  mana: 50 #mana mmocore
+BroadcastTarget:
+  command: "me đã tấn công %target% bằng kỹ năng %player_item_in_hand%!"
+  execute_as: "player"

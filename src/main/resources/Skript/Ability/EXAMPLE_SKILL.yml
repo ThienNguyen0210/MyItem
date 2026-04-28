@@ -1,0 +1,135 @@
+code: |-
+  // ========================================================================
+  // KỸ NĂNG: ĐỊNH MỆNH HỎA ẤN (Doom Mark) - THUNDER STRIKE EDITION
+  // ========================================================================
+
+  if (attacker == null) return;
+
+  // 1. TÌM MỤC TIÊU
+  var target = api.getNearest(attacker, 10.0);
+  if (target == null) return;
+
+  var plugin = org.ThienNguyen.Main.getInstance();
+  if (target.hasMetadata("DOOM_MARK_ACTIVE")) return;
+
+  // --- [BƯỚC 1] DÁN ẤN & GIẬT SÉT (20% DAMAGE) ---
+  target.setMetadata("DOOM_MARK_ACTIVE", new org.bukkit.metadata.FixedMetadataValue(plugin, true));
+  
+  // Hiệu ứng sấm sét (StrikeLightningEffect không gây sát thương thật của Minecraft để tránh cháy block)
+  target.getWorld().strikeLightningEffect(target.getLocation());
+  
+  // Tính sát thương nổ dự kiến để lấy 20%
+  double baseMultiplier = 10.0 + (level * 1.0);
+  double estimatedDmg = (baseDamage * baseMultiplier);
+  double thunderDmg = estimatedDmg * 0.2; // 20% sát thương
+
+  // Gây sát thương sét ngay lập tức
+  api.powerDamage(attacker, target, thunderDmg);
+  attacker.sendMessage("§b§l⚡ §fThiên lôi đã giáng xuống! §7(Sát thương khởi đầu: " + (int)thunderDmg + ")");
+
+  // --- [BƯỚC 2] HIỆU ỨNG ĐẾM NGƯỢC ---
+  Runnable tick1 = new Runnable() {
+      run() {
+          if (target == null || target.isDead()) return;
+          target.getWorld().spawnParticle(org.bukkit.Particle.FLAME, target.getLocation().add(0, 2.2, 0), 8, 0.1, 0.1, 0.1, 0.05);
+          target.getWorld().playSound(target.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_HAT, 1.0f, 2.0f);
+      }
+  };
+  api.delay(20, tick1);
+
+  Runnable tick2 = new Runnable() {
+      run() {
+          if (target == null || target.isDead()) return;
+          target.getWorld().spawnParticle(org.bukkit.Particle.FLAME, target.getLocation().add(0, 2.2, 0), 15, 0.1, 0.1, 0.1, 0.1);
+          target.getWorld().playSound(target.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_HAT, 1.0f, 2.0f);
+      }
+  };
+  api.delay(40, tick2);
+
+  // --- [BƯỚC 3] KÍCH NỔ CHÍNH (GIÂY THỨ 3) ---
+  Runnable explode = new Runnable() {
+      run() {
+          target.removeMetadata("DOOM_MARK_ACTIVE", plugin);
+          if (target == null || target.isDead()) return;
+
+          var loc = target.getLocation();
+          target.getWorld().spawnParticle(org.bukkit.Particle.EXPLOSION_EMITTER, loc, 1);
+          target.getWorld().playSound(loc, org.bukkit.Sound.ENTITY_GENERIC_EXPLODE, 1.2f, 0.8f);
+
+          // Sát thương nổ chính (100%)
+          double finalDmg = (baseDamage * baseMultiplier);
+          api.powerDamage(attacker, target, finalDmg);
+
+          // Sát thương lan 40%
+          var nearby = target.getNearbyEntities(3.0, 3.0, 3.0);
+          for (int j = 0; j < nearby.size(); j++) {
+              var e = nearby.get(j);
+              if (e instanceof org.bukkit.entity.LivingEntity && e != attacker && e != target) {
+                  api.powerDamage(attacker, (org.bukkit.entity.LivingEntity) e, finalDmg * 0.4);
+              }
+          }
+      }
+  };
+  api.delay(60, explode);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Mẫu 2
+#code: |-
+#  // ========================================================================
+#  // KỸ NĂNG: ĐỊNH MỆNH HỎA ẤN (Target dính đòn)
+#  // ========================================================================
+#
+#  if (attacker == null || target == null) return; // target này lấy từ cú chém thật
+#
+#  var plugin = org.ThienNguyen.Main.getInstance();
+#
+#  // Kiểm tra chặn lặp trên chính con quái vừa bị chém
+#  if (target.hasMetadata("DOOM_MARK_ACTIVE")) return;
+#
+#  // --- [BƯỚC 1] DÁN ẤN & SÉT ĐÁNH ---
+#  target.setMetadata("DOOM_MARK_ACTIVE", new org.bukkit.metadata.FixedMetadataValue(plugin, true));
+#  target.getWorld().strikeLightningEffect(target.getLocation());
+#
+#  double baseMultiplier = 10.0 + (level * 1.0);
+#  double thunderDmg = (baseDamage * baseMultiplier) * 0.2;
+#  api.powerDamage(attacker, target, thunderDmg);
+#
+#  // --- [BƯỚC 2] ĐẾM NGƯỢC ---
+#  Runnable tick1 = new Runnable() {
+#      run() {
+#          if (target == null || target.isDead()) return;
+#          target.getWorld().spawnParticle(org.bukkit.Particle.FLAME, target.getLocation().add(0, 2.2, 0), 8, 0.1, 0.1, 0.1, 0.05);
+#      }
+#  };
+#  api.delay(20, tick1);
+#
+#  // --- [BƯỚC 3] BÙM ---
+#  Runnable explode = new Runnable() {
+#      run() {
+#          target.removeMetadata("DOOM_MARK_ACTIVE", plugin);
+#          if (target == null || target.isDead()) return;
+#
+#          var loc = target.getLocation();
+#          target.getWorld().spawnParticle(org.bukkit.Particle.EXPLOSION_EMITTER, loc, 1);
+#          target.getWorld().playSound(loc, org.bukkit.Sound.ENTITY_GENERIC_EXPLODE, 1.2f, 0.8f);
+#
+#          double finalDmg = (baseDamage * baseMultiplier);
+#          api.powerDamage(attacker, target, finalDmg);
+#      }
+#  };
+#  api.delay(60, explode);

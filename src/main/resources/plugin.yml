@@ -1,0 +1,38 @@
+name: MyItem
+version: 1.0-SNAPSHOT
+main: org.ThienNguyen.Main
+api-version: '1.13'
+author: Nhà Văn Viết Code
+description: Plugin quan ly vat pham tuy chinh
+
+commands:
+  myitem:
+    description: Lenh chinh cho he thong MyItem
+    aliases: [mi]
+    permission: windycraft.admin
+    usage: /<command>
+  setname:
+    description: Đổi tên vật phẩm trên tay (Hỗ trợ Hex)
+    permission: windycraft.setname
+  rpginv:
+    description: Đổi tên vật phẩm trên tay (Hỗ trợ Hex)
+    permission: windycraft.rpginv
+  setlore:
+    description: Chỉnh sửa lore item
+    usage: /setlore <add|set|remove> <nội dung>
+    permission: windycraft.setlore
+  unbreaking:
+    description: Bật/Tắt chế độ không thể phá hủy cho item.
+    permission: windycraft.unbreaking
+  itemflag:
+    description: Ẩn hoặc hiện các thuộc tính của item.
+    permission: windycraft.itemflag
+  attribute:
+    description: Ẩn hoặc hiện các thuộc tính của item.
+    permission: windycraft.attribute
+  setmodel:
+    description: "Đặt Custom Model Data cho item"
+    permission: "myitem.setmodel"
+  material:
+    description: "Thay đổi loại vật liệu của item"
+    permission: "myitem.material"

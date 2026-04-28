@@ -1,0 +1,38 @@
+item:
+  receive-msg: "&a[MyItem] You received item &f{id} &afrom Admin!"
+  no-mana: "&cNot enough Mana! (&f{mana}&7/&b{cost}&c)"
+  # Socket & Gem messages
+  socket-limit: "&c[!] This item has reached the limit for &f{type} &csockets!"
+  drill-success: "&a✔ [Upgrade] Socket added successfully!"
+  drill-failed: "&c✘ [Upgrade] Socketing failed! The drill has been destroyed."
+  no-stack-allowed: "&c[!] You can only modify one item at a time (no stacked items)!"
+  max-gem-limit: "&c[!] This equipment already has the maximum of 2 gems!"
+  no-empty-socket: "&c[!] This equipment has no empty &f{type} &csockets for socketing!"
+  apply-success: "&a✔ [Socket] Gem applied successfully!"
+  apply-failed: "&c✘ [Socket] Socketing failed! The gem has shattered."
+  # Transfer messages
+  cooldown: "&c&l✘ &7Please wait &e{time} seconds!"
+  need-two-items: "&c&l✘ &7Please place both items in the slots!"
+  min-level: "&c&l✘ &7Both items must be at least level &e{level} &7to transfer!"
+  success: "&a&l✔ &7Transfer successful!"
+  failed: "&c&l✘ &7Transfer failed! Both items have been downgraded by 1 level."
+
+upgrade:
+  # Chat messages
+  max-level: "&cEquipment has reached the maximum level!"
+  success: "&a&l✔ &7Successfully upgraded to &f+{level} &e({chance}%)"
+  protected: "&e&l⚠ &7Failed! Thanks to the &bProtection Scroll&7, the item level was maintained."
+  base-level-name: "original state"
+  failed-down: "&c&l✘ &7Failed! Downgraded to &f{level} &8({chance}%)"
+  failed-keep: "&c&l✘ &7Failed! Item remains at &f+0"
+  # GUI Alert messages
+  only-one-item: "&c&l✘ &7You can only upgrade one item at a time!"
+  not-a-gem: "&c&l✘ &7This is not an &eEnhancement Stone&7!"
+  not-a-scroll: "&c&l✘ &7This is not a &bProtection Scroll&7!"
+  missing-materials: "&cPlease place both the item and stone!"
+  take-result-first: "&cPlease take the previous result first!"
+  amulet-sent: "&a&l✔ &7Sent &b{amount} Protection Amulet(s) &ato &f{player}"
+  amulet-received: "&a&l✔ &7You received &b{amount} Protection Amulet(s) &afrom Admin!"
+  gem-received: "&a&l✔ &7Bạn đã nhận được: {gem}"
+  gem-fullinventory: "full inventory drop item {gem}"
+consume-cooldown: "&f Bạn chờ &a%time%s&f nữa để xài nha ^^"

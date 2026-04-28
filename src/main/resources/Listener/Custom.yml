@@ -1,0 +1,10 @@
+# Các biến khả dụng:
+# {damage}: Sát thương gốc + sát thương từ PDC
+# {armor}: Tổng giáp từ PDC
+# Công thức mặc định: damage * (100 / (100 + armor))
+armor-formula: "damage * (100 / (100 + armor))"
+block-reduction: 0.75
+crit-multiplier: 1.2
+# Ngưỡng máu để sát thương tử thần kích hoạt (ví dụ: 50 là dưới 50% máu)
+death-damage-threshold: 50
+magic-defense-formula: "damage * (100 / (100 + mDef))" # công thức tính phòng thủ phép # beta chưa thử nghiệm trên người

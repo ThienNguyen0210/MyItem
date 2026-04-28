@@ -1,0 +1,28 @@
+trigger: "RIGHT_CLICK"
+mana: 0
+code: |
+  import org.bukkit.Particle;
+  import org.bukkit.Sound;
+  import org.bukkit.Location;
+  import org.bukkit.util.Vector;
+
+  // Lấy hướng nhìn và tính toán vị trí mới (phía trước 6 block)
+  Vector direction = player.getLocation().getDirection().normalize();
+  Location targetLoc = player.getLocation().add(direction.multiply(6));
+
+  // Hiệu ứng hạt tại điểm bắt đầu
+  player.getWorld().spawnParticle(Particle.CLOUD, player.getLocation(), 20, 0.2, 0.2, 0.2, 0.1);
+  
+  // Dịch chuyển
+  player.teleport(targetLoc);
+  
+  // Hiệu ứng âm thanh và hạt tại điểm đến
+  player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.2f);
+  player.getWorld().spawnParticle(Particle.DRAGON_BREATH, player.getLocation().add(0, 1, 0), 30, 0.5, 0.5, 0.5, 0.05);
+
+  // Nếu lúc dịch chuyển có target ở gần điểm đến, gây sát thương
+  if (target != null) {
+      double dmg = baseDamage * 1.2;
+      api.damage(player, target, dmg);
+      player.sendMessage("§b[Skill] §fÁm sát thành công!");
+  }

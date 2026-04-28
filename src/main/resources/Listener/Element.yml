@@ -1,0 +1,156 @@
+# Element.yml - Cấu hình các nguyên tố (Element) trong plugin MyItem
+# Đã điều chỉnh: Base Damage = 1, Damage-per = 0.4, Density cực thấp (1-3)
+
+FIRE:
+  display-name: "§cLửa"
+  particle: "FLAME"
+  density: 1
+  base-damage: 1.0
+  damage-per: 0.4
+
+ICE:
+  display-name: "§bBăng Nguyên"
+  particle: "SNOWFLAKE"
+  density: 1
+  base-damage: 1.0
+  damage-per: 0.4
+  extra-effect: "SLOW:2:40"
+
+STONE:
+  display-name: "§8Đá"
+  particle: "BLOCK_CRACK"
+  material: "STONE"
+  density: 1
+  base-damage: 1.0
+  damage-per: 0.4
+
+LIGHTNING:
+  display-name: "§eSấm Sét"
+  particle: "ELECTRIC_SPARK"
+  density: 1
+  base-damage: 1.0
+  damage-per: 0.4
+  extra-effect: "CONFUSE:1:30"
+
+WATER:
+  display-name: "§9Nước"
+  particle: "DRIPPING_WATER"
+  density: 1
+  base-damage: 1.0
+  damage-per: 0.4
+  extra-effect: "SLOW:1:60"
+
+WIND:
+  display-name: "§aGió"
+  particle: "CLOUD"
+  density: 1
+  base-damage: 1.0
+  damage-per: 0.4
+  extra-effect: "KNOCKBACK:1"
+
+EARTH:
+  display-name: "§6Đất"
+  particle: "BLOCK_CRACK"
+  material: "DIRT"
+  density: 1
+  base-damage: 1.0
+  damage-per: 0.4
+
+POISON:
+  display-name: "§2Độc"
+  particle: "VILLAGER_HAPPY"
+  density: 1
+  base-damage: 1.0
+  damage-per: 0.4
+  extra-effect: "POISON:1:80"
+
+DARK:
+  display-name: "§5Bóng Tối"
+  particle: "SMOKE_LARGE"
+  density: 1
+  base-damage: 1.0
+  damage-per: 0.4
+  extra-effect: "BLIND:1:50"
+
+HOLY:
+  display-name: "§fThánh Quang"
+  particle: "ENCHANTMENT_TABLE"
+  density: 1
+  base-damage: 1.0
+  damage-per: 0.4
+
+SHADOW:
+  display-name: "§0Bóng Ma"
+  particle: "SOUL"
+  density: 1
+  base-damage: 1.0
+  damage-per: 0.4
+  extra-effect: "WITHER:1:40"
+
+LAVA:
+  display-name: "§4Dung Nham"
+  particle: "LAVA"
+  density: 1
+  base-damage: 1.0
+  damage-per: 0.4
+  extra-effect: "FIRE:60"
+
+FROST:
+  display-name: "§3Sương Lạnh"
+  particle: "SNOW_SHOVEL"
+  density: 1
+  base-damage: 1.0
+  damage-per: 0.4
+  extra-effect: "SLOW:3:30"
+
+THUNDER:
+  display-name: "§3Sét"
+  particle: "CRIT"
+  density: 1
+  base-damage: 1.0
+  damage-per: 0.4
+
+NATURE:
+  display-name: "§2Thiên Nhiên"
+  particle: "VILLAGER_PLANT_GROW"
+  density: 1
+  base-damage: 1.0
+  damage-per: 0.4
+  extra-effect: "REGENERATION:1:60"
+
+VOID:
+  display-name: "§4Hư Không"
+  particle: "PORTAL"
+  density: 1
+  base-damage: 1.0
+  damage-per: 0.4
+  extra-effect: "WITHER:2:30"
+
+PLASMA:
+  display-name: "§dHuyết Tương"
+  particle: "REDSTONE"
+  density: 1
+  base-damage: 1.0
+  damage-per: 0.4
+
+ARCANE:
+  display-name: "§dHuyền Bí"
+  particle: "WITCH"
+  density: 1
+  base-damage: 1.0
+  damage-per: 0.4
+
+BLOOD:
+  display-name: "§4Máu"
+  particle: "DRIP_LAVA"
+  density: 1
+  base-damage: 1.0
+  damage-per: 0.4
+  extra-effect: "VAMPIRISM:20"
+
+SPIRIT:
+  display-name: "§fLinh Hồn"
+  particle: "SOUL_FIRE_FLAME"
+  density: 1
+  base-damage: 1.0
+  damage-per: 0.4

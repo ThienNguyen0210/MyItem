@@ -1,0 +1,7 @@
+1:
+  material: EMERALD
+  display-name: "&a&lĐá Cường Hóa Cấp 1"
+  chance-per-level: 5.0
+  custom-model-data: 101
+  lore:
+    - "&7Mỗi cấp của trang bị cộng thêm 5% tỉ lệ"

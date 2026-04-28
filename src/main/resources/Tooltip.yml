@@ -1,0 +1,42 @@
+# Phần settings này không đụng nha có time thì tìm hiểu nó sau rồi đụng:v
+settings:
+  fill-character: ""
+  fill-count-right: 39
+  fill-count-left: 1
+
+# Định nghĩa các loại Tooltip
+# top là name mid là lore bottom là cái mà cuối lore ấy :v lấy các symbol này trong path sau
+# nghe thầy chỉ nè không lại hỏi:v
+# vào itemsadder rồi vô storage vào font_images_unicode_cache.yml
+# trong đây chứa các symbol , tìm xem cái pack vừa tải leak nó symbol gì rồi gắn lần lượt vào
+# đây là mẫu cho pack mmoitem thoôi hydronic gì ấy:v thầy làm mẫu cho pack này rồi
+# symbol là các kí tự render ra pack vị dụ các kí tự trong yml này nè:)
+types:
+  normal:
+    top: "§f"
+    mid: "§f뀁"
+    bottom: "§f"
+  common:
+    top: "§f뀍"
+    mid: "§f뀁"
+    bottom: "§f뀎"
+  rare:
+    top: "§f뀊"
+    mid: "§f뀁"
+    bottom: "§f뀋"
+  epic:
+    top: "§f뀇"
+    mid: "§f뀁"
+    bottom: "§f뀈"
+  legendary:
+    top: "§f뀄"
+    mid: "§f뀁"
+    bottom: "§f뀅"
+  mythic:
+    top: "§f뀀"
+    mid: "§f뀁"
+    bottom: "§f뀂"
+  godlike:
+    top: "§f뀐"
+    mid: "§f뀁"
+    bottom: "§f뀑"

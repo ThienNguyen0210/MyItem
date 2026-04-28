@@ -1,0 +1,145 @@
+settings:
+  use-roman: true
+
+# Cấu hình hiển thị kỹ năng trên Item
+# {level}: Cấp độ kỹ năng
+# {chance}: Tỷ lệ kích hoạt
+abilities:
+  LIGHTNING:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Lôi Điện Cấp {level}"
+  POISON:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Độc Cấp {level}"
+  WEAK:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Hư Nhược Cấp {level}"
+  HUNGER:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Cơn Đói Cấp {level}"
+  TIRED:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Bì Lao Cấp {level}"
+  CONFUSE:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Hỗn Loạn Cấp {level}"
+  WITHER:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Héo Tàn Cấp {level}"
+  BLIND:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Manh Cấp {level}"
+  SLOW:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Trì Hoãn Cấp {level}"
+  AIR_SHOCK:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Phong Chấn Cấp {level}"
+  CURSE:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Nguyền Chú Cấp {level}"
+  BUBBLE:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Khí Bào Cấp {level}"
+  BLEED:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Xuất Huyết Cấp {level}"
+  FIRE_VORTEX:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Hỏa Toàn Cấp {level}"
+  FREEZE:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Đóng Băng Cấp {level}"
+  DISARM:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Giải Giáp Cấp {level}"
+  EXPLODE:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Bạo Phá Cấp {level}"
+  FLAME_PULSE:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Hỏa Xung Cấp {level}"
+  ANGEL:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Thiên Sứ Cấp {level}"
+  SHADOW_DEVOUR:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Ảnh Thực Cấp {level}"
+  SONIC_WAVE:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Âm Ba Cấp {level}"
+  FIRE_RAIN:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Hỏa Vũ Cấp {level}"
+  STAR_RITUAL:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Tinh Nghi Cấp {level}"
+  FIRE_TRIPLE_SHOT:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Tam Liên Hỏa Cấp {level}"
+  STAR_FALL:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Tinh Vẫn Cấp {level}"
+  SUN_STRIKE_AOE:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Nhật Kích Phạm Vi Cấp {level}"
+  BLACK_HOLE:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Hắc Động Cấp {level}"
+  SHADOW_WAVE:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Ảnh Ba Cấp {level}"
+  FAIRY_CHAIN:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Tiên Liên Cấp {level}"
+  LILAC_BLOOM_BOMB:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Tử Đinh Hoa Bạo Cấp {level}"
+  LEAF_STORM:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Diệp Bạo Cấp {level}"
+  SPIRIT_WOLF:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Linh Lang Cấp {level}"
+  PLAGUE_SPREAD:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Dịch Tán Cấp {level}"
+  WIND_TORNADO:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Phong Long Cấp {level}"
+  FIRE_ORB:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Hỏa Cầu Cấp {level}"
+  PLASMA_ORB:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Ly Tử Cầu Cấp {level}"
+  ELECTRIC_BLADE:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Điện Nhận Cấp {level}"
+  FIRST_STRIKE:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Tiên Kích Cấp {level}"
+  TNT_STUCK:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Phụ Bám TNT Cấp {level}"
+  BADLUCK:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Ác Vận Cấp {level}"
+  BUBBLE_DEFLECTOR:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Khí Bào Phản Cấp {level}"
+  DARK_FLAME:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Ám Diệm Cấp {level}"
+  DARK_IMPACT:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Ám Kích Cấp {level}"
+  ROOTS:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Thụ Căn Cấp {level}"
+  VAMPIRISM:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Hấp Huyết Cấp {level}"
+  VENOM_SPREAD:
+    lore:
+      - "&fᎉ &a{chance}% Kích Hoạt Độc Tán Cấp {level}"

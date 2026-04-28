@@ -1,0 +1,45 @@
+# --- Chỉ số cơ bản ---
+damage: "&fᎈ &fSát Thương &#C1E1C1+{value:24}"
+health: "&fᎏ &fMáu Tối Đa &#C1E1C1+{value:24}"
+armor: "&fᎎ &fGiáp &#C1E1C1+{value:24}"
+
+# --- Chỉ số tấn công ---
+pve_damage: "&fᎥ &fSát Thương PvE &#C1E1C1+{value:24}%"
+pvp_damage: "&fᎩ &fSát Thương PvP &#C1E1C1+{value:24}%"
+critical_chance: "&fᎋ &fTỷ Lệ Chí Mạng &#C1E1C1+{value:24}%"
+critical_damage: "&fᎌ &fSát Thương Chí Mạng &#C1E1C1+{value:24}%"
+true_damage: "&f᎕ &fSát Thương Chuẩn &#C1E1C1+{value:24}"
+attack_speed: "&fᎊ &fTốc Độ Tấn Công &#C1E1C1+{value:24}%"
+
+# --- Chỉ số phòng thủ ---
+pve_defense: "&fᎍ &fPhòng Thủ PvE &#C1E1C1+{value:24}%"
+pvp_defense: "&fᎍ &fPhòng Thủ PvP &#C1E1C1+{value:24}%"
+dodge_rate: "&fᎢ &fTỷ Lệ Né Tránh &#C1E1C1+{value:24}%"
+block_rate: "&fᎡ &fTỷ Lệ Chặn Đòn &#C1E1C1+{value:24}%"
+thorns: "&fｭ &fPhản Sát Thương &#C1E1C1+{value:24}%"
+
+# --- Xuyên thấu & Đặc biệt ---
+penetration: "&f᎕ &fXuyên Giáp &#C1E1C1+{value:24}%"
+armor_pen: "&f౒ &fSát Lực &#C1E1C1+{value:24}"
+lifesteal: "&f᎐ &fHút Máu &#C1E1C1+{value:24}%"
+
+# --- Năng lượng & Hồi phục ---
+max_mana: "&f &fNăng Lượng Tối Đa &#C1E1C1+{value:24}"
+mana_regen: "&f &fHồi Năng Lượng &#C1E1C1+{value:24}/s"
+health_regen: "&fᎏ &fHồi Phục Máu &#C1E1C1+{value:24}/s"
+
+# --- Hệ thống & Khác ---
+level_require: "&f︵ &fYêu Cầu Cấp Độ &7{value:24}"
+class_require: "&f︵ &fYêu Cầu Nghề Nghiệp &7{value:24}"
+exp_bonus: "&fᎨ &fExp Bonus &#C1E1C1+{value:24}%"
+movement_speed: "&f᎒ &fTốc Độ Di Chuyển &#C1E1C1+{value:24}%"
+
+# --- Chỉ số bổ sung ---
+all_damage: "&f᎔ &fSát Thương Toàn Phần &#C1E1C1+{value:24}%"
+all_defense: "&fᎍ &fGiảm Damage Toàn Phần &#C1E1C1+{value:24}%"
+bow_damage: "&f丬 &fSát Thương Cung Tên &#C1E1C1+{value:24}"
+knockback_resistance: "&fᎎ &fKháng Bật Lùi &#C1E1C1+{value:24}%"
+death_damage: "&fౚ &fSát Thương Tử Thần &#C1E1C1+{value:24}%"
+durability: "&f🛡 &fĐộ Bền &#C1E1C1+{value:24}"
+magic_damage: "&f並 &fSức Mạnh Phép Thuật &#C1E1C1+{value:24}"
+magic_defense: "&f两 &fKháng Phép &#C1E1C1+{value:24}"

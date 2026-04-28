@@ -1,0 +1,43 @@
+# [TRIGGER] Điều kiện kích hoạt: Click chuột phải khi cầm vật phẩm.
+trigger: "RIGHT_CLICK"
+# [MANA] Tiêu hao: Hiện tại là 0 để bạn dễ dàng test kỹ năng. # bỏ mana ra nếu bạn không dùng mmocore
+mana: 0
+
+code: |
+  // Import các thư viện cần thiết của Bukkit để xử lý vị trí, âm thanh và hạt
+  import org.bukkit.Particle;
+  import org.bukkit.Sound;
+  import org.bukkit.Location;
+  import org.bukkit.util.Vector;
+
+  // [1] TÍNH TOÁN VECTOR DỊCH CHUYỂN
+  // normalize(): Chuyển hướng nhìn của người chơi về độ dài chuẩn (1 đơn vị).
+  // multiply(6): Kéo dài khoảng cách dịch chuyển lên 6 block phía trước.
+  Vector direction = player.getLocation().getDirection().normalize();
+  Location targetLoc = player.getLocation().add(direction.multiply(6));
+
+  // [2] HIỆU ỨNG TẠI VỊ TRÍ CŨ
+  // Tạo một đám mây (CLOUD) tại chân người chơi trước khi biến mất để tạo cảm giác tốc độ.
+  player.getWorld().spawnParticle(Particle.CLOUD, player.getLocation(), 20, 0.2, 0.2, 0.2, 0.1);
+  
+  // [3] THỰC THI DỊCH CHUYỂN (Teleport)
+  // Đưa người chơi đến tọa độ đã tính toán ở Bước 1.
+  player.teleport(targetLoc);
+  
+  // [4] HIỆU ỨNG TẠI VỊ TRÍ MỚI
+  // playSound: Phát âm thanh dịch chuyển của Enderman tại điểm đến.
+  player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.2f);
+  // spawnParticle: Tạo hiệu ứng hạt "Hơi thở rồng" (DRAGON_BREATH) để làm nổi bật sự xuất hiện.
+  player.getWorld().spawnParticle(Particle.DRAGON_BREATH, player.getLocation().add(0, 1, 0), 30, 0.5, 0.5, 0.5, 0.05);
+
+  // [5] XỬ LÝ SÁT THƯƠNG ÁM SÁT
+  // Kiểm tra nếu lúc dùng skill, người chơi đang nhắm vào một mục tiêu (target).
+  if (target != null) {
+      // Sát thương bằng 1.2 lần sát thương gốc của vũ khí.
+      double dmg = baseDamage * 1.2;
+      // Sử dụng hàm api.damage để gây sát thương chuẩn từ Plugin lên mục tiêu.
+      api.damage(player, target, dmg);
+  
+      // Gửi thông báo cho người dùng
+      player.sendMessage("§b[Skill] §fÁm sát thành công!");
+  }

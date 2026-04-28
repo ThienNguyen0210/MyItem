@@ -1,0 +1,32 @@
+display-format: "%name% &f&l[&a+%level%&f&l]"
+
+color-levels:
+  0: "&f"
+  4: "&a"
+  10: "&d"
+  15: "&6&l"
+
+max-level: 15
+upgrade-costs:
+  levels:
+    1: 1000.0
+    2: 2000.0
+    3: 5000.0
+  default-cost: 500.0 # Giá mặc định nếu không khai báo cụ thể ở trên
+# Tỉ lệ thành công (%) cho từng cấp độ (từ cấp hiện tại lên cấp tiếp theo)
+levels:
+  1: 100
+  2: 70
+  3: 50
+  4: 50
+  5: 40
+  # Các cấp sau không ghi sẽ mặc định là 30%
+  default-chance: 30
+
+# Danh sách stats được phép tăng và tỉ lệ tăng mỗi cấp
+# 0.2 có nghĩa là tăng 20% (nhân với 1.2)
+upgrade-stats:
+  damage: 0.2
+  armor: 0.1
+  health: 0.1
+  true_damage: 0.05

@@ -1,0 +1,24 @@
+tiers:
+  # Cấp độ 1: Common - Đồ phổ thông
+  common:
+    display-name: "&#AAB3BB&l[ &7COMMON &r&#AAB3BB&l]"
+
+  # Cấp độ 2: Uncommon - Bắt đầu có chút đặc biệt
+  uncommon:
+    display-name: "&#7BED9F&l[ &aUNCOMMON &r&#7BED9F&l]"
+
+  # Cấp độ 3: Rare - Đồ hiếm
+  rare:
+    display-name: "&#70A1FF&l[ &bRARE &r&#70A1FF&l]"
+
+  # Cấp độ 4: Epic - Sử thi / Anh hùng
+  epic:
+    display-name: "&#A55EEA&l[ &dEPIC &r&#A55EEA&l]"
+
+  # Cấp độ 5: Mythic - Thần thoại
+  mythic:
+    display-name: "&#FF4757&l[ &cMYTHIC &r&#FF4757&l]"
+
+  # Cấp độ 6: Legend - Huyền thoại
+  legend:
+    display-name: "&#E9AF16&l[ &6LEGENDARY &r&#E9AF16&l]"

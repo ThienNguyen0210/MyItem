@@ -1,0 +1,51 @@
+# API Key của Google Gemini
+# - Nếu bạn muốn dùng key riêng của mình → điền vào đây
+# - Nếu để trống hoặc không điền → plugin sẽ dùng key hard-code trong code
+api-key: "" #lấy api key gemini quá dễ và nó free :D
+ai:
+  level_require: true
+  tiny_font_enabled: true
+  unbreaking: true
+  # Các profile (id) để chọn khi dùng /myitem ai <id>
+  profiles:
+    # Ví dụ profile "normal" - chỉ số cân bằng
+    normal:
+      stats_ranges:
+        damage: [80.0, 150.0]
+        health: [200.0, 500.0]
+        armor: [10.0, 30.0]
+        critical_chance: [5.0, 25.0]
+        critical_damage: [120.0, 200.0]
+        attack_speed: [0.8, 1.5]
+        movement_speed: [0.0, 0.3]
+        # Thêm stats nào cần thì thêm tiếp, key phải khớp với validStats
+      default_tier: LEGENDARY
+      default_material: NETHERITE_SWORD
+      description: "Cân bằng, phù hợp item thường"
+
+    # Profile "god" - chỉ số cực mạnh
+    god:
+      stats_ranges:
+        damage: [300.0, 800.0]
+        health: [1000.0, 3000.0]
+        armor: [50.0, 120.0]
+        critical_chance: [30.0, 60.0]
+        critical_damage: [250.0, 500.0]
+        lifesteal: [10.0, 30.0]
+        true_damage: [50.0, 150.0]
+      default_tier: MYTHIC
+      default_material: NETHERITE_SWORD
+      description: "Item thần thánh, chỉ số siêu cao"
+
+    # Profile "low" - item yếu, cho newbie
+    low:
+      stats_ranges:
+        damage: [10.0, 40.0]
+        health: [50.0, 150.0]
+        armor: [2.0, 8.0]
+        critical_chance: [1.0, 8.0]
+      default_tier: COMMON
+      default_material: IRON_SWORD
+      description: "Item cơ bản, dành cho người mới"
+
+    # Bạn có thể thêm bao nhiêu profile tùy thích

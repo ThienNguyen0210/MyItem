@@ -1,0 +1,9 @@
+settings:
+  # Nếu true, sẽ ẩn enchant gốc và ghi vào Lore
+  custom-enchant-lore: false
+# Định nghĩa tên hiển thị cho các Enchant Vanilla trong Lore
+# lưu ý tên định nghĩa không ghi hoa
+display:
+  sharpness: "&eSắc bén {value}"
+  protection: "&7Bảo vệ {value}"
+  # Thêm các enchant khác tại đây...

@@ -1,0 +1,23 @@
+# ID phải khớp chính xác với ID trong MythicMobs # dự án lỗi tạm thời không đụng
+Blasting_Combo:
+  damage: "%myitem_total_damage% * {value_level}"
+  default: 0.5
+  per-level: 0.1
+  mana: 20 #mana mmocore
+  lore:
+    - "&8&m       &r &d&lKỸ NĂNG HUYỀN THOẠI &8&m       "
+    - "&f▶ Kỹ năng: &bBộc Phá Liên Hoàn &7(Cấp %level%)"
+    - "&f▶ Kích hoạt: &e%trigger%"
+    - "&f▶ Sát thương: &7{value_level}x Sức mạnh"
+    - "&f▶ Hồi chiêu: &c%cooldown% giây"
+
+Super_Nova:
+  damage: "500 * {value_level}"
+  default: 1.0
+  per-level: 0.5
+  lore:
+    - "&8&m       &r &d&lKỸ NĂNG HUYỀN THOẠI &8&m       "
+    - "&f▶ Kỹ năng: &eSiêu Tân Tinh &7(Cấp %level%)"
+    - "&f▶ Kích hoạt: &e%trigger%"
+    - "&f▶ Trạng thái: &6Tàn Phá"
+    - "&f▶ Hồi chiêu: &c%cooldown% giây"

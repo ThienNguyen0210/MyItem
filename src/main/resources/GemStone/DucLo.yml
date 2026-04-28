@@ -1,0 +1,10 @@
+common:
+  format: "&f᎟&f [&b LỖ &f]"
+  color: "&a"
+  limit: 6 # Chỉ cho phép tối đa 3 lỗ Phổ Thông trên 1 món đồ
+  cost: 2000 #tốn 2000$ để đục
+rare:
+  format: "&7[ &bLỗ Hiếm &7]"
+  color: "&b"
+  limit: 1 # Chỉ cho phép 1 lỗ Hiếm
+  cost: 0 #free

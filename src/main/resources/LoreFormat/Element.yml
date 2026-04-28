@@ -1,0 +1,57 @@
+settings:
+  use-roman: false
+  horizontal-display: true
+  # Dấu cách giữa các nguyên tố (có thể dùng mã màu)
+  separator: "  "
+# -------------------------------------------------------------------------
+# NHÓM TẤN CÔNG (ATTACK) - Chỉ hiển thị Icon màu & Giá trị
+# -------------------------------------------------------------------------
+attack:
+  FIRE: "&c๏ &#C1E1C1+{value}"
+  ICE: "&b❄ &#C1E1C1+{value}"
+  STONE: "&7🪨 &#C1E1C1+{value}"
+  LIGHTNING: "&e๒ &#C1E1C1+{value}"
+  WATER: "&9ค &#C1E1C1+{value}"
+  WIND: "&aς &#C1E1C1+{value}"
+  EARTH: "&6ƙ &#C1E1C1+{value}"
+  POISON: "&2☠ &#C1E1C1+{value}"
+  DARK: "&5🌑 &#C1E1C1+{value}"
+  HOLY: "&e✨ &#C1E1C1+{value}"
+  SHADOW: "&8👤 &#C1E1C1+{value}"
+  LAVA: "&4🌋 &#C1E1C1+{value}"
+  FROST: "&3🧊 &#C1E1C1+{value}"
+  THUNDER: "&3🌩 &#C1E1C1+{value}"
+  NATURE: "&2Ŧ &#C1E1C1+{value}"
+  VOID: "&0🕳 &#C1E1C1+{value}"
+  PLASMA: "&d⚗ &#C1E1C1+{value}"
+  ARCANE: "&5🔮 &#C1E1C1+{value}"
+  BLOOD: "&4🩸 &#C1E1C1+{value}"
+  SPIRIT: "&b👻 &#C1E1C1+{value}"
+
+# -------------------------------------------------------------------------
+# NHÓM PHÒNG THỦ (DEFENSE) - Dùng Icon tương ứng để nhận diện kháng
+# -------------------------------------------------------------------------
+# -------------------------------------------------------------------------
+# NHÓM PHÒNG THỦ (DEFENSE) - Đã đồng bộ Icon với nhóm Attack
+# -------------------------------------------------------------------------
+defense:
+  FIRE: "&c๏ &#C1E1C1+{value}%"
+  ICE: "&b❄ &#C1E1C1+{value}%"
+  STONE: "&7🪨 &#C1E1C1+{value}%"
+  LIGHTNING: "&e๒ &#C1E1C1+{value}%"
+  WATER: "&9ค &#C1E1C1+{value}%"
+  WIND: "&aς &#C1E1C1+{value}%"
+  EARTH: "&6ƙ &#C1E1C1+{value}%"
+  POISON: "&2☠ &#C1E1C1+{value}%"
+  DARK: "&5🌑 &#C1E1C1+{value}%"
+  HOLY: "&e✨ &#C1E1C1+{value}%"
+  SHADOW: "&8👤 &#C1E1C1+{value}%"
+  LAVA: "&4🌋 &#C1E1C1+{value}%"
+  FROST: "&3🧊 &#C1E1C1+{value}%"
+  THUNDER: "&3🌩 &#C1E1C1+{value}%"
+  NATURE: "&2Ŧ &#C1E1C1+{value}%"
+  VOID: "&0🕳 &#C1E1C1+{value}%"
+  PLASMA: "&d⚗ &#C1E1C1+{value}%"
+  ARCANE: "&5🔮 &#C1E1C1+{value}%"
+  BLOOD: "&4🩸 &#C1E1C1+{value}%"
+  SPIRIT: "&b👻 &#C1E1C1+{value}%"

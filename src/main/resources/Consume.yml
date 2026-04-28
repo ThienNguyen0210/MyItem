@@ -1,0 +1,54 @@
+# ========================================================
+# CẤU CẤU HÌNH VẬT PHẨM TIÊU THỤ (CONSUME ITEMS)
+# ========================================================
+# Hỗ trợ các thẻ lệnh:
+# [console] - Chạy bằng quyền Console (Dùng cho lệnh Admin, Give đồ...)
+# [player]  - Chạy bằng quyền của người chơi (Lệnh chat, lệnh công cộng...)
+# [op]      - Tạm thời cấp quyền OP cho người chơi để chạy lệnh rồi tước lại ngay
+# Placeholder: %player% - Tự động thay bằng tên người sử dụng
+# ========================================================
+
+# Ví dụ vật phẩm dùng lệnh cố định
+THAN_THU_PHU:
+  material: PAPER
+  model-id: 1001
+  display-name: "&e&lThần Thú Phù"
+  cooldown: 5  # 5 giây sau mới xài được tiếp:)
+  lore:
+    - "&7Sử dụng để nhận sức mạnh thần thú trong 1 phút"
+    - ""
+    - "&eChuột phải để sử dụng!"
+  commands:
+    - "[console] effect give %player% strength 60 1"
+    - "[console] effect give %player% resistance 60 1"
+    - "[op] say %player% đang mang sức mạnh của Thần Thú!"
+    - "[player] me cảm thấy rất mạnh mẽ!"
+
+# Ví dụ vật phẩm dùng lệnh ngẫu nhiên (Làm hộp quà, bùa may mắn)
+BUA_MAY_MAN:
+  material: GOLD_INGOT
+  model-id: 1002
+  display-name: "&6&lBùa May Mắn"
+  lore:
+    - "&7Chuột phải để nhận vật phẩm ngẫu nhiên"
+    - "&f- Tỉ lệ nhận đồ xịn hoặc đồ thường"
+  # Plugin sẽ bốc ngẫu nhiên 1 trong các group dưới đây để chạy
+  random-commands:
+    - group1: # Quà thường
+        - "[console] give %player% iron_ingot 5"
+        - "[player] me vừa nhận được 5 Sắt từ Bùa May Mắn."
+    - group2: # Quà xịn
+        - "[console] give %player% diamond 1"
+        - "[console] experience add %player% 100"
+        - "[op] broadcast &e%player% đã cực kỳ may mắn nhận được &bKIM CƯƠNG!"
+# có thể thêm nhiều group từ group1 tới groupN #nhà văn viết code
+# Ví dụ vật phẩm chuyển Gamemode (Dùng thẻ [op])
+QUYEN_NANG_ADMIN:
+  material: NETHER_STAR
+  display-name: "&d&lQuyền Năng Sáng Tạo"
+  lore:
+    - "&7Chuột phải để vào chế độ Sáng Tạo trong 10 giây"
+  commands:
+    - "[op] gamemode creative %player%"
+    - "[console] title %player% actionbar {\"text\":\"&aBạn đã vào chế độ Sáng Tạo!\"}"
+    - "[console] schedule 10 seconds [op] gamemode survival %player%" # Nếu server có lệnh schedule

@@ -1,0 +1,19 @@
+# Cấu hình rơi đồ cho quái thường (Sử dụng tên Entity)
+Vanilla:
+  ZOMBIE:
+    - id: "KiemKhoiDau"
+      chance: 10.5
+    - id: "GiapDa"
+      chance: 5.0
+  SKELETON:
+    - id: "CungGo"
+      chance: 15.0
+
+# Cấu hình rơi đồ cho MythicMobs (Sử dụng tên Internal Name của Mob)
+MythicMobs:
+  SkeletalKnight:
+    - id: "KiemThanh"
+      chance: 1.0
+  KingSkeleton:
+    - id: "VuongMien"
+      chance: 100.0

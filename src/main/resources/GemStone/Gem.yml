@@ -1,0 +1,16 @@
+Ruby_Lv1:
+  material: RED_DYE
+  display-name: "&c&lHồng Ngọc Cấp 1"
+  type: "common"
+  success: 70
+  model-id: 5001 # Khi khảm thành công, vũ khí sẽ chuyển sang Model này
+  format: "&f︵&c Sát Thương I"
+  apply:
+    stats:
+      - "damage: 50"
+    ability:
+      - "lightning: 5 100" # sấm sét cấp 5 tỉ lệ 100%
+    element:
+      - "FIRE: 10"
+    BUFF:
+      - "SPEED: 2"

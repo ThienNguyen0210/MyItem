@@ -1,0 +1,8 @@
+common:
+  format: "&fミ&7 Trống"
+  color: "&a"
+  limit: 6          # Giới hạn số lỗ loại common
+  max-total: 8
+rare:
+  format: "&7[ &bLỗ Hiếm &7]"
+  color: "&b"

@@ -1,0 +1,29 @@
+# Tên hiển thị tùy chỉnh cho từng hiệu ứng
+display-names:
+  # Buffs
+  SPEED:            "§b⚡ Tốc Độ"
+  FAST_DIGGING:     "§e⛏ Đào Nhanh"
+  INCREASE_DAMAGE:  "§6⚔ Sức Mạnh"
+  JUMP:             "§a🐰 Nhảy Cao"
+  REGENERATION:     "§d💚 Hồi Phục"
+  DAMAGE_RESISTANCE: "§7🛡 Kháng Đòn"
+  FIRE_RESISTANCE:  "§c🔥 Chống Lửa"
+  WATER_BREATHING:  "§9🌊 Thở Dưới Nước"
+  HEALTH_BOOST:     "§c❤ Máu Thêm"
+  ABSORPTION:       "§6🛡️ Hấp Thu"
+  NIGHT_VISION:     "§3🌙 Thị Lực Đêm"
+  LUCK:             "§a🍀 May Mắn"
+
+  # Debuffs
+  SLOW:             "§8⛓ Chậm Chạp"
+  SLOW_DIGGING:     "§7⛏ Đào Chậm"
+  CONFUSION:        "§d🌀 Hỗn Loạn"
+  BLINDNESS:        "§0🌑 Mù Lòa"
+  HUNGER:           "§6🍗 Đói Khát"
+  WEAKNESS:         "§c💪 Yếu Đuối"
+  POISON:           "§2🧪 Trúng Độc"
+  WITHER:           "§8💀 Héo Mòn"
+  GLOWING:          "§e✨ Phát Sáng"
+  LEVITATION:       "§f☁️ Bay Lên"
+  UNLUCK:           "§c☠️ Xui Xẻo"
+  DARKNESS:         "§0🌑 Bóng Tối"

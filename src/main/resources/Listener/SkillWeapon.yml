@@ -1,0 +1,8 @@
+# Cấu hình mana cho các kỹ năng Java (Weapon)
+SongAm:
+  mana: 20
+LightningStrike:
+  mana: 15
+FireballExplosionSkill:
+  mana: 25
+# Thêm các kỹ năng khác tương tự...

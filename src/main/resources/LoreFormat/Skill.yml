@@ -1,0 +1,79 @@
+settings:
+  use-roman: true
+# Nhánh dành cho các kỹ năng gắn vào vũ khí (Type: Weapon)
+# tự sửa tôi lười:D
+# skill.yml - Cấu hình hiển thị lore cho kỹ năng gắn vào item
+# Placeholder có sẵn:
+#   %level%     → Cấp độ kỹ năng
+#   %trigger%   → Kích hoạt (ví dụ: RIGHT_CLICK, HIT, SNEAK,...)
+#   %cooldown%  → Thời gian hồi chiêu (giây)
+#   %name%      → Tên kỹ năng (skillId)
+
+# Nhánh dành cho các kỹ năng gắn vào vũ khí (Type: Weapon)
+Weapon:
+  SongAm:
+    - "&8&m                &r &6&lKỸ NĂNG VŨ KHÍ &8&m                "
+    - "&f▶ &bSóng Âm &7(Cấp %level%)"
+    - "&f▶ Kích hoạt: &e%trigger%"
+    - "&f▶ Hồi chiêu: &c%cooldown% giây"
+    - "&7Phát ra sóng âm gây choáng và sát thương khu vực."
+
+  HakiBaVuong:
+    - "&8&m                &r &6&lKỸ NĂNG VŨ KHÍ &8&m                "
+    - "&f▶ &eKiếm Khí &7(Cấp %level%)"
+    - "&f▶ Kích hoạt: &e%trigger%"
+    - "&f▶ Hồi chiêu: &c%cooldown% giây"
+    - "&7Giải phóng kiếm khí chém xuyên kẻ địch."
+
+  LightningStrike:
+    - "&8&m                &r &6&lKỸ NĂNG VŨ KHÍ &8&m                "
+    - "&f▶ &fSét Đánh &7(Cấp %level%)"
+    - "&f▶ Kích hoạt: &e%trigger%"
+    - "&f▶ Hồi chiêu: &c%cooldown% giây"
+    - "&7Triệu hồi tia sét giáng xuống kẻ địch."
+
+  AmaterasuSkill:
+    - "&8&m                &r &6&lKỸ NĂNG VŨ KHÍ &8&m                "
+    - "&f▶ &4Amaterasu &7(Cấp %level%)"
+    - "&f▶ Kích hoạt: &e%trigger%"
+    - "&f▶ Hồi chiêu: &c%cooldown% giây"
+    - "&7Thiêu đốt vĩnh cửu bằng ngọn lửa đen."
+
+# Nhánh dành cho các kỹ năng chạy lệnh (Type: Command)
+Command:
+  Fireball:
+    - "&8&m                &r &c&lKỸ NĂNG PHÁP THUẬT &8&m                "
+    - "&f▶ &6Quả Cầu Lửa &7(Cấp %level%)"
+    - "&f▶ Kích hoạt: &e%trigger%"
+    - "&f▶ Hồi chiêu: &c%cooldown% giây"
+    - "&7Bắn quả cầu lửa gây nổ lớn."
+
+  HealSelf:
+    - "&8&m                &r &a&lKỸ NĂNG HỖ TRỢ &8&m                "
+    - "&f▶ &2Hồi Phục &7(Cấp %level%)"
+    - "&f▶ Kích hoạt: &e%trigger%"
+    - "&f▶ Hồi chiêu: &c%cooldown% giây"
+    - "&7Hồi máu cho bản thân theo cấp độ."
+
+  Teleport:
+    - "&8&m                &r &d&lKỸ NĂNG DỊ CHUYỂN &8&m                "
+    - "&f▶ &5Dịch Chuyển &7(Cấp %level%)"
+    - "&f▶ Kích hoạt: &e%trigger%"
+    - "&f▶ Hồi chiêu: &c%cooldown% giây"
+    - "&7Dịch chuyển tức thời về phía trước."
+
+  DashSkill:
+    - "&8&m                &r &9&lKỸ NĂNG DI CHUYỂN &8&m                "
+    - "&f▶ &bLao Về Phía Trước &7(Cấp %level%)"
+    - "&f▶ Kích hoạt: &e%trigger%"
+    - "&f▶ Hồi chiêu: &c%cooldown% giây"
+    - "&7Tăng tốc lao về phía trước, gây sát thương."
+
+# (Tùy chọn) Nếu bạn muốn có nhánh MythicMobs riêng (nếu type là MythicMob)
+# MythicMobs:
+#   BossSummon:
+#     - "&8&m                &r &5&lKỸ NĂNG MYTHIC &8&m                "
+#     - "&f▶ &5Triệu Hồi Boss &7(Cấp %level%)"
+#     - "&f▶ Kích hoạt: &e%trigger%"
+#     - "&f▶ Hồi chiêu: &c%cooldown% giây"
+# bạn tự định nghĩa

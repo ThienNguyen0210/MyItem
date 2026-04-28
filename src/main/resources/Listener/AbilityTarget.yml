@@ -1,0 +1,19 @@
+# Định nghĩa đối tượng chịu tác động của kỹ năng theo hệ thống mới
+# attack: Khi ĐÁNH, gây hiệu ứng lên ĐỐI THỦ (Nạn nhân)
+# attack_self: Khi ĐÁNH, gây hiệu ứng lên CHÍNH MÌNH (Người đánh)
+# defense: Khi BỊ ĐÁNH, gây hiệu ứng lên KẺ ĐỊCH (Người vừa đánh mình)
+# defense_self: Khi BỊ ĐÁNH, gây hiệu ứng lên CHÍNH MÌNH (Người bị đánh)
+
+Abilities:
+#  # --- NHÓM KỸ NĂNG TẤN CÔNG (Khi bạn đánh người khác) ---
+#  BLEED: "attack"          # Gây chảy máu cho đối phương
+#  EXPLODE: "attack"        # Tạo vụ nổ tại vị trí đối phương
+#  FLAME_PULSE: "attack"    # Phát hỏa xung quanh đối phương
+#  FREEZE: "attack"         # Đóng băng đối phương
+#  DISARM: "attack"         # Tước vũ khí của đối phương
+#
+#  # Ví dụ kỹ năng hút máu (nếu có class riêng)
+#  # LIFESTEAL: "attack_self"
+#
+#
+#  # --- NHÓM KỸ NĂNG PHÒNG THỦ (Khi bạn bị người khác đánh) ---

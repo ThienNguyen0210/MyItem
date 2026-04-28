@@ -1,0 +1,14 @@
+# Cấu hình hệ thống Chuyển Hóa
+settings:
+  # Tỉ lệ chuyển hóa thành công (0-100)
+  # Nếu thất bại, cả 2 vật phẩm sẽ bị giảm 1 cấp độ
+  success-rate: 70.0
+
+  # Yêu cầu cấp độ tối thiểu của cả 2 vật phẩm để có thể chuyển hóa
+  min-level-required: 1
+
+  # Thông báo
+  messages:
+    not-enough-level: "§c§l✘ §7Cả 2 vật phẩm phải đạt ít nhất cấp §e%level% §7để chuyển hóa!"
+    fail-punishment: "§c§l✘ §7Chuyển hóa thất bại! Cả 2 vật phẩm đều bị giảm 1 cấp độ."
+    success: "§a§l✔ §7Chuyển hóa thành công! §f[+%oldA% ⇄ +%oldB%]"

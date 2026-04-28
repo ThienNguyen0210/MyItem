@@ -1,0 +1,39 @@
+item:
+  receive-msg: "&a[MyItem] Bạn nhận được vật phẩm &f{id} &atừ Admin!"
+  no-mana: "&cKhông đủ Mana! (&f{mana}&7/&b{cost}&c)"
+  # Thông báo đục lỗ & khảm ngọc
+  socket-limit: "&c[!] Vật phẩm này đã đạt giới hạn lỗ loại &f{type}&c!"
+  drill-success: "&a✔ [Nâng cấp] Đục lỗ thành công!"
+  drill-failed: "&c✘ [Nâng cấp] Đục lỗ thất bại! Mũi khoan đã bị hỏng."
+  no-stack-allowed: "&c[!] Bạn chỉ có thể đục lỗ cho từng vật phẩm một (không được để chồng lên nhau)!"
+  max-gem-limit: "&c[!] Trang bị này đã khảm tối đa 2 viên ngọc!"
+  no-empty-socket: "&c[!] Trang bị không có lỗ trống loại &f{type} &cđể khảm!"
+  apply-success: "&a✔ [Khảm] Khảm ngọc thành công!"
+  apply-failed: "&c✘ [Khảm] Khảm ngọc thất bại! Viên ngọc đã bị vỡ."
+  # Chuyển hóa
+  cooldown: "&c&l✘ &7Vui lòng đợi &e{time} giây!"
+  need-two-items: "&c&l✘ &7Hãy đặt đủ 2 món đồ!"
+  min-level: "&c&l✘ &7Cả 2 món phải đạt ít nhất cấp &e{level} &7để chuyển hóa!"
+  success: "&a&l✔ &7Chuyển hóa thành công!"
+  failed: "&c&l✘ &7Chuyển hóa thất bại! Cả 2 vật phẩm bị giảm 1 cấp."
+
+upgrade:
+  # Tin nhắn trong chat
+  max-level: "&cTrang bị đã đạt cấp tối đa!"
+  success: "&a&l✔ &7Thành công nâng lên &f+{level} &e({chance}%)"
+  protected: "&e&l⚠ &7Thất bại! Nhờ &bBùa Hộ Mệnh&7, trang bị không bị giảm cấp."
+  base-level-name: "mốc nguyên bản"
+  failed-down: "&c&l✘ &7Thất bại! Hạ xuống &f{level} &8({chance}%)"
+  failed-keep: "&c&l✘ &7Thất bại! Trang bị vẫn ở mốc &f+0"
+  # Tin nhắn thông báo trong GUI
+  only-one-item: "&c&l✘ &7Bạn chỉ có thể cường hóa từng vật phẩm một!"
+  not-a-gem: "&c&l✘ &7Vật phẩm này không phải là &eĐá Cường Hóa&7!"
+  not-a-scroll: "&c&l✘ &7Đây không phải là &bBùa Hộ Mệnh&7!"
+  missing-materials: "&cVui lòng đặt đủ vật phẩm và đá!"
+  take-result-first: "&cVui lòng lấy kết quả cũ ra trước!"
+  amulet-sent: "&a&l✔ &7Đã gửi &b{amount} Bùa Hộ Mệnh &acho &f{player}"
+  amulet-received: "&a&l✔ &7Bạn nhận được &b{amount} Bùa Hộ Mệnh &atừ Admin!"
+  gem-received: "&a&l✔ &7Bạn đã nhận được: {gem}"
+  gem-fullinventory: "full inventory drop item {gem}"
+# tất c đều custom thông báo tới user còn admin hay staff thì khỏi vì dài và tui lười:))
+consume-cooldown: "&f Bạn chờ &a%time%s&f nữa để xài nha ^^"
