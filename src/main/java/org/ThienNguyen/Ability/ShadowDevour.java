@@ -26,7 +26,7 @@ public class ShadowDevour implements IAbility {
         double durationSeconds = 2.0 + (level * 0.3);
         long durationTicks = (long) (durationSeconds * 20);
 
-        // Lấy vị trí cố định của target lúc bị trúng chiêu
+        
         final Location center = target.getLocation();
         Particle.DustOptions blackDust = new Particle.DustOptions(Color.fromRGB(0, 0, 0), 1.8f);
 
@@ -40,7 +40,7 @@ public class ShadowDevour implements IAbility {
                     return;
                 }
 
-                // Hiệu ứng bụi đen bao quanh vị trí
+                
                 for (int i = 0; i < 12; i++) {
                     double x = (Math.random() - 0.5) * 4.0;
                     double y = Math.random() * 2.5;
@@ -48,7 +48,7 @@ public class ShadowDevour implements IAbility {
                     center.getWorld().spawnParticle(Particle.REDSTONE, center.clone().add(x, y, z), 1, blackDust);
                 }
 
-                // Quét thực thể đi vào vùng
+                
                 if (elapsed % 10 == 0) {
                     center.getWorld().playSound(center, Sound.AMBIENT_CAVE, 0.5f, 0.5f);
                     for (Entity entity : center.getWorld().getNearbyEntities(center, 2.5, 2.5, 2.5)) {
@@ -59,7 +59,7 @@ public class ShadowDevour implements IAbility {
                 }
                 elapsed += 2;
             }
-            // Thay 'YourPluginInstance' bằng instance của plugin bạn đang chạy
+            
         }.runTaskTimer(JavaPlugin.getProvidingPlugin(getClass()), 0L, 2L);
 
     }

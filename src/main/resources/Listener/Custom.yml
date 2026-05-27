@@ -8,3 +8,9 @@ crit-multiplier: 1.2
 # Ngưỡng máu để sát thương tử thần kích hoạt (ví dụ: 50 là dưới 50% máu)
 death-damage-threshold: 50
 magic-defense-formula: "damage * (100 / (100 + mDef))" # công thức tính phòng thủ phép # beta chưa thử nghiệm trên người
+# Giới hạn tối đa % giảm sát thương chí mạng nhận vào (mặc định 90%)
+crit-damage-reduction-cap: 90.0
+# Damage tối thiểu sau khi áp dụng flat damage reduction (mặc định 1.0)
+damage-reduction-min: 1.0
+# Thời gian hiệu lực vết thương sâu (ticks, 20 ticks = 1 giây, mặc định 60 = 3 giây)
+deep-wound-duration-ticks: 60

@@ -23,7 +23,7 @@ public class ConsumeManager implements Listener {
     private static final String KEY_CONSUME = "consume_id";
     private final Random random = new Random();
 
-    // Quản lý Cooldown
+    
     private final Map<UUID, Map<String, Long>> cooldownMap = new HashMap<>();
 
     public static ItemStack getConsumeItem(String id, int amount) {
@@ -57,7 +57,7 @@ public class ConsumeManager implements Listener {
 
     @EventHandler
     public void onUse(PlayerInteractEvent e) {
-        // Kiểm tra hành động chuột phải
+        
         if (e.getAction() != Action.RIGHT_CLICK_AIR && e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
 
         ItemStack item = e.getItem();
@@ -68,13 +68,13 @@ public class ConsumeManager implements Listener {
 
         if (id == null) return;
 
-        e.setCancelled(true); // Chặn đặt block hoặc dùng vật phẩm gốc
+        e.setCancelled(true); 
         Player player = e.getPlayer();
         FileConfiguration config = Main.getInstance().getConsumeConfig();
 
         if (!config.contains(id)) return;
 
-        // === XỬ LÝ COOLDOWN (Quan trọng: Kiểm tra trước khi trừ đồ) ===
+        
         int cooldownSeconds = config.getInt(id + ".cooldown", 0);
         if (cooldownSeconds > 0) {
             long currentTime = System.currentTimeMillis();
@@ -85,31 +85,31 @@ public class ConsumeManager implements Listener {
                 if (currentTime < expireTime) {
                     double timeLeft = (expireTime - currentTime) / 1000.0;
 
-                    // Lấy message từ LanguageManager
+                    
                     String msg = Main.getInstance().getLangManager().getMessage("consume-cooldown");
                     if (msg == null || msg.isEmpty()) msg = "&cBạn phải chờ %time%s nữa!";
 
                     player.sendMessage(ChatColor.translateAlternateColorCodes('&',
                             msg.replace("%time%", String.format("%.1f", timeLeft))));
-                    return; // DỪNG LẠI, không cho xài tiếp
+                    return; 
                 }
             }
-            // Ghi nhận cooldown ngay lập tức để chặn spam
+            
             playerCooldowns.put(id, currentTime + (cooldownSeconds * 1000L));
         }
 
-        // === TRỪ VẬT PHẨM ===
+        
         if (item.getAmount() > 1) {
             item.setAmount(item.getAmount() - 1);
         } else {
-            // Fix lỗi bản 1.20.1: Đặt item chính là null hoặc không khí
+            
             player.getInventory().setItemInMainHand(null);
         }
 
-        // === THỰC THI LỆNH ===
+        
         List<String> commandsToRun = new ArrayList<>();
         if (config.contains(id + ".random-commands")) {
-            // Logic lấy random commands
+            
             List<?> groups = config.getList(id + ".random-commands");
             if (groups != null && !groups.isEmpty()) {
                 Object groupObj = groups.get(random.nextInt(groups.size()));

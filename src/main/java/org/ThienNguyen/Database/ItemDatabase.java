@@ -16,7 +16,7 @@ public class ItemDatabase {
 
     public ItemDatabase(String path) {
         try {
-            // Khởi tạo kết nối SQLite
+            
             connection = DriverManager.getConnection("jdbc:sqlite:" + path);
             createTable();
         } catch (SQLException e) {
@@ -96,7 +96,7 @@ public class ItemDatabase {
         }
     }
 
-    // Chuyển ItemStack sang Base64
+    
     private String itemStackToBase64(ItemStack item) {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
              BukkitObjectOutputStream dataOutput = new BukkitObjectOutputStream(outputStream)) {
@@ -107,7 +107,7 @@ public class ItemDatabase {
         }
     }
 
-    // Khôi phục ItemStack từ Base64
+    
     private ItemStack itemStackFromBase64(String data) {
         try (ByteArrayInputStream inputStream = new ByteArrayInputStream(Base64Coder.decodeLines(data));
              BukkitObjectInputStream dataInput = new BukkitObjectInputStream(inputStream)) {

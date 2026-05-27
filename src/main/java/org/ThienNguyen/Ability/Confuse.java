@@ -14,7 +14,7 @@ public class Confuse implements IAbility {
     @Override
     public void execute(Player attacker, LivingEntity target, int level, double baseDamage) {
         if (target == null || target.isDead()) return;
-        // Nausea cấp độ 1 là đủ để rung màn hình
+        
         target.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, level * 20 * 4, 0));
     }
 }

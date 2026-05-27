@@ -22,24 +22,24 @@ public class EndCrystalSkill implements ISkill {
 
     @Override
     public void execute(Player player, LivingEntity targetIgnored, int level, double baseDamageFromEvent) {
-        // 1. Lấy stats từ Cache (100k)
+        
         PlayerCombatCache.CombatStats stats = PlayerCombatCache.getStats(player.getUniqueId());
         double realPower = stats.totalBonusDmg;
         if (realPower <= 0) realPower = player.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE).getValue();
 
-        // Công thức: 15% + 10% mỗi cấp
+        
         double damagePerSecond = realPower * (0.15 + (level * 0.10));
 
         Location spawnLoc = player.getLocation().add(player.getLocation().getDirection().multiply(2)).add(0, 1, 0);
 
-        // 2. Triệu hồi End Crystal bất tử
+        
         EnderCrystal crystal = (EnderCrystal) spawnLoc.getWorld().spawnEntity(spawnLoc, EntityType.ENDER_CRYSTAL);
         crystal.setShowingBottom(false);
         crystal.setMetadata("UNBREAKABLE_CRYSTAL", new FixedMetadataValue(Main.getInstance(), true));
 
         player.getWorld().playSound(spawnLoc, Sound.BLOCK_END_PORTAL_SPAWN, 1.0f, 1.5f);
 
-        // 3. Vòng lặp bắn tia và gây damage (5 giây)
+        
         new BukkitRunnable() {
             int ticks = 0;
 
@@ -55,23 +55,23 @@ public class EndCrystalSkill implements ISkill {
 
                 Location cLoc = crystal.getLocation().add(0, 0.5, 0);
 
-                // Hiệu ứng vòng tròn tím quanh Crystal
+                
                 cLoc.getWorld().spawnParticle(Particle.REDSTONE, cLoc, 10, 0.5, 0.5, 0.5, 0,
                         new Particle.DustOptions(Color.PURPLE, 1.0f));
 
-                // Quét mục tiêu trong bán kính 10 block
+                
                 for (Entity entity : crystal.getNearbyEntities(10, 10, 10)) {
                     if (entity instanceof LivingEntity victim && !entity.equals(player) && !(entity instanceof ArmorStand)) {
 
-                        // Vẽ tia Dust từ Crystal đến Victim
+                        
                         drawBeam(cLoc, victim.getEyeLocation());
 
-                        // Gây sát thương mỗi giây
+                        
                         victim.setNoDamageTicks(0);
                         victim.setMetadata("IS_ABILITY", new FixedMetadataValue(Main.getInstance(), true));
                         victim.damage(damagePerSecond, player);
 
-                        // Dọn dẹp metadata trễ
+                        
                         new BukkitRunnable() {
                             @Override
                             public void run() { if (victim.isValid()) victim.removeMetadata("IS_ABILITY", Main.getInstance()); }
@@ -80,7 +80,7 @@ public class EndCrystalSkill implements ISkill {
                 }
                 ticks++;
             }
-        }.runTaskTimer(Main.getInstance(), 0L, 20L); // Chạy mỗi 1 giây
+        }.runTaskTimer(Main.getInstance(), 0L, 20L); 
     }
 
     private void drawBeam(Location start, Location end) {

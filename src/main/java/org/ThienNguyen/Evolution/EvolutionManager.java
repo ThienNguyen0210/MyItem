@@ -37,7 +37,7 @@ public class EvolutionManager {
         int required = pdc.getOrDefault(REQUIRED_KEY, PersistentDataType.INTEGER, 0);
         String nextId = pdc.get(NEXT_ID_KEY, PersistentDataType.STRING);
 
-        // Lưu lại tên cũ trước khi tiến hóa để dùng trong tin nhắn
+        
         String oldName = meta.hasDisplayName() ? meta.getDisplayName() : item.getType().name();
 
         if (!mobId.equals("INITIALIZE_ONLY")) {
@@ -50,7 +50,7 @@ public class EvolutionManager {
                 item.setType(evolved.getType());
                 item.setItemMeta(evolved.getItemMeta());
 
-                // Gửi tên cũ và vật phẩm mới vào hàm xử lý
+                
                 handleSuccess(player, item, oldName);
                 return;
             }
@@ -68,7 +68,7 @@ public class EvolutionManager {
         String newName = evolvedItem.getItemMeta().hasDisplayName() ?
                 evolvedItem.getItemMeta().getDisplayName() : evolvedItem.getType().name();
 
-        // 1. Gửi tin nhắn riêng (Private Message) từ List trong config
+        
         List<String> privateMsgs = config.getStringList("settings.private-messages");
         if (privateMsgs != null && !privateMsgs.isEmpty()) {
             for (String msg : privateMsgs) {
@@ -78,11 +78,11 @@ public class EvolutionManager {
                         .replace("&", "§"));
             }
         } else {
-            // Tin nhắn mặc định nếu config trống
+            
             player.sendMessage("§a§l✔ §fVật phẩm đã tiến hóa thành §e" + newName);
         }
 
-        // 2. Thông báo toàn server (Broadcast)
+        
         if (config.getBoolean("settings.enable-broadcast", false)) {
             String broadcastMsg = config.getString("settings.broadcast-message", "&6&l[Tiến Hóa] &e{player} &fđã nâng cấp thành công &b{item}&f!");
             Bukkit.broadcastMessage(broadcastMsg.replace("{player}", player.getName())
@@ -90,7 +90,7 @@ public class EvolutionManager {
                     .replace("&", "§"));
         }
 
-        // 3. Hiệu ứng Sound
+        
         try {
             String s = config.getString("settings.effects.sound", "ENTITY_PLAYER_LEVELUP");
             player.playSound(player.getLocation(), Sound.valueOf(s), 1.0f, 1.0f);
@@ -98,7 +98,7 @@ public class EvolutionManager {
             player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
         }
 
-        // 4. Hiệu ứng Particle
+        
         try {
             String p = config.getString("settings.effects.particle", "EXPLOSION_HUGE");
             player.getWorld().spawnParticle(Particle.valueOf(p), player.getLocation().add(0, 1, 0), 10, 0.5, 0.5, 0.5, 0.1);
@@ -116,7 +116,7 @@ public class EvolutionManager {
         int percent = (required > 0) ? (int) ((double) current / required * 100) : 0;
         if (percent > 100) percent = 100;
 
-        // Đọc format từ config
+        
         String format = Main.getInstance().getEvolutionConfig().getString("settings.lore-format", "&6⚡ &fTiến hóa: &b{current}&7/&e{required} &8({percent}%)");
 
         String targetLine = format.replace("{current}", String.valueOf(current))
@@ -125,7 +125,7 @@ public class EvolutionManager {
                 .replace("&", "§");
 
         boolean found = false;
-        // Duyệt ngược từ dưới lên để tìm dòng tiến hóa cũ và thay thế
+        
         for (int i = lore.size() - 1; i >= 0; i--) {
             String line = lore.get(i);
             if (line.contains("Tiến hóa:") || line.contains("Tiến độ:")) {
@@ -135,9 +135,9 @@ public class EvolutionManager {
             }
         }
 
-        // Nếu không tìm thấy dòng cũ, thêm vào cuối danh sách
+        
         if (!found) {
-            // Thêm một dòng trống để tách biệt với lore cũ nếu cần
+            
             if (!lore.isEmpty() && !lore.get(lore.size() - 1).isEmpty()) {
                 lore.add("");
             }

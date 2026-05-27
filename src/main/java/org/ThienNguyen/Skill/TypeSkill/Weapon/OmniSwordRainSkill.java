@@ -60,11 +60,11 @@ public class OmniSwordRainSkill implements ISkill {
                 }
                 count++;
             }
-        }.runTaskTimer(Main.getInstance(), 0L, 4L); // Tăng tốc độ bắn một chút (0.2s một đợt)
+        }.runTaskTimer(Main.getInstance(), 0L, 4L); 
     }
 
     private void launchHomingSword(Player player, LivingEntity target, double damage) {
-        // Vị trí xuất hiện ngẫu nhiên phía trên người chơi
+        
         Location spawnLoc = player.getEyeLocation().add(
                 (Math.random() - 0.5) * 5,
                 2 + Math.random() * 2,
@@ -92,24 +92,24 @@ public class OmniSwordRainSkill implements ISkill {
                 }
 
                 Vector dir = target.getEyeLocation().toVector().subtract(as.getLocation().toVector()).normalize();
-                Location nextLoc = as.getLocation().add(dir.multiply(1.0)); // Tăng tốc độ bay cho mượt
+                Location nextLoc = as.getLocation().add(dir.multiply(1.0)); 
 
                 as.teleport(nextLoc.setDirection(dir));
                 as.getWorld().spawnParticle(Particle.CRIT, as.getLocation().add(0, 0.5, 0), 1, 0, 0, 0, 0);
 
-                // Kiểm tra va chạm gần (khoảng cách 1.3 là đẹp nhất cho ArmorStand)
+                
                 if (as.getLocation().distanceSquared(target.getLocation().add(0, 1, 0)) < 1.8) {
 
-                    // --- FIX DAMAGE CHIẾN THUẬT ---
+                    
                     target.setMetadata("IS_ABILITY", new FixedMetadataValue(Main.getInstance(), true));
 
-                    // Reset bất tử ngay lập tức TRƯỚC khi gây sát thương
+                    
                     target.setNoDamageTicks(0);
 
-                    // Gây sát thương trực tiếp
+                    
                     target.damage(damage, player);
 
-                    // Sau khi damage xong, ép buộc reset lần nữa để cây kiếm sau có thể gây damage ngay
+                    
                     target.setNoDamageTicks(0);
 
                     target.getWorld().spawnParticle(Particle.SWEEP_ATTACK, target.getLocation().add(0, 1, 0), 1, 0, 0, 0, 0);

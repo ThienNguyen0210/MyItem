@@ -3,7 +3,7 @@ package org.ThienNguyen.Skill;
 import org.ThienNguyen.Main;
 import org.ThienNguyen.Skill.TypeSkill.MythicMobsSkill;
 import org.ThienNguyen.Skill.TypeSkill.SkillCommand;
-import org.ThienNguyen.Skill.TypeSkill.ScriptSkill; // Thêm import
+import org.ThienNguyen.Skill.TypeSkill.ScriptSkill; 
 import org.ThienNguyen.Skill.TypeSkill.Weapon.*;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -23,7 +23,7 @@ public class SkillManager {
         skills.clear();
         manaCosts.clear();
 
-        // 1. ĐĂNG KÝ CÁC SKILL CÓ CODE JAVA CỨNG (WEAPON)
+        
         register(new SongAm());
         register(new LightningStrike());
         register(new FireballExplosionSkill());
@@ -45,12 +45,12 @@ public class SkillManager {
         register(new DeathMarkSkill());
         register(new OmniSwordRainSkill());
 
-        // 2. NẠP SKILL TỪ CÁC FILE CẤU HÌNH HỆ THỐNG
+        
         loadWeaponSkills();
         loadCommandSkills();
         loadMythicLibSkills();
 
-        // 3. NẠP SKILL TỪ USER CODE TRONG THƯ MỤC SKRIPT
+        
         loadScriptSkills();
 
         Main.getInstance().getLogger().info("§a[Skill] Đã nạp tổng cộng " + skills.size() + " kỹ năng và đồng bộ Mana!");
@@ -155,7 +155,7 @@ public class SkillManager {
         } else if (type.equalsIgnoreCase("Command")) {
             config = YamlConfiguration.loadConfiguration(getConfigFile("SkillCommand.yml"));
         } else if (type.equalsIgnoreCase("Script")) {
-            // Lấy danh sách từ folder Skript
+            
             File folder = new File(Main.getInstance().getDataFolder(), "Skript/Skill");
             if (folder.exists()) {
                 File[] files = folder.listFiles((dir, name) -> name.endsWith(".yml"));

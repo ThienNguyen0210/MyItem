@@ -29,32 +29,32 @@ public class BubbleDeflector implements IAbility {
         Plugin plugin = JavaPlugin.getProvidingPlugin(getClass());
         Location startLoc = target.getLocation().add(0, 1.0, 0);
 
-        // Hướng bắn: Từ attacker xuyên qua target
+        
         Vector direction = target.getLocation().subtract(attacker.getLocation()).toVector().normalize();
 
-        // Công thức sát thương
+        
         double damageMultiplier = 0.6 + ((level - 1) * 0.1);
         double finalDamage = baseDamage * damageMultiplier;
 
-        // 1. Sát thương mục tiêu chính
+        
         applySafeDamage(target, attacker, finalDamage, plugin);
         target.getWorld().playSound(target.getLocation(), Sound.ENTITY_BOAT_PADDLE_LAND, 1.0f, 1.2f);
 
-        // 2. Tạo tia bọt biển tồn tại trong 1 giây (20 ticks)
-        // Mỗi 2 tick sẽ quét sát thương và tạo hạt 1 lần
+        
+        
         new BukkitRunnable() {
             int ticks = 0;
-            final double piercingRange = 5.0; // Xa 5 block như bạn muốn
-            final Set<LivingEntity> damagedEntities = new HashSet<>(); // Để không gây damage quá nhiều lần lên 1 con trong 1 lần tia quét
+            final double piercingRange = 5.0; 
+            final Set<LivingEntity> damagedEntities = new HashSet<>(); 
 
             @Override
             public void run() {
-                if (ticks >= 15) { // Tồn tại khoảng 0.75 giây cho mượt
+                if (ticks >= 15) { 
                     this.cancel();
                     return;
                 }
 
-                // Vẽ tia hạt bọt biển
+                
                 for (double d = 0; d <= piercingRange; d += 0.5) {
                     Location pLoc = startLoc.clone().add(direction.clone().multiply(d));
                     pLoc.getWorld().spawnParticle(Particle.WATER_BUBBLE, pLoc, 2, 0.1, 0.1, 0.1, 0.02);
@@ -63,9 +63,9 @@ public class BubbleDeflector implements IAbility {
                     }
                 }
 
-                // Quét mục tiêu trong tia (Mỗi 5 tick quét damage một lần để tránh quá mạnh)
+                
                 if (ticks % 5 == 0) {
-                    damagedEntities.clear(); // Reset để mục tiêu có thể bị dính damage tiếp theo nhịp tia
+                    damagedEntities.clear(); 
                     damageEntitiesInBeam(attacker, startLoc, direction, piercingRange, finalDamage, target, plugin);
                 }
 
@@ -109,6 +109,6 @@ public class BubbleDeflector implements IAbility {
         Vector closestPointOnLine = start.clone().add(direction.clone().multiply(dotProduct)).toVector();
         double distanceSquared = entityLoc.toVector().distanceSquared(closestPointOnLine);
 
-        return distanceSquared < 1.2; // Độ rộng của tia bọt (khoảng 1.1 block)
+        return distanceSquared < 1.2; 
     }
 }

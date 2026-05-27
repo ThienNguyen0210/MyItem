@@ -22,7 +22,7 @@ import java.util.List;
 public class ComboListener implements Listener {
 
     public static final String METADATA_KEY = "current_active_combo";
-    // Đảm bảo Key này khớp với class ComboItem của bạn
+    
     public static final NamespacedKey COMBO_KEY = new NamespacedKey("windy", "combo_id");
 
     @EventHandler
@@ -34,7 +34,7 @@ public class ComboListener implements Listener {
 
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {
-        // Kiểm tra interact để cập nhật khi người dùng đeo giáp bằng chuột phải
+        
         ItemStack item = event.getItem();
         if (item != null && (item.getType().name().contains("HELMET") ||
                 item.getType().name().contains("CHESTPLATE") ||
@@ -48,7 +48,7 @@ public class ComboListener implements Listener {
         updateComboStatus(event.getPlayer());
     }
     private void updateComboStatus(Player player) {
-        // Delay 1-2 tick để server cập nhật trang bị vào slot trước khi quét
+        
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -66,7 +66,7 @@ public class ComboListener implements Listener {
                         player.removeMetadata(METADATA_KEY, Main.getInstance());
                     }
 
-                    // Gọi hàm tính lại chỉ số trong CacheListener
+                    
                     CacheListener.refreshCache(player);
                 }
             }
@@ -80,7 +80,7 @@ public class ComboListener implements Listener {
         for (String comboId : comboConfig.getKeys(false)) {
             List<String> requiredSlots = comboConfig.getStringList(comboId + ".require-slots");
 
-            // TRƯỜNG HỢP 1: Tự định nghĩa slot (Head, Mainhand...)
+            
             if (requiredSlots != null && !requiredSlots.isEmpty()) {
                 boolean allMatch = true;
                 for (String slotName : requiredSlots) {
@@ -92,7 +92,7 @@ public class ComboListener implements Listener {
                 }
                 if (allMatch) return comboId;
             }
-            // TRƯỜNG HỢP 2: Mặc định (Kiểm tra 4 món giáp)
+            
             else if (checkBasicArmorSet(player, comboId)) {
                 return comboId;
             }
@@ -104,11 +104,11 @@ public class ComboListener implements Listener {
         if (item == null || item.getType() == Material.AIR) return false;
         if (!item.hasItemMeta()) return false;
 
-        // Cách 1: Thử lấy theo key mặc định của plugin
+        
         NamespacedKey key = new NamespacedKey(Main.getInstance(), "combo_id");
         String id = item.getItemMeta().getPersistentDataContainer().get(key, PersistentDataType.STRING);
 
-        // Cách 2: Nếu id vẫn null, thử lấy theo key "windy:combo_id" (nếu bạn lỡ hardcode ở đâu đó)
+        
         if (id == null) {
             NamespacedKey backupKey = new NamespacedKey("windy", "combo_id");
             id = item.getItemMeta().getPersistentDataContainer().get(backupKey, PersistentDataType.STRING);

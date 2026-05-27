@@ -41,7 +41,7 @@ public class Tooltips {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
 
-        // 1. LƯU DỮ LIỆU GỐC (Cải thiện để giữ empty lines)
+        
         if (!meta.getPersistentDataContainer().has(ORIGINAL_NAME_KEY, PersistentDataType.STRING)) {
             meta.getPersistentDataContainer().set(ORIGINAL_NAME_KEY, PersistentDataType.STRING,
                     meta.hasDisplayName() ? meta.getDisplayName() : "");
@@ -53,7 +53,7 @@ public class Tooltips {
             meta.getPersistentDataContainer().set(ORIGINAL_LORE_KEY, PersistentDataType.STRING, loreData);
         }
 
-        // 2. LẤY DỮ LIỆU GỐC
+        
         String rawName = meta.getPersistentDataContainer().get(ORIGINAL_NAME_KEY, PersistentDataType.STRING);
         String rawLore = meta.getPersistentDataContainer().get(ORIGINAL_LORE_KEY, PersistentDataType.STRING);
 
@@ -61,11 +61,11 @@ public class Tooltips {
         if (rawLore != null && !rawLore.isEmpty()) {
             String[] parts = rawLore.split(Pattern.quote(SEPARATOR));
             for (String part : parts) {
-                oldLore.add(part); // Giữ luôn cả dòng trống
+                oldLore.add(part); 
             }
         }
 
-        // 3. SETTINGS
+        
         String globalFill = config.getString("settings.fill-character", "");
         int globalLeft = config.getInt("settings.fill-count-left", 1);
         int globalRight = config.getInt("settings.fill-count-right", 39);
@@ -74,11 +74,11 @@ public class Tooltips {
         String midIcon = section.getString("mid", "");
         String botIcon = section.getString("bottom", "");
 
-        // 4. XỬ LÝ TÊN
+        
         String displayName = (rawName == null || rawName.isEmpty()) ? "§fVật phẩm" : rawName;
         String finalNewName = buildLine(globalFill, globalLeft, globalRight, topIcon, displayName);
 
-        // 5. XỬ LÝ LORE + THÊM EMPTY LINES
+        
         List<String> newLore = new ArrayList<>();
         ConfigurationSection customLinesSection = section.getConfigurationSection("custom-lines");
 
@@ -108,15 +108,15 @@ public class Tooltips {
             newLore.add(buildLine(currentFill, currentLeft, currentRight, currentIcon, lineText));
         }
 
-        // Thêm dòng phân cách và bottom
+        
         newLore.add(buildLine(globalFill, globalLeft, globalRight, midIcon, " "));
         newLore.add(buildLine(globalFill, globalLeft, globalRight, botIcon, " "));
 
-        // === QUAN TRỌNG: ẨN THUỘC TÍNH VANILLA ===
+        
         meta.setDisplayName(finalNewName);
         meta.setLore(newLore);
 
-        // Ẩn tất cả thuộc tính mặc định của item
+        
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         meta.addItemFlags(ItemFlag.HIDE_UNBREAKABLE);
@@ -126,7 +126,7 @@ public class Tooltips {
         meta.addItemFlags(ItemFlag.HIDE_ARMOR_TRIM);
         meta.addItemFlags(ItemFlag.HIDE_POTION_EFFECTS);
 
-        // Hỗ trợ thêm cho phiên bản mới
+        
         try {
             meta.addItemFlags(ItemFlag.valueOf("HIDE_STORED_ENCHANTS"));
         } catch (Exception ignored) {}
@@ -146,43 +146,43 @@ public class Tooltips {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
 
-        // Lấy cấu hình chung
+        
         String globalFill = config.getString("settings.fill-character", "");
         int globalLeft = config.getInt("settings.fill-count-left", 1);
         int globalRight = config.getInt("settings.fill-count-right", 39);
 
-        // Lấy icon của tooltip type
+        
         String topIcon = section.getString("top", "");
         String midIcon = section.getString("mid", "");
         String botIcon = section.getString("bottom", "");
 
-        // 1. Xử lý Tên Item (Gắn icon TOP)
+        
         String currentName = meta.hasDisplayName() ? meta.getDisplayName() : "§fVật Phẩm";
         meta.setDisplayName(buildLine(globalFill, globalLeft, globalRight, topIcon, currentName));
 
-        // 2. Xử lý Lore (Gắn icon MID và BOTTOM)
+        
         List<String> currentLore = meta.hasLore() && meta.getLore() != null
                 ? new ArrayList<>(meta.getLore())
                 : new ArrayList<>();
 
         List<String> newLore = new ArrayList<>();
 
-        // Thêm lore nội dung với icon MID
+        
         for (String line : currentLore) {
-            // Tránh null, nếu dòng trống thì dùng khoảng trắng để icon mid vẫn hiển thị đẹp
+            
             String content = (line == null || line.trim().isEmpty()) ? " " : line;
             newLore.add(buildLine(globalFill, globalLeft, globalRight, midIcon, content));
         }
 
-        // Dòng đệm cuối trước khi đóng (tùy chọn, giúp tooltip thoáng hơn)
+        
         newLore.add(buildLine(globalFill, globalLeft, globalRight, midIcon, " "));
 
-        // 3. Bottom border (Dòng cuối cùng đóng tooltip)
+        
         newLore.add(buildLine(globalFill, globalLeft, globalRight, botIcon, " "));
 
         meta.setLore(newLore);
 
-        // Ẩn thuộc tính vanilla
+        
         meta.addItemFlags(
                 ItemFlag.HIDE_ATTRIBUTES,
                 ItemFlag.HIDE_ENCHANTS,
@@ -218,11 +218,11 @@ public class Tooltips {
             meta.setLore(null);
         } else {
             List<String> recoveredLore = Arrays.stream(rawLore.split(Pattern.quote(SEPARATOR)))
-                    .collect(Collectors.toList()); // Giữ cả dòng trống
+                    .collect(Collectors.toList()); 
             meta.setLore(recoveredLore);
         }
 
-        // Xóa hết flag ẩn
+        
         for (ItemFlag flag : ItemFlag.values()) {
             meta.removeItemFlags(flag);
         }
@@ -239,7 +239,7 @@ public class Tooltips {
         String rightPad = (fill != null) ? fill.repeat(right) : "";
         String coloredContent = ChatColor.translateAlternateColorCodes('&', content);
 
-        // Nếu content là dòng trống thì chỉ trả về padding + icon
+        
         if (content.trim().isEmpty()) {
             return leftPad + "§f" + icon + rightPad;
         }

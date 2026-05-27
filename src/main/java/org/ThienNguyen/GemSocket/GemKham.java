@@ -59,9 +59,9 @@ public class GemKham implements Listener {
 
         String gemRequiredType = gemConfig.getString(gemId + ".type", "common");
 
-        // ====================== SỬA Ở ĐÂY ======================
+        
         int currentGems = getTotalGems(targetItem);
-        int totalSockets = getTotalSocketCount(targetItem); // Sử dụng hàm tính TỔNG số lỗ
+        int totalSockets = getTotalSocketCount(targetItem); 
 
         if (currentGems >= totalSockets) {
             player.sendMessage(lang.getMessage("item.max-gem-limit"));
@@ -99,7 +99,7 @@ public class GemKham implements Listener {
         }
     }
 
-    // ====================== HÀM MỚI - ĐẾM SỐ LỖ TRỐNG ======================
+    
     private int getTotalSocketCount(ItemStack item) {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return 0;
@@ -108,11 +108,11 @@ public class GemKham implements Listener {
         String data = meta.getPersistentDataContainer().get(socketKey, PersistentDataType.STRING);
         if (data == null || data.isEmpty()) return 0;
 
-        // Chỉ cần đếm số lượng phần tử sau khi split dấu |
+        
         return data.split("\\|").length;
     }
 
-    // Các hàm cũ giữ nguyên hoặc tinh chỉnh nhẹ
+    
     private int getTotalGems(ItemStack item) {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return 0;
@@ -142,7 +142,7 @@ public class GemKham implements Listener {
         FileConfiguration gemConfig = Main.getInstance().getGemConfig();
         FileConfiguration typeConfig = Main.getInstance().getGemTypeConfig();
 
-        // 1. Cập nhật dữ liệu ẩn (PDC)
+        
         NamespacedKey socketKey = new NamespacedKey(Main.getInstance(), "item_sockets");
         String currentData = meta.getPersistentDataContainer().get(socketKey, PersistentDataType.STRING);
         if (currentData != null) {
@@ -150,14 +150,14 @@ public class GemKham implements Listener {
             meta.getPersistentDataContainer().set(socketKey, PersistentDataType.STRING, newData);
         }
 
-        // 2. Xử lý Lore (Chỉ replace ký tự đích, giữ nguyên hoa văn)
+        
         List<String> lore = meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
 
-        // Lấy chuỗi định dạng lỗ trống (Ví dụ: "&7Lỗ trống")
+        
         String emptyFormat = typeConfig.getString(type + ".format", "Lỗ trống");
         String coloredEmpty = ChatColor.translateAlternateColorCodes('&', emptyFormat);
 
-        // Lấy format của ngọc (Ví dụ: "&f︵&c Sát Thương I")
+        
         String gemFormat = gemConfig.getString(gemId + ".format");
         if (gemFormat == null || gemFormat.isEmpty()) {
             gemFormat = "&f[ ● ] " + gemConfig.getString(gemId + ".display-name", gemId);
@@ -168,9 +168,9 @@ public class GemKham implements Listener {
         for (int i = 0; i < lore.size(); i++) {
             String originalLine = lore.get(i);
 
-            // Kiểm tra xem dòng này có chứa chuỗi định dạng lỗ trống không
+            
             if (originalLine.contains(coloredEmpty)) {
-                // CHỈ REPLACE CỤM TỪ LỖ TRỐNG, GIỮ NGUYÊN TRƯỚC VÀ SAU
+                
                 String newLine = originalLine.replace(coloredEmpty, coloredGem);
                 lore.set(i, newLine);
                 replaced = true;
@@ -178,12 +178,12 @@ public class GemKham implements Listener {
             }
         }
 
-        // Nếu không tìm thấy dòng nào chứa định dạng chuẩn, thử quét theo text thuần (fallback)
+        
         if (!replaced) {
             String cleanEmptyKey = ChatColor.stripColor(coloredEmpty).trim();
             for (int i = 0; i < lore.size(); i++) {
                 if (ChatColor.stripColor(lore.get(i)).contains(cleanEmptyKey)) {
-                    // Nếu tìm thấy theo text thuần, thay nguyên dòng để tránh lỗi màu
+                    
                     lore.set(i, coloredGem);
                     replaced = true;
                     break;
@@ -191,7 +191,7 @@ public class GemKham implements Listener {
             }
         }
 
-        // Nếu vẫn không thấy thì mới add vào cuối
+        
         if (!replaced) {
             lore.add(coloredGem);
         }

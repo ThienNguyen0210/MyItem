@@ -1,5 +1,6 @@
 package org.ThienNguyen.Listener;
 
+import org.ThienNguyen.API.PlayerRefreshStatsEvent;
 import org.ThienNguyen.Ability.AbilityData;
 import org.ThienNguyen.JewelryManager;
 import org.ThienNguyen.Main;
@@ -11,8 +12,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.attribute.Attribute;
-import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -37,8 +36,20 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CacheListener implements Listener {
-    private static final Map<UUID, Long> LAST_COMBO_NOTIFY = new ConcurrentHashMap<>();
-    private static final long NOTIFY_COOLDOWN_MS = 500L; // 500ms,
+    // THÊM vào đầu class CacheListener, sau các field hiện có:
+    private static final NamespacedKey KEY_PCT_DAMAGE          = new NamespacedKey(Main.getInstance(), "pct_damage");
+    private static final NamespacedKey KEY_PCT_CRIT_DMG_RED    = new NamespacedKey(Main.getInstance(), "pct_critical_damage_reduction");
+    private static final NamespacedKey KEY_PCT_ARMOR           = new NamespacedKey(Main.getInstance(), "pct_armor");
+    private static final NamespacedKey KEY_PCT_TRUE_DMG        = new NamespacedKey(Main.getInstance(), "pct_true_damage");
+    private static final NamespacedKey KEY_PCT_MAGIC_DMG       = new NamespacedKey(Main.getInstance(), "pct_magic_damage");
+    private static final NamespacedKey KEY_PCT_MAGIC_DEF       = new NamespacedKey(Main.getInstance(), "pct_magic_defense");
+    private static final NamespacedKey KEY_PCT_PVE             = new NamespacedKey(Main.getInstance(), "pct_pve_damage");
+    private static final NamespacedKey KEY_PCT_PVP             = new NamespacedKey(Main.getInstance(), "pct_pvp_damage");
+    private static final NamespacedKey KEY_PCT_ALL_DMG         = new NamespacedKey(Main.getInstance(), "pct_all_damage");
+    private static final NamespacedKey KEY_PCT_BOW_DMG         = new NamespacedKey(Main.getInstance(), "pct_bow_damage");
+    private static final NamespacedKey KEY_PCT_DEATH_DMG       = new NamespacedKey(Main.getInstance(), "pct_death_damage");
+    private static final NamespacedKey KEY_IS_PLACEHOLDER      = new NamespacedKey(Main.getInstance(), "is_placeholder");
+    // Thiện nguyễn dev
     private static final EquipmentSlot[] ALL_SLOTS = {
             EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET,
             EquipmentSlot.HAND, EquipmentSlot.OFF_HAND
@@ -83,7 +94,7 @@ public class CacheListener implements Listener {
     }
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerDropItem(org.bukkit.event.player.PlayerDropItemEvent e) {
-        // Gọi delayRefresh để quét lại túi đồ và tay sau khi item đã rời khỏi người
+        
         delayRefresh(e.getPlayer());
     }
 
@@ -105,43 +116,141 @@ public class CacheListener implements Listener {
 
 
     private static final ConcurrentHashMap<UUID, Long> LAST_COMBO_MESSAGE_TIME = new ConcurrentHashMap<>();
-    private static final long MESSAGE_COOLDOWN_MS = 3000L; // đúng 1 giây như bạn muốn :D
+    private static final long MESSAGE_COOLDOWN_MS = 3000L; 
+    /**
+     * Hàm tính toán và nhân các chỉ số dạng phần trăm (%) độc lập hoàn toàn với chỉ số cố định
+     */
+    private static void applyPercentStats(Player player, PlayerCombatCache.CombatStats stats, FileConfiguration slotConfig) {
+        double pctBonusDmg = 0.0;
+        double pctArmor = 0.0;
+        double pctTrueDmg = 0.0;
+        double pctCritDmgReduction = 0.0;
+        double pctMagicDmg = 0.0;
+        double pctMagicDef = 0.0;
+        double pctPveBonus = 0.0;
+        double pctPvpBonus = 0.0;
+        double pctAllDamage = 0.0;
+        double pctBowDamage = 0.0;
+        double pctDeathDamage = 0.0;
 
+        for (EquipmentSlot slot : ALL_SLOTS) {
+            ItemStack item = player.getInventory().getItem(slot);
+            if (item == null || item.getType() == Material.AIR || !item.hasItemMeta()) continue;
+            if (isMMOCoreAvailable() && !MMOCORE.canUse(player, item)) continue;
+
+            var pdc = item.getItemMeta().getPersistentDataContainer();
+
+            if (pdc.has(KEY_PCT_DAMAGE, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "damage", slot))
+                pctBonusDmg += pdc.get(KEY_PCT_DAMAGE, PersistentDataType.DOUBLE);
+
+            if (pdc.has(KEY_PCT_CRIT_DMG_RED, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "critical_damage_reduction", slot))
+                pctCritDmgReduction += pdc.get(KEY_PCT_CRIT_DMG_RED, PersistentDataType.DOUBLE);
+
+            if (pdc.has(KEY_PCT_ARMOR, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "armor", slot))
+                pctArmor += pdc.get(KEY_PCT_ARMOR, PersistentDataType.DOUBLE);
+
+            if (pdc.has(KEY_PCT_TRUE_DMG, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "true_damage", slot))
+                pctTrueDmg += pdc.get(KEY_PCT_TRUE_DMG, PersistentDataType.DOUBLE);
+
+            if (pdc.has(KEY_PCT_MAGIC_DMG, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "magic_damage", slot))
+                pctMagicDmg += pdc.get(KEY_PCT_MAGIC_DMG, PersistentDataType.DOUBLE);
+
+            if (pdc.has(KEY_PCT_MAGIC_DEF, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "magic_defense", slot))
+                pctMagicDef += pdc.get(KEY_PCT_MAGIC_DEF, PersistentDataType.DOUBLE);
+
+            if (pdc.has(KEY_PCT_PVE, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "pve_damage", slot))
+                pctPveBonus += pdc.get(KEY_PCT_PVE, PersistentDataType.DOUBLE);
+
+            if (pdc.has(KEY_PCT_PVP, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "pvp_damage", slot))
+                pctPvpBonus += pdc.get(KEY_PCT_PVP, PersistentDataType.DOUBLE);
+
+            if (pdc.has(KEY_PCT_ALL_DMG, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "all_damage", slot))
+                pctAllDamage += pdc.get(KEY_PCT_ALL_DMG, PersistentDataType.DOUBLE);
+
+            if (pdc.has(KEY_PCT_BOW_DMG, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "bow_damage", slot))
+                pctBowDamage += pdc.get(KEY_PCT_BOW_DMG, PersistentDataType.DOUBLE);
+
+            if (pdc.has(KEY_PCT_DEATH_DMG, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "death_damage", slot))
+                pctDeathDamage += pdc.get(KEY_PCT_DEATH_DMG, PersistentDataType.DOUBLE);
+        }
+
+        if (pctCritDmgReduction != 0.0) stats.totalCritDamageReduction *= (1.0 + (pctCritDmgReduction / 100.0));
+        if (pctBonusDmg != 0.0)    stats.totalBonusDmg     *= (1.0 + (pctBonusDmg / 100.0));
+        if (pctArmor != 0.0)       stats.totalArmor        *= (1.0 + (pctArmor / 100.0));
+        if (pctTrueDmg != 0.0)     stats.totalTrueDamage   *= (1.0 + (pctTrueDmg / 100.0));
+        if (pctMagicDmg != 0.0)    stats.totalMagicDamage  *= (1.0 + (pctMagicDmg / 100.0));
+        if (pctMagicDef != 0.0)    stats.totalMagicDefense *= (1.0 + (pctMagicDef / 100.0));
+        if (pctPveBonus != 0.0)    stats.totalPveBonus     *= (1.0 + (pctPveBonus / 100.0));
+        if (pctPvpBonus != 0.0)    stats.totalPvpBonus     *= (1.0 + (pctPvpBonus / 100.0));
+        if (pctAllDamage != 0.0)   stats.totalAllDamage    *= (1.0 + (pctAllDamage / 100.0));
+        if (pctBowDamage != 0.0)   stats.totalBowDamage    *= (1.0 + (pctBowDamage / 100.0));
+        if (pctDeathDamage != 0.0) stats.totalDeathDamage *= (1.0 + (pctDeathDamage / 100.0));
+    }
+
+    /**
+     * Hàm phụ kiểm tra slot quy định riêng cho chỉ số phần trăm độc lập
+     */
+    private static boolean isAllowedPercent(ItemStack item, FileConfiguration config, String stat, EquipmentSlot currentSlot) {
+        if (item == null || !item.hasItemMeta()) return true;
+
+        NamespacedKey key = new NamespacedKey(Main.getInstance(), "slot_pct_" + stat.toLowerCase());
+        String requiredSlot = item.getItemMeta().getPersistentDataContainer().get(key, PersistentDataType.STRING);
+
+        if (requiredSlot != null) {
+            if (requiredSlot.equalsIgnoreCase("any")) return true;
+            String current = normalizeSlot(currentSlot);
+
+            String[] allowedSlots = requiredSlot.split(",");
+            for (String s : allowedSlots) {
+                if (s.trim().equalsIgnoreCase(current)) return true;
+            }
+            return false;
+        }
+
+        if (config == null) return true;
+        List<String> list = config.getStringList("stats-slots." + stat);
+        if (list == null || list.isEmpty()) return true;
+
+        String currentNormalized = normalizeSlot(currentSlot);
+        String originalName = currentSlot.name();
+
+        for (String allowed : list) {
+            if (allowed.equalsIgnoreCase(currentNormalized) ||
+                    allowed.equalsIgnoreCase(originalName)) {
+                return true;
+            }
+        }
+        return false;
+    }
     public static void refreshCache(Player player) {
         if (player == null || !player.isOnline()) return;
 
         PlayerCombatCache.CombatStats stats = new PlayerCombatCache.CombatStats();
-
+        stats.clear();
         FileConfiguration slotConfig   = Main.getInstance().getStatsSettingsConfig();
         FileConfiguration gemConfig    = Main.getInstance().getGemConfig();
         FileConfiguration eConfig      = Main.getInstance().getElementConfig();
         FileConfiguration comboConfig  = Main.getInstance().getComboConfig();
 
-        // ────────────────────────────────────────────────
-        // 1. Xử lý thông báo combo - CHỈ GỬI ĐÚNG 1 LẦN TRONG 1 GIÂY
-        // ────────────────────────────────────────────────
-// 1. Lấy ID bộ combo hiện tại (Hàm này phải trả về ID duy nhất nếu mặc đủ bộ)
-        String currentComboId = org.ThienNguyen.Listener.ItemCombo.ComboListener.getFullSetComboId(player);
-        if (currentComboId == null) currentComboId = ""; // Chuyển null thành chuỗi rỗng để dễ so sánh
 
-// 2. Lấy ID đã lưu từ Metadata (ID cuối cùng mà người chơi đã được thông báo)
+
+
+        String currentComboId = org.ThienNguyen.Listener.ItemCombo.ComboListener.getFullSetComboId(player);
+        if (currentComboId == null) currentComboId = "";
+
         String comboMetadataKey = "last_notified_combo";
         String lastNotifiedId = "";
         if (player.hasMetadata(comboMetadataKey)) {
             lastNotifiedId = player.getMetadata(comboMetadataKey).get(0).asString();
         }
 
-// 3. CHỈ XỬ LÝ NẾU TRẠNG THÁI THAY ĐỔI (Tránh việc đổi tay qua lại mà ID vẫn thế)
         if (!currentComboId.equals(lastNotifiedId)) {
-
-            // Cập nhật Metadata NGAY LẬP TỨC để chặn các Event chạy song song phía sau
             if (!currentComboId.isEmpty()) {
                 player.setMetadata(comboMetadataKey, new FixedMetadataValue(Main.getInstance(), currentComboId));
             } else {
                 player.removeMetadata(comboMetadataKey, Main.getInstance());
             }
 
-            // Kiểm tra Cooldown thời gian để tránh spam khi mặc/tháo đồ quá nhanh
             long now = System.currentTimeMillis();
             UUID uuid = player.getUniqueId();
             long lastSent = LAST_COMBO_MESSAGE_TIME.getOrDefault(uuid, 0L);
@@ -153,14 +262,13 @@ public class CacheListener implements Listener {
                         player.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
                     }
                 }
-                // Cập nhật mốc thời gian gửi tin nhắn thành công
                 LAST_COMBO_MESSAGE_TIME.put(uuid, now);
             }
         }
 
-        // ────────────────────────────────────────────────
-        // 2. Cộng stats combo (luôn cập nhật, không cooldown)
-        // ────────────────────────────────────────────────
+
+
+
         if (currentComboId != null) {
             org.bukkit.configuration.ConfigurationSection comboStats = comboConfig.getConfigurationSection(currentComboId + ".stats");
             if (comboStats != null) {
@@ -170,16 +278,16 @@ public class CacheListener implements Listener {
             }
         }
 
-        // ────────────────────────────────────────────────
-        // 3. Reset cache cũ
-        // ────────────────────────────────────────────────
+
+
+
         stats.clearWeaponElements();
         stats.bestAbilities.clear();
         stats.totalArmor = player.getAttribute(org.bukkit.attribute.Attribute.GENERIC_ARMOR).getValue();
 
-        // ────────────────────────────────────────────────
-        // 4. Trang bị (giữ nguyên)
-        // ────────────────────────────────────────────────
+
+
+
         for (EquipmentSlot slot : ALL_SLOTS) {
             ItemStack item = player.getInventory().getItem(slot);
             if (item == null || item.getType() == Material.AIR) continue;
@@ -191,7 +299,18 @@ public class CacheListener implements Listener {
             if (isAllowed(item, slotConfig, "accuracy", slot)) {
                 stats.totalAccuracy += Accuracy.get(item);
             }
+
+            if (isAllowed(item, slotConfig, "exp_bonus", slot)) {
+                stats.totalExpBonus += ExpBonus.get(item);
+            }
+            if (isAllowed(item, slotConfig, "movement_speed", slot)) {
+                stats.totalMovementSpeed += MovementSpeed.get(item);
+            }
+
             if (isAllowed(item, slotConfig, "damage", slot))          stats.totalBonusDmg     += Damage.getDamage(item);
+            if (isAllowed(item, slotConfig, "critical_damage_reduction", slot))  stats.totalCritDamageReduction += CritDamageReduction.get(item);
+            if (isAllowed(item, slotConfig, "damage_reduction", slot))   stats.totalDamageReduction += DamageReduction.get(item);
+            if (isAllowed(item, slotConfig, "deep_wound", slot))   stats.totalDeepWound += DeepWound.get(item);
             if (isAllowed(item, slotConfig, "pve_damage", slot))      stats.totalPveBonus     += PveDamage.get(item);
             if (isAllowed(item, slotConfig, "pvp_damage", slot))      stats.totalPvpBonus     += PvpDamage.get(item);
             if (isAllowed(item, slotConfig, "all_damage", slot))      stats.totalAllDamage    += AllDamage.get(item);
@@ -213,7 +332,8 @@ public class CacheListener implements Listener {
             if (isAllowed(item, slotConfig, "death_damage", slot))    stats.totalDeathDamage  += DeathDamage.get(item);
             if (isAllowed(item, slotConfig, "magic_damage", slot))    stats.totalMagicDamage  += MagicDamage.get(item);
             if (isAllowed(item, slotConfig, "magic_defense", slot))   stats.totalMagicDefense += MagicDefense.get(item);
-            // Nguyên tố, ngọc, ability legacy... (giữ nguyên như cũ)
+
+
             Map<String, Integer> itemElements = ElementCore.getAllElements(item);
             for (Map.Entry<String, Integer> entry : itemElements.entrySet()) {
                 String eId = entry.getKey().toUpperCase();
@@ -228,7 +348,6 @@ public class CacheListener implements Listener {
 
             List<String> gemIds = GemLogic.getGemsOnItem(item);
             for (String gemId : gemIds) {
-                // stats, element, ability từ gem (giữ nguyên)
                 if (gemConfig.contains(gemId + ".apply.stats")) {
                     for (String line : gemConfig.getStringList(gemId + ".apply.stats")) {
                         String[] parts = line.split(":", 2);
@@ -266,20 +385,14 @@ public class CacheListener implements Listener {
             }
         }
 
-        // ────────────────────────────────────────────────
-        // 5. Trang sức (Jewelry) - giữ nguyên
-        // ────────────────────────────────────────────────
-        // ────────────────────────────────────────────────
-        // 5. Trang sức (Jewelry)
-        // ────────────────────────────────────────────────
 
-        // NGUỒN 1: Lấy từ GUI ảo (Dữ liệu cũ trong Database/Cache)
+
+
         Map<Integer, ItemStack> jewelryItems = JewelryManager.getCachedJewelry(player.getUniqueId());
         for (ItemStack jItem : jewelryItems.values()) {
             applyJewelryStats(stats, jItem, eConfig, gemConfig);
         }
 
-        // NGUỒN 2: Lấy trực tiếp từ Inventory người chơi (Nếu bật trong config)
         FileConfiguration mainConfig = Main.getInstance().getConfig();
         if (mainConfig.getBoolean("jewelry.enable-player-inventory", false)) {
             ConfigurationSection pSlots = mainConfig.getConfigurationSection("jewelry.player-slots");
@@ -288,8 +401,6 @@ public class CacheListener implements Listener {
                     try {
                         int slotIdx = Integer.parseInt(key);
                         ItemStack item = player.getInventory().getItem(slotIdx);
-
-                        // CHỈ CỘNG STATS NẾU: Không phải không khí & Không phải Placeholder
                         if (item != null && item.getType() != Material.AIR && !isPlaceholder(item)) {
                             applyJewelryStats(stats, item, eConfig, gemConfig);
                         }
@@ -298,56 +409,69 @@ public class CacheListener implements Listener {
             }
         }
 
-        // ────────────────────────────────────────────────
-        // 6. Knockback Resistance
-        // ────────────────────────────────────────────────
+
+
+
         double finalKB = Math.max(0.0, Math.min(1.0, stats.totalKnockbackResist));
         org.bukkit.attribute.AttributeInstance kbAttr = player.getAttribute(org.bukkit.attribute.Attribute.GENERIC_KNOCKBACK_RESISTANCE);
         if (kbAttr != null) {
             kbAttr.setBaseValue(finalKB);
         }
-        // ────────────────────────────────────────────────
-        // 8. HOOK MYATTRIBUTE - CỘNG DỒN TỪ SQLITE
-        // ────────────────────────────────────────────────
-        try {
-            // Chỉ chạy nếu plugin MyAttribute đang được bật trên server
-            if (org.bukkit.Bukkit.getPluginManager().isPluginEnabled("MyAttribute")) {
-                UUID uuid = player.getUniqueId();
 
-                // Nhóm Tấn Công
-                stats.totalAccuracy += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "accuracy");
+
+
+
+        try {
+            if (Bukkit.getPluginManager().isPluginEnabled("MyAttribute")) {
+                UUID uuid = player.getUniqueId();
+                stats.totalDeepWound += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "deep_wound");
+                stats.totalDamageReduction += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "damage_reduction");
+                stats.totalCritDamageReduction += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "critical_damage_reduction");
+                stats.totalExpBonus     += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "exp_bonus");
+                stats.totalArmorPen     += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "armor_pen");
                 stats.totalBonusDmg     += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "damage");
-                stats.totalMagicDamage  += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "magic_damage");
-                stats.totalCritChance   += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "crit_chance");
-                stats.totalCritDamage   += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "crit_damage");
+                stats.totalTrueDamage   += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "true_damage");
+                stats.totalAccuracy     += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "accuracy");
+                stats.totalCritChance   += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "critical_chance");
+                stats.totalCritDamage   += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "critical_damage");
                 stats.totalPenetration  += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "penetration");
                 stats.totalLifesteal    += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "lifesteal");
-                stats.totalTrueDamage   += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "true_damage");
                 stats.totalPveBonus     += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "pve_damage");
                 stats.totalPvpBonus     += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "pvp_damage");
-
-                // Nhóm Phòng Thủ
+                stats.totalMagicDamage  += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "magic_damage");
+                stats.totalDodge        += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "dodge_rate");
                 stats.totalArmor        += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "armor");
                 stats.totalMagicDefense += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "magic_defense");
                 stats.totalPveDef       += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "pve_defense");
                 stats.totalPvpDef       += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "pvp_defense");
             }
-        } catch (Throwable t) {
-            // Tránh crash nếu class API không tồn tại lúc runtime
-        }
-        // ────────────────────────────────────────────────
-        // 7. Update cache
-        // ────────────────────────────────────────────────
+        } catch (Throwable ignored) {}
+
+
+
+
+        applyPercentStats(player, stats, slotConfig);
+
+
+
+
+        PlayerRefreshStatsEvent apiEvent = new PlayerRefreshStatsEvent(player, stats);
+        org.bukkit.Bukkit.getPluginManager().callEvent(apiEvent);
+
         PlayerCombatCache.updateCache(player.getUniqueId(), stats);
     }
 
-    // Hàm updateStat bạn đã cung cấp (đặt ở cùng class)
+    
     private static void updateStat(PlayerCombatCache.CombatStats stats, String type, double val) {
-        if (val == 0) return; // Tối ưu: không xử lý nếu giá trị bằng 0
+        if (val == 0) return; 
 
         switch (type.toLowerCase()) {
-            // TẤN CÔNG
+            case "exp_bonus", "exp" -> stats.totalExpBonus += val;
+            case "critical_damage_reduction" -> stats.totalCritDamageReduction += val;
+            case "movement_speed", "speed" -> stats.totalMovementSpeed += val;
+            case "damage_reduction" -> stats.totalDamageReduction += val;
             case "damage" -> stats.totalBonusDmg += val;
+            case "deep_wound" -> stats.totalDeepWound += val;
             case "pve_damage" -> stats.totalPveBonus += val;
             case "pvp_damage" -> stats.totalPvpBonus += val;
             case "all_damage" -> stats.totalAllDamage += val;
@@ -356,14 +480,14 @@ public class CacheListener implements Listener {
             case "true_damage" -> stats.totalTrueDamage += val;
             case "death_damage" -> stats.totalDeathDamage += val;
 
-            // CHỈ SỐ PHỤ TẤN CÔNG
+            
             case "critical_chance", "crit_chance" -> stats.totalCritChance += val;
             case "critical_damage", "crit_damage" -> stats.totalCritDamage += val;
             case "penetration" -> stats.totalPenetration += val;
             case "armor_pen" -> stats.totalArmorPen += val;
             case "lifesteal" -> stats.totalLifesteal += val;
-            case "accuracy" -> stats.totalAccuracy += val; // Thêm dòng này
-            // PHÒNG THỦ
+            case "accuracy" -> stats.totalAccuracy += val; 
+            
             case "armor" -> stats.totalArmor += val;
             case "pve_defense", "pve_def" -> stats.totalPveDef += val;
             case "pvp_defense", "pvp_def" -> stats.totalPvpDef += val;
@@ -374,8 +498,8 @@ public class CacheListener implements Listener {
             case "thorns" -> stats.totalThorns += val;
             case "knockback_resistance" -> stats.totalKnockbackResist += val;
 
-            // LƯU Ý: Health thường được xử lý qua Attribute gốc của Minecraft
-            // nên bạn không cộng vào 'stats' mà cộng trực tiếp vào Player trong refreshCache
+            
+            
         }
     }
 
@@ -396,10 +520,13 @@ public class CacheListener implements Listener {
     private static void applyJewelryStats(PlayerCombatCache.CombatStats stats, ItemStack jItem, FileConfiguration eConfig, FileConfiguration gemConfig) {
         if (jItem == null || jItem.getType() == Material.AIR) return;
         stats.totalAccuracy += Accuracy.get(jItem);
-        // Cộng các chỉ số cơ bản
+        stats.totalExpBonus += ExpBonus.get(jItem);
+        stats.totalCritDamageReduction += CritDamageReduction.get(jItem);
         stats.totalBonusDmg     += Damage.getDamage(jItem);
+        stats.totalDamageReduction += DamageReduction.get(jItem);
         stats.totalPveBonus     += PveDamage.get(jItem);
         stats.totalPvpBonus     += PvpDamage.get(jItem);
+        stats.totalDeepWound += DeepWound.get(jItem);
         stats.totalCritChance   += CriticalChance.get(jItem);
         stats.totalCritDamage   += CriticalDamage.get(jItem);
         stats.totalLifesteal    += Lifesteal.get(jItem);
@@ -419,7 +546,7 @@ public class CacheListener implements Listener {
         stats.totalMagicDamage  += MagicDamage.get(jItem);
         stats.totalMagicDefense += MagicDefense.get(jItem);
 
-        // Xử lý nguyên tố (Elements)
+        
         Map<String, Integer> jElements = ElementCore.getAllElements(jItem);
         for (Map.Entry<String, Integer> entry : jElements.entrySet()) {
             String eId = entry.getKey().toUpperCase();
@@ -432,7 +559,7 @@ public class CacheListener implements Listener {
             }
         }
 
-        // Xử lý ngọc (Gems) đính trên trang sức
+        
         List<String> jGemIds = GemLogic.getGemsOnItem(jItem);
         for (String gemId : jGemIds) {
             if (gemConfig.contains(gemId + ".apply.stats")) {
@@ -453,9 +580,9 @@ public class CacheListener implements Listener {
     }
     private static boolean isPlaceholder(ItemStack item) {
         if (item == null || !item.hasItemMeta()) return false;
-        // Kiểm tra xem item có chứa NBT 'is_placeholder' mà chúng ta đã đặt không
+
         return item.getItemMeta().getPersistentDataContainer()
-                .has(new NamespacedKey(Main.getInstance(), "is_placeholder"), org.bukkit.persistence.PersistentDataType.BOOLEAN);
+                .has(KEY_IS_PLACEHOLDER, PersistentDataType.BOOLEAN);
     }
     private static void processAbilityLineLegacy(String data, Map<String, double[]> best) {
         String[] parts = data.split(":");
@@ -470,17 +597,31 @@ public class CacheListener implements Listener {
         } catch (Exception ignored) {}
     }
 
+    /**
+     * Normalize EquipmentSlot cho thống nhất
+     */
+    private static String normalizeSlot(EquipmentSlot slot) {
+        if (slot == null) return "";
+        String name = slot.name().toLowerCase().replace("_", "");
+        if (name.equals("hand")) return "mainhand";
+        if (name.equals("offhand")) return "offhand";
+        return name;
+    }
+
+    /**
+     * Hàm kiểm tra slot được phép (đã fix)
+     */
     private static boolean isAllowed(ItemStack item, FileConfiguration config, String stat, EquipmentSlot currentSlot) {
         if (item == null || !item.hasItemMeta()) return true;
 
+        // Kiểm tra PDC custom slot
         NamespacedKey key = new NamespacedKey(Main.getInstance(), "slot_" + stat.toLowerCase());
         String requiredSlot = item.getItemMeta().getPersistentDataContainer().get(key, PersistentDataType.STRING);
 
         if (requiredSlot != null) {
             if (requiredSlot.equalsIgnoreCase("any")) return true;
-            String current = currentSlot.name().toLowerCase().replace("_", "");
-            if (current.equals("hand")) current = "mainhand";
 
+            String current = normalizeSlot(currentSlot);
             String[] allowedSlots = requiredSlot.split(",");
             for (String s : allowedSlots) {
                 if (s.trim().equalsIgnoreCase(current)) return true;
@@ -488,9 +629,21 @@ public class CacheListener implements Listener {
             return false;
         }
 
+        // Fallback config
         if (config == null) return true;
         List<String> list = config.getStringList("stats-slots." + stat);
-        return list == null || list.isEmpty() || list.contains(currentSlot.name());
+        if (list == null || list.isEmpty()) return true;
+
+        String currentNormalized = normalizeSlot(currentSlot);
+        String originalName = currentSlot.name();
+
+        for (String allowed : list) {
+            if (allowed.equalsIgnoreCase(currentNormalized) ||
+                    allowed.equalsIgnoreCase(originalName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean isMMOCoreAvailable() {

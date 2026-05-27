@@ -2,7 +2,7 @@ package org.ThienNguyen.Skill.TypeSkill.Weapon;
 
 import org.ThienNguyen.Skill.ISkill;
 import org.ThienNguyen.Main;
-import org.ThienNguyen.Listener.PlayerCombatCache; // Cầu nối lấy stats 100k
+import org.ThienNguyen.Listener.PlayerCombatCache; 
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.ArmorStand;
@@ -32,47 +32,47 @@ public class HellfireBreathSkill implements ISkill {
 
         Set<LivingEntity> targets = new HashSet<>();
 
-        // 5 Tia lửa hình quạt
+        
         for (int i = -2; i <= 2; i++) {
             Vector direction = startLoc.getDirection().clone();
-            double angle = i * 0.15; // Thu hẹp góc một chút cho tập trung
+            double angle = i * 0.15; 
 
             double cos = Math.cos(angle); double sin = Math.sin(angle);
             double x = direction.getX() * cos - direction.getZ() * sin;
             double z = direction.getX() * sin + direction.getZ() * cos;
             direction.setX(x).setZ(z);
 
-            // Tầm xa 10 block
+            
             for (double d = 1; d <= 10; d += 0.5) {
                 Location point = startLoc.clone().add(direction.clone().multiply(d));
 
-                // Hiệu ứng hạt
+                
                 player.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, point, 1, 0.05, 0.05, 0.05, 0.02);
                 if (point.getBlock().getType().isSolid()) break;
 
-                // Kiểm tra quái tại điểm point
+                
                 for (Entity entity : point.getWorld().getNearbyEntities(point, 0.6, 0.6, 0.6)) {
                     if (entity instanceof LivingEntity victim && !entity.equals(player) && !(entity instanceof ArmorStand)) {
 
-                        // CHẶN GÂY DAMAGE NHIỀU LẦN (Tránh 1 hit chết)
+                        
                         if (!targets.contains(victim)) {
                             targets.add(victim);
 
-                            // 1. Đánh dấu kỹ năng lên Player
+                            
                             player.setMetadata("IS_ABILITY", new FixedMetadataValue(Main.getInstance(), true));
 
-                            // 2. Nạp hệ số phần trăm vào Victim
+                            
                             victim.setMetadata("ABILITY_EXTRA_DAMAGE", new FixedMetadataValue(Main.getInstance(), skillPercent));
 
-                            // 3. Kích hoạt EventDamage
+                            
                             victim.setNoDamageTicks(0);
                             victim.damage(0.01, player);
 
-                            // Hiệu ứng
+                            
                             victim.setFireTicks(40);
                             victim.getWorld().spawnParticle(Particle.SOUL, victim.getEyeLocation(), 3, 0.2, 0.2, 0.2, 0.05);
 
-                            // Dọn dẹp Metadata sau khi Event xử lý xong
+                            
                             Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
                                 player.removeMetadata("IS_ABILITY", Main.getInstance());
                                 victim.removeMetadata("ABILITY_EXTRA_DAMAGE", Main.getInstance());

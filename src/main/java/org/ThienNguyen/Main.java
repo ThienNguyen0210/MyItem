@@ -41,6 +41,7 @@ public class Main extends JavaPlugin {
     private FileConfiguration tooltipConfig;
     // --- Các biến FileConfiguration ---
     private FileConfiguration skillConfig;
+    private FileConfiguration customListenerConfig;
     private StationDatabase stationDatabase;
     private FileConfiguration gemConfig;
     private org.ThienNguyen.AI.AIProcessor aiProcessor;
@@ -68,13 +69,14 @@ public class Main extends JavaPlugin {
     // --- Database ---
     private ItemDatabase itemDatabase;
     private FileConfiguration scriptSkillConfig;
+    private FileConfiguration expireConfig; // <-- THÊM DÒNG NÀY ĐỂ QUẢN LÝ EXPIRE.YML
     @Override
     public void onEnable() {
         instance = this;
-        if (!setupEconomy()) {
-            getLogger().severe(String.format("[%s] - Disabled due to no Vault dependency found!", getDescription().getName()));
-            getServer().getPluginManager().disablePlugin(this);
-            return;
+        if (setupEconomy()) {
+            getLogger().info("&aHook Vault Success!");
+        } else {
+            getLogger().warning("&cQuên cài vault kìa bro,:)");
         }
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new MyItemExpansion().register();
@@ -224,6 +226,11 @@ public class Main extends JavaPlugin {
         }
 
         // 6. Đăng ký toàn bộ Events
+        // passive
+        getServer().getPluginManager().registerEvents(new org.ThienNguyen.Listener.Passive.Blood(), this);
+        getServer().getPluginManager().registerEvents(new org.ThienNguyen.Listener.Passive.Longshot(), this);
+        new org.ThienNguyen.Listener.Expire().runTaskLater(this, 100L);
+        //
         langManager = new LanguageManager(this);
         getServer().getPluginManager().registerEvents(new org.ThienNguyen.Listener.AbilityBlockListener(), this);
         getServer().getPluginManager().registerEvents(new org.ThienNguyen.Consume.ConsumeManager(), this);
@@ -235,7 +242,8 @@ public class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new GemRemover(), this);
         getServer().getPluginManager().registerEvents(new org.ThienNguyen.GemSocket.GemKham(), this);
         getServer().getPluginManager().registerEvents(new org.ThienNguyen.Skill.SkillTriggerListener(), this);
-        getServer().getPluginManager().registerEvents(new ExpLogic(), this);
+        ExpLogic expLogic = new ExpLogic();
+        getServer().getPluginManager().registerEvents(expLogic, this);
         getServer().getPluginManager().registerEvents(new StatsListener(), this);
         getServer().getPluginManager().registerEvents(new EventDamage(), this);
 //
@@ -319,6 +327,39 @@ public class Main extends JavaPlugin {
             e.printStackTrace();
         }
     }
+    /**
+     * Quét toàn bộ file .yml trong một thư mục cụ thể và nạp vào bộ nhớ
+     * @param subFolderPath Đường dẫn thư mục con tính từ thư mục gốc của plugin (Ví dụ: "Skript/Skill")
+     */
+    private void reloadSkriptFolder(String subFolderPath) {
+        File folder = new File(getDataFolder(), subFolderPath);
+
+        // Nếu thư mục chưa tồn tại, tạo mới nó
+        if (!folder.exists()) {
+            folder.mkdirs();
+            return;
+        }
+
+        File[] files = folder.listFiles((dir, name) -> name.toLowerCase().endsWith(".yml"));
+        if (files == null) return;
+
+        int loadedCount = 0;
+        for (File file : files) {
+            try {
+                // Nạp nội dung file cấu hình .yml vào bộ nhớ RAM
+                FileConfiguration config = YamlConfiguration.loadConfiguration(file);
+
+                // TODO: Bạn có thể lưu trữ các đối tượng 'config' này vào một Map<String, FileConfiguration>
+                // nếu cần truy xuất dữ liệu từ các file Skript này ở các class xử lý tính năng khác.
+
+                loadedCount++;
+            } catch (Exception e) {
+            }
+        }
+
+        if (loadedCount > 0) {
+        }
+    }
     public void reloadPluginConfigs() {
         // 1. Nạp lại file config.yml chính của Bukkit
         reloadConfig();
@@ -343,8 +384,10 @@ public class Main extends JavaPlugin {
         this.evolutionConfig = setupConfig("Evolution.yml");
 
         syncStatsWithWeb();
-        setupConfig("README.yml");
-
+        File readmeFile = new File(getDataFolder(), "README.yml");
+        if (!readmeFile.exists()) {
+            saveResource("README.yml", false);
+        }
         if (this.aiProcessor != null) {
             this.aiProcessor = new org.ThienNguyen.AI.AIProcessor();
         }
@@ -352,13 +395,13 @@ public class Main extends JavaPlugin {
         if (langManager != null) {
             langManager.loadLanguage();
         }
-
+        this.customListenerConfig = setupConfig("Listener/Custom.yml");
         this.comboConfig = setupConfig("itemcombo.yml");
         this.customConfig = setupConfig("config.yml");
         this.tooltipConfig = setupConfig("Tooltip.yml");
         this.mobDropConfig = setupConfig("MobDrop.yml");
         this.particleConfig = setupConfig("Particle.yml");
-
+        this.expireConfig = setupConfig("Listener/Expire.yml"); // <-- THÊM DÒNG NÀY ĐỂ TỰ ĐỘNG GIẢI NÉN VÀ NẠP CONFIG
         this.tiersConfig = setupConfig("LoreFormat/Tiers.yml");
         this.upgradeGemConfig = setupConfig("Upgrade/upgrade.yml");
         this.chuyenHoaConfig = setupConfig("Upgrade/chuyenhoa.yml");
@@ -378,7 +421,8 @@ public class Main extends JavaPlugin {
 
         checkAndSaveExample("Skript/Skill/EXAMPLE_SKILL.yml");
         checkAndSaveExample("Skript/Ability/EXAMPLE_SKILL.yml");
-
+        reloadSkriptFolder("Skript/Skill");
+        reloadSkriptFolder("Skript/Ability");
         this.loreFormatConfig = setupConfig("LoreFormat/Format.yml");
         this.statsConfig = setupConfig("LoreFormat/Stats.yml");
         this.effectConfig = setupConfig("LoreFormat/Effect.yml");
@@ -397,7 +441,8 @@ public class Main extends JavaPlugin {
         SkillManager.loadSkills();
         org.ThienNguyen.Ability.AbilityManager.clearAbilities();
         org.ThienNguyen.Ability.AbilityManager.loadExternalAbilities();
-
+        EventDamage.resetFormulaCache();
+        EventDamage.reloadAbilityTriggerCache();
         getLogger().info("§e[MyItem] Hệ thống cấu hình, Kỹ năng và Nội tại mẫu đã được nạp thành công!");
     }
 
@@ -429,9 +474,9 @@ public class Main extends JavaPlugin {
 
         String description =
                 "\n§f> Tên plugin: §6Myitem" +
-                        "\n§f> Phiên bản: §e" + "2.0" +
+                        "\n§f> Phiên bản: §e" + "2.1" +
                         "\n§f> AI: §e" + "1.0" +
-                        "\n§f> Tác giả: §dNhà văn viết code" +
+                        "\n§f> Tác giả: §dThiện Dev" +
                         "\n§f> Dành cho: §a1.14.x -> 1.21.x" +
                         "\n§f> Trạng thái: §c§lBản Chính Thức";
 
@@ -442,21 +487,40 @@ public class Main extends JavaPlugin {
     }
     private void startRegenTask() {
         Bukkit.getScheduler().runTaskTimer(this, () -> {
+            // Kiểm tra config có bật tính năng này không
+            if (!getConfig().getBoolean("regeneration.enabled", false)) return;
+
             for (Player p : Bukkit.getOnlinePlayers()) {
                 if (!p.isOnline() || p.isDead()) continue;
+
+                double maxHp = p.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
+                double currentHp = p.getHealth();
+                if (currentHp >= maxHp) continue;
+
+                double finalRegen = 0;
+
+                // 1. Hồi máu theo chỉ số cụ thể (Flat) - Logic cũ của bạn
                 if (p.hasMetadata("windy_health_regen")) {
-                    double amount = p.getMetadata("windy_health_regen").get(0).asDouble();
-                    if (amount > 0) {
-                        double maxHp = p.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
-                        double currentHp = p.getHealth();
-                        if (currentHp < maxHp) {
-                            p.setHealth(Math.min(maxHp, currentHp + amount));
-                        }
+                    finalRegen += p.getMetadata("windy_health_regen").get(0).asDouble();
+                }
+
+                // 2. Hồi máu theo phần trăm (%) - Logic mới
+                if (p.hasMetadata("windy_health_regen_percent")) {
+                    double percent = p.getMetadata("windy_health_regen_percent").get(0).asDouble();
+                    if (percent > 0) {
+                        finalRegen += (maxHp * (percent / 100.0));
                     }
                 }
+
+                // Thực hiện hồi máu
+                if (finalRegen > 0) {
+                    p.setHealth(Math.min(maxHp, currentHp + finalRegen));
+                }
+
+                // Cập nhật ngọc buff
                 StatsListener.getInstance().updateGemBuffsOnly(p);
             }
-        }, 0L, 20L);
+        }, 0L, 20L); // 20L = 1 giây
     }
 
     @Override
@@ -505,7 +569,7 @@ public class Main extends JavaPlugin {
         }
     }
 
-    private FileConfiguration setupConfig(String path) {
+    public FileConfiguration setupConfig(String path) {
         File file = new File(getDataFolder(), path);
         if (!file.exists()) {
             file.getParentFile().mkdirs();
@@ -549,7 +613,12 @@ public class Main extends JavaPlugin {
         }, 20L, 40L);
     }
 // --- Các Getters bổ sung để sửa lỗi Build ---
-
+    public FileConfiguration getExpireConfig() {
+        if (this.expireConfig == null) {
+            this.expireConfig = setupConfig("Listener/Expire.yml");
+        }
+        return this.expireConfig;
+    }
     public FileConfiguration getDucLoConfig() {
         return ducLoConfig;
     }
@@ -597,6 +666,12 @@ public class Main extends JavaPlugin {
     public FileConfiguration getSkillMythicLibConfig() { return skillMythicLibConfig; }
     public LanguageManager getLangManager() {
         return langManager;
+    }
+    public FileConfiguration getCustomListenerConfig() {
+        if (this.customListenerConfig == null) {
+            this.customListenerConfig = setupConfig("Listener/Custom.yml");
+        }
+        return this.customListenerConfig;
     }
     // web
     public FileConfiguration getTooltipConfig() {

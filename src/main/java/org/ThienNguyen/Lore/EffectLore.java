@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 
 public class EffectLore {
 
-    // --- HỆ THỐNG TÍNH PIXEL ---
+    
     private static int getCharWidth(char c) {
         if ("i!|;:,.".indexOf(c) != -1) return 2;
         if ("l'".indexOf(c) != -1) return 3;
@@ -51,7 +51,7 @@ public class EffectLore {
         Map<String, Integer> currentEffects = BuffData.getEffects(item);
         Set<String> processedKeys = new HashSet<>();
 
-        // Cập nhật dòng cũ
+        
         for (int i = 0; i < lore.size(); i++) {
             String effectKey = getMatchedEffectKey(lore.get(i), config);
             if (effectKey != null) {
@@ -65,7 +65,7 @@ public class EffectLore {
             }
         }
 
-        // Thêm mới
+        
         for (Map.Entry<String, Integer> entry : currentEffects.entrySet()) {
             if (!processedKeys.contains(entry.getKey()) && entry.getValue() > 0) {
                 lore.add(getFormattedLine(entry.getKey(), entry.getValue(), config));
@@ -98,7 +98,7 @@ public class EffectLore {
         boolean useRoman = config.getBoolean("use-roman", true);
         String levelDisplay = useRoman ? toRoman(level) : String.valueOf(level);
 
-        // Regex tìm {level:X} hoặc {value:X}
+        
         Pattern pattern = Pattern.compile("\\{(level|value):(\\d+)\\}");
         Matcher matcher = pattern.matcher(format);
 
@@ -106,7 +106,7 @@ public class EffectLore {
             int targetCharPos = Integer.parseInt(matcher.group(2));
             int targetPixelWidth = targetCharPos * 6;
 
-            // Lấy phần đứng trước biến căn lề
+            
             String prefix = format.substring(0, matcher.start());
             int currentPixelWidth = getStringPixelWidth(formatColor(prefix));
 
@@ -118,15 +118,15 @@ public class EffectLore {
                 pixelNeeded -= 4;
             }
 
-            // Thay thế biến căn lề bằng khoảng trắng + cấp độ
+            
             return formatColor(format.replace(matcher.group(0), sb.toString() + levelDisplay));
         }
 
-        // Nếu không có biến căn lề, mặc định cách 1 dấu cách
+        
         return formatColor(format) + " " + levelDisplay;
     }
 
-    // --- CÁC HÀM PHỤ TRỢ (Giữ nguyên) ---
+    
 
     private static String getMatchedEffectKey(String line, FileConfiguration config) {
         if (config.getConfigurationSection("display-names") == null) return null;
@@ -134,7 +134,7 @@ public class EffectLore {
         for (String key : config.getConfigurationSection("display-names").getKeys(false)) {
             String rawName = config.getString("display-names." + key);
             if (rawName == null) continue;
-            // Xóa biến format để so sánh tên thuần túy
+            
             String cleanName = ChatColor.stripColor(formatColor(rawName.split("\\{")[0])).trim();
             if (!cleanName.isEmpty() && strippedLine.contains(cleanName)) return key;
         }
@@ -166,7 +166,7 @@ public class EffectLore {
     }
 
     private static String toRoman(int n) {
-        if (n <= 0) return ""; // Đổi String.valueOf(n) thành chuỗi rỗng ""
+        if (n <= 0) return ""; 
         Integer l = romanMap.floorKey(n);
         if (l == null) return "";
         if (n == l) return romanMap.get(n);

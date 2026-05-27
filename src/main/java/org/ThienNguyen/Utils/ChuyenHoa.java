@@ -28,7 +28,7 @@ public class ChuyenHoa implements Listener {
     private final int SLOT_B = 15;
     private final int SLOT_BUTTON = 22;
 
-    // Sử dụng chung NamespacedKey với class Upgrade để đồng bộ dữ liệu
+    
     private static final NamespacedKey LEVEL_KEY = new NamespacedKey(Main.getInstance(), "upgrade_level");
 
     private final Map<UUID, Long> cooldowns = new HashMap<>();
@@ -82,7 +82,7 @@ public class ChuyenHoa implements Listener {
         Player player = (Player) event.getWhoClicked();
         int slot = event.getRawSlot();
 
-        // Bảo vệ các ô trang trí
+        
         if (slot >= 0 && slot < 36) {
             if (slot != SLOT_A && slot != SLOT_B && slot != SLOT_BUTTON) {
                 event.setCancelled(true);
@@ -97,13 +97,13 @@ public class ChuyenHoa implements Listener {
     }
 
     private void handleTransfer(Player player, Inventory inv) {
-        var lang = Main.getInstance().getLangManager(); // Khai báo lang để dùng
+        var lang = Main.getInstance().getLangManager(); 
         long now = System.currentTimeMillis();
 
         if (cooldowns.containsKey(player.getUniqueId())) {
             long left = (cooldowns.get(player.getUniqueId()) + 5000) - now;
             if (left > 0) {
-                // Sửa dòng này
+                
                 player.sendMessage(lang.getMessage("item.cooldown", "{time}", String.valueOf(left / 1000 + 1)));
                 return;
             }
@@ -113,7 +113,7 @@ public class ChuyenHoa implements Listener {
         ItemStack itemB = inv.getItem(SLOT_B);
 
         if (itemA == null || itemB == null || itemA.getType().isAir() || itemB.getType().isAir()) {
-            // Sửa dòng này
+            
             player.sendMessage(lang.getMessage("item.need-two-items"));
             return;
         }
@@ -122,7 +122,7 @@ public class ChuyenHoa implements Listener {
         int levelB = upgradeUtils.getItemLevel(itemB);
 
         if (levelA < minLevel || levelB < minLevel) {
-            // Sửa dòng này
+            
             player.sendMessage(lang.getMessage("item.min-level", "{level}", String.valueOf(minLevel)));
             return;
         }
@@ -134,14 +134,14 @@ public class ChuyenHoa implements Listener {
             finalizeItem(itemB, levelA);
 
             player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1.2f);
-            // Sửa dòng này
+            
             player.sendMessage(lang.getMessage("item.success"));
         } else {
             applyPunishment(itemA, levelA);
             applyPunishment(itemB, levelB);
 
             player.playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1f, 0.5f);
-            // Sửa dòng này
+            
             player.sendMessage(lang.getMessage("item.failed"));
         }
 
@@ -168,24 +168,24 @@ public class ChuyenHoa implements Listener {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
 
-        // 1. Cập nhật hoặc Xóa LEVEL_KEY trong PDC
+        
         if (newLevel <= 0) {
             meta.getPersistentDataContainer().remove(LEVEL_KEY);
-            // Quan trọng: Phải xóa thêm cả BASE_NAME_KEY ở đây nếu bạn muốn dọn sạch hoàn toàn
+            
             NamespacedKey baseNameKey = new NamespacedKey(Main.getInstance(), "base_name");
             meta.getPersistentDataContainer().remove(baseNameKey);
         } else {
             meta.getPersistentDataContainer().set(LEVEL_KEY, PersistentDataType.INTEGER, newLevel);
         }
 
-        // 2. Cập nhật Meta vào item trước khi gọi các hàm xử lý tên và lore
+        
         item.setItemMeta(meta);
 
-        // 3. Gọi kỹ thuật Rename: Hàm này sẽ xử lý hiển thị tên dựa trên newLevel
-        // Nếu newLevel = 0, hàm này (bản đã sửa) sẽ trả tên về base_name gốc
+        
+        
         upgradeUtils.updateItemName(item, newLevel);
 
-        // 4. Cập nhật Lore hiển thị chỉ số
+        
         org.ThienNguyen.Lore.StatsLore.updateLore(item);
     }
 
@@ -195,7 +195,7 @@ public class ChuyenHoa implements Listener {
         Player player = (Player) event.getPlayer();
         Inventory inv = event.getInventory();
 
-        // Trả lại item cho người chơi và xóa khỏi GUI để tránh dupe
+        
         int[] slots = {SLOT_A, SLOT_B};
         for (int slot : slots) {
             ItemStack is = inv.getItem(slot);

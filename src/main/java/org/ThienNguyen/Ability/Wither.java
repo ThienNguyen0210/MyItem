@@ -14,7 +14,7 @@ public class Wither implements IAbility {
     @Override
     public void execute(Player attacker, LivingEntity target, int level, double baseDamage) {
         if (target == null || target.isDead()) return;
-        // Cấp độ: level - 1, Thời gian: level * 2 giây (40 ticks)
+        
         target.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, level * 20 * 2, level - 1));
     }
 }

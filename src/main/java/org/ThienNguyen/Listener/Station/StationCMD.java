@@ -73,15 +73,15 @@ public class StationCMD implements CommandExecutor, TabCompleter {
         return true;
     }
 
-    // ====================== ADD CODE - TỰ SINH MÃ + TỰ LƯU VÀO DB ======================
+    
     private void handleAddCode(Player player) {
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (item == null || item.getType().isAir()) {  // Chỉ check null + air
+        if (item == null || item.getType().isAir()) {  
             player.sendMessage("§cBạn phải cầm item trên tay (không phải tay trống)!");
             return;
         }
 
-        // Nếu item chưa có meta → tạo mới
+        
         ItemMeta meta = item.hasItemMeta() ? item.getItemMeta() : Bukkit.getItemFactory().getItemMeta(item.getType());
         if (meta == null) {
             player.sendMessage("§cKhông thể xử lý item này!");
@@ -92,7 +92,7 @@ public class StationCMD implements CommandExecutor, TabCompleter {
         meta.getPersistentDataContainer().set(stationCodeKey, PersistentDataType.STRING, code);
         item.setItemMeta(meta);
 
-        // Lấy lore, display name, model id từ item (sau khi set meta nếu cần)
+        
         List<String> lore = meta.hasLore() ? meta.getLore() : new ArrayList<>();
         String displayName = meta.hasDisplayName() ? meta.getDisplayName() : null;
         Integer modelId = meta.hasCustomModelData() ? meta.getCustomModelData() : null;
@@ -101,9 +101,9 @@ public class StationCMD implements CommandExecutor, TabCompleter {
         String dataJson = gson.toJson(data);
         String loreJson = gson.toJson(lore);
 
-// Bước 1: Lấy dữ liệu PDC từ Item và chuyển thành JSON
+
         String pdcJson = serializePDC(meta);
-// Bước 2: Gọi hàm updateMasterData với đầy đủ tham số mới
+
         stationDb.updateMasterData(code, dataJson, loreJson, displayName, modelId, pdcJson);
         player.sendMessage("§a[Station] §fĐã tạo và lưu mã mới: §e" + code);
         plugin.getLogger().info("[StationCMD] Đã tạo & lưu mã mới vào DB: " + code);
@@ -119,7 +119,7 @@ public class StationCMD implements CommandExecutor, TabCompleter {
         return sb.toString();
     }
 
-    // ====================== UPDATE - SYNC ONLINE + REMAKE NAME/MODEL/LORE ======================
+    
     private void handleStationUpdate(Player admin) {
         ItemStack masterItem = admin.getInventory().getItemInMainHand();
         if (masterItem == null || masterItem.getType().isAir() || !masterItem.hasItemMeta()) {
@@ -138,18 +138,18 @@ public class StationCMD implements CommandExecutor, TabCompleter {
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             ItemMeta meta = masterItem.getItemMeta();
 
-            // Serialize toàn bộ PDC từ item mẫu
+            
             String pdcJson = serializePDC(meta);
 
-            // Lấy lore, name, model
+            
             List<String> lore = meta.hasLore() ? meta.getLore() : new ArrayList<>();
             String displayName = meta.hasDisplayName() ? meta.getDisplayName() : null;
             Integer modelId = meta.hasCustomModelData() ? meta.getCustomModelData() : null;
 
             String loreJson = gson.toJson(lore);
-            String dataJson = gson.toJson(new StationData()); // hoặc lấy từ DB cũ nếu cần giữ stats cũ
+            String dataJson = gson.toJson(new StationData()); 
 
-            // Lưu vào DB (bây giờ có pdcJson)
+            
             stationDb.updateMasterData(itemCode, dataJson, loreJson, displayName, modelId, pdcJson);
 
             int newVersion = stationDb.getMasterVersion(itemCode);
@@ -157,7 +157,7 @@ public class StationCMD implements CommandExecutor, TabCompleter {
             Bukkit.getScheduler().runTask(plugin, () -> {
                 int count = 0;
                 for (Player p : Bukkit.getOnlinePlayers()) {
-                    count += syncItems(p, itemCode, new StationData(), masterItem, newVersion, admin); // data tạm
+                    count += syncItems(p, itemCode, new StationData(), masterItem, newVersion, admin); 
                 }
                 admin.sendMessage("§b[Station] §fĐã cập nhật đầy đủ PDC + lore + name cho mã: §e" + itemCode);
                 admin.sendMessage("§b[Station] §fĐã patch cho §a" + count + " §fitem online.");
@@ -171,12 +171,12 @@ public class StationCMD implements CommandExecutor, TabCompleter {
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
 
         for (NamespacedKey key : pdc.getKeys()) {
-            // Bỏ qua các key hệ thống của Station để tránh lặp dữ liệu
+            
             if (key.equals(stationCodeKey) || key.equals(stationVersionKey)) continue;
 
-            String keyStr = key.toString(); // Kết quả dạng "namespace:key"
+            String keyStr = key.toString(); 
 
-            // Kiểm tra và lấy dữ liệu theo đúng kiểu
+            
             if (pdc.has(key, PersistentDataType.STRING)) {
                 pdcMap.put(keyStr, pdc.get(key, PersistentDataType.STRING));
             } else if (pdc.has(key, PersistentDataType.INTEGER)) {
@@ -223,9 +223,9 @@ public class StationCMD implements CommandExecutor, TabCompleter {
         int currentVersion = meta.getPersistentDataContainer()
                 .getOrDefault(stationVersionKey, PersistentDataType.INTEGER, 0);
 
-        if (currentVersion >= newVersion) return; // Tránh double update
+        if (currentVersion >= newVersion) return; 
 
-        // ================== LORE REPLACE (paste từ masterItem) ==================
+        
         List<String> masterLore = masterItem.getItemMeta().hasLore()
                 ? new ArrayList<>(masterItem.getItemMeta().getLore())
                 : new ArrayList<>();
@@ -243,7 +243,7 @@ public class StationCMD implements CommandExecutor, TabCompleter {
 
         meta.setLore(finalLore);
 
-        // ================== PDC MERGE ==================
+        
         ItemMeta masterMeta = masterItem.getItemMeta();
         mergePDC(masterMeta, meta);
 
@@ -256,7 +256,7 @@ public class StationCMD implements CommandExecutor, TabCompleter {
                     BuffData.setEffect(item, name, level));
         }
 
-        // ================== REMAKE DISPLAY NAME & MODEL ID ==================
+        
         if (masterMeta.hasDisplayName()) {
             meta.setDisplayName(masterMeta.getDisplayName());
         }
@@ -265,7 +265,7 @@ public class StationCMD implements CommandExecutor, TabCompleter {
             meta.setCustomModelData(masterMeta.getCustomModelData());
         }
 
-        // LƯU VERSION MỚI
+        
         meta.getPersistentDataContainer().set(stationVersionKey, PersistentDataType.INTEGER, newVersion);
 
         item.setItemMeta(meta);
@@ -278,8 +278,8 @@ public class StationCMD implements CommandExecutor, TabCompleter {
         PersistentDataContainer target = targetMeta.getPersistentDataContainer();
 
         for (NamespacedKey key : source.getKeys()) {
-            // Tự động xác định kiểu dữ liệu đang tồn tại trong source để copy sang target
-            // Điều này tránh việc check nhầm kiểu gây ra lỗi Double/Integer
+            
+            
 
             if (source.has(key, PersistentDataType.STRING)) {
                 target.set(key, PersistentDataType.STRING, source.get(key, PersistentDataType.STRING));

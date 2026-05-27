@@ -37,38 +37,38 @@ public class ScriptSkill implements ISkill {
             bsh.set("level", level);
             bsh.set("baseDamage", baseDamage);
             bsh.set("api", this);
-            // Truyền thêm instance plugin để dùng trong Script nếu cần (ví dụ lấy metadata)
+            
             bsh.set("plugin", Main.getInstance());
 
             bsh.eval(script);
         } catch (Exception e) {
             Bukkit.getLogger().severe("[MyItem] Lỗi thực thi script skill '" + name + "': " + e.getMessage());
-            e.printStackTrace(); // Nên in ra để dễ debug lỗi cú pháp trong YML
+            e.printStackTrace(); 
         }
     }
 
-    // --- CÁC HÀM HỖ TRỢ (API cho User gọi trong YML) ---
+    
 
-    // 1. Hàm Delay cực kỳ quan trọng (Sửa lỗi Method Not Found)
+    
     public void delay(int ticks, Runnable r) {
         Bukkit.getScheduler().runTaskLater(Main.getInstance(), r, (long) ticks);
     }
 
-    // 2. Hàm gây sát thương chuẩn
+    
     public void damage(Player source, LivingEntity victim, double amount) {
         if (victim == null || victim.isDead()) return;
 
-        // 1. Dán nhãn giá trị sát thương (Giống bên ScriptAbility)
-        // Để EventDamage có thể lấy ra và ghi đè vào event.setDamage()
+        
+        
         victim.setMetadata("SKILL_DAMAGE_VALUE", new FixedMetadataValue(Main.getInstance(), amount));
 
-        // 2. Dán nhãn IS_ABILITY để tránh lặp kỹ năng
+        
         victim.setMetadata("IS_ABILITY", new FixedMetadataValue(Main.getInstance(), true));
 
-        // 3. Thực thi gây damage (Dùng 1.0 để kích hoạt event onDamage)
+        
         victim.damage(1.0, source);
 
-        // 4. Dọn dẹp metadata
+        
         Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
             if (victim.isValid()) {
                 victim.removeMetadata("IS_ABILITY", Main.getInstance());
@@ -77,7 +77,7 @@ public class ScriptSkill implements ISkill {
         }, 2L);
     }
 
-    // 3. Hàm hỗ trợ tìm mục tiêu gần nhất (Rất cần cho skill lốc xoáy/đạn bay)
+    
     public LivingEntity getNearest(Player player, double range) {
         List<Entity> entities = player.getNearbyEntities(range, range, range);
         LivingEntity nearest = null;

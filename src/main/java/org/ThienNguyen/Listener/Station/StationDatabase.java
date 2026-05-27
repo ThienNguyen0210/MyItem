@@ -29,7 +29,7 @@ public class StationDatabase {
                 stmt.execute("PRAGMA journal_mode = WAL;");
                 stmt.execute("PRAGMA synchronous = NORMAL;");
 
-                // 1. Tạo bảng station_master với cấu trúc đầy đủ nhất
+                
                 stmt.execute("CREATE TABLE IF NOT EXISTS station_master (" +
                         "code TEXT PRIMARY KEY," +
                         "data_json TEXT NOT NULL," +
@@ -40,7 +40,7 @@ public class StationDatabase {
                         "version INTEGER DEFAULT 1" +
                         ");");
 
-                // 2. Migration: Thêm các cột nếu người dùng đang dùng phiên bản DB cũ
+                
                 String[] columns = {
                         "ALTER TABLE station_master ADD COLUMN lore_json TEXT;",
                         "ALTER TABLE station_master ADD COLUMN display_name TEXT;",
@@ -52,11 +52,11 @@ public class StationDatabase {
                     try {
                         stmt.execute(sql);
                     } catch (SQLException ignored) {
-                        // Cột đã tồn tại, bỏ qua lỗi
+                        
                     }
                 }
 
-                // 3. Tạo bảng player_sync
+                
                 stmt.execute("CREATE TABLE IF NOT EXISTS player_sync (" +
                         "player_uuid TEXT," +
                         "code TEXT," +
@@ -164,15 +164,15 @@ public class StationDatabase {
                 "version = version + 1";
 
         try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
-            // Dữ liệu cho phần INSERT (nếu code chưa tồn tại)
+            
             pstmt.setString(1, code);
             pstmt.setString(2, dataJson);
             pstmt.setString(3, loreJson);
             pstmt.setString(4, displayName);
-            pstmt.setObject(5, customModelData); // Dùng setObject để hỗ trợ null
+            pstmt.setObject(5, customModelData); 
             pstmt.setString(6, pdcJson);
 
-            // Dữ liệu cho phần UPDATE (nếu đã có code trùng)
+            
             pstmt.setString(7, dataJson);
             pstmt.setString(8, loreJson);
             pstmt.setString(9, displayName);

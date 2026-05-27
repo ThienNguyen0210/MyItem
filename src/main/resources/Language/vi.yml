@@ -16,7 +16,11 @@ item:
   min-level: "&c&l✘ &7Cả 2 món phải đạt ít nhất cấp &e{level} &7để chuyển hóa!"
   success: "&a&l✔ &7Chuyển hóa thành công!"
   failed: "&c&l✘ &7Chuyển hóa thất bại! Cả 2 vật phẩm bị giảm 1 cấp."
-
+expire:
+  expired: "§c[!] Vật phẩm {item} của bạn đã hết hạn sử dụng và bị hủy!"
+  success-applied: "§a[✓] Đã gắn hạn sử dụng cho vật phẩm: §e{time}"
+  invalid-format: "§c[!] Định dạng thời gian không hợp lệ! Ví dụ: 1mo 2d 5h"
+  no-item: "§c[!] Bạn phải cầm một vật phẩm trên tay!"
 upgrade:
   # Tin nhắn trong chat
   max-level: "&cTrang bị đã đạt cấp tối đa!"

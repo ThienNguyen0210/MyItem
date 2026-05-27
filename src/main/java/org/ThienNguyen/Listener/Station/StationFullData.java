@@ -5,7 +5,7 @@ public class StationFullData {
     private final String loreJson;
     private final String displayName;
     private final Integer customModelData;
-    private final String pdcJson;        // ← MỚI
+    private final String pdcJson;        
     private final int version;
 
     public StationFullData(String dataJson, String loreJson, String displayName,
@@ -22,6 +22,6 @@ public class StationFullData {
     public String getLoreJson() { return loreJson; }
     public String getDisplayName() { return displayName; }
     public Integer getCustomModelData() { return customModelData; }
-    public String getPdcJson() { return pdcJson; }          // ← MỚI
+    public String getPdcJson() { return pdcJson; }          
     public int getVersion() { return version; }
 }

@@ -2,7 +2,7 @@ package org.ThienNguyen.Skill.TypeSkill.Weapon;
 
 import org.ThienNguyen.Skill.ISkill;
 import org.ThienNguyen.Main;
-import org.ThienNguyen.Listener.PlayerCombatCache; // Import cache của bạn
+import org.ThienNguyen.Listener.PlayerCombatCache; 
 import org.bukkit.*;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
@@ -27,19 +27,19 @@ public class TiaChopLienHoanSkill implements ISkill {
 
     @Override
     public void execute(Player player, LivingEntity targetIgnored, int level, double baseDamageFromEvent) {
-        // --- BƯỚC 1: LẤY SÁT THƯƠNG THỰC TỪ CACHE (THAY CHO PLACEHOLDER) ---
+        
         PlayerCombatCache.CombatStats stats = PlayerCombatCache.getStats(player.getUniqueId());
 
-        // Lấy totalBonusDmg (con số 100k của bạn).
-        // Nếu bạn có cộng thêm % AllDamage thì dùng: stats.totalBonusDmg * (1 + stats.totalAllDamage/100.0)
+        
+        
         double realPower = stats.totalBonusDmg;
 
-        // Bảo hiểm nếu cache trống thì lấy damage mặc định của Minecraft
+        
 
-        // --- BƯỚC 2: TÍNH TOÁN FINAL DAMAGE ---
+        
         double finalDmg = realPower * (0.50 + (level * 0.10));
 
-        // Gửi tin nhắn debug để kiểm tra con số to
+        
 
         Location startLoc = player.getEyeLocation().subtract(0, 0.2, 0);
         Vector direction = startLoc.getDirection().normalize();
@@ -101,24 +101,24 @@ public class TiaChopLienHoanSkill implements ISkill {
     }
 
     private void applyElectricDamage(Player caster, LivingEntity victim, double damage) {
-        // PHÁ GIÁP BẤT TỬ: Giúp đòn 100k trúng ngay lập tức không bị đòn đánh tay 1.2 cản trở
+        
         victim.setNoDamageTicks(0);
 
-        // ĐÁNH DẤU METADATA LÊN NẠN NHÂN: Để EventDamage.java của bạn RETURN ngay
+        
         victim.setMetadata("IS_ABILITY", new FixedMetadataValue(Main.getInstance(), true));
-        // Bạn có thể set thêm nhãn này nếu EventDamage của bạn có dùng tới
+        
         victim.setMetadata("SKILL_DAMAGE_PROCESSED", new FixedMetadataValue(Main.getInstance(), true));
 
-        // GÂY SÁT THƯƠNG THỰC TẾ
+        
         victim.damage(damage, caster);
 
-        // Hiệu ứng
+        
         victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 60, 1));
         Location loc = victim.getLocation().add(0, 1, 0);
         loc.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, loc, 15, 0.4, 0.4, 0.4, 0.15);
         loc.getWorld().playSound(loc, Sound.BLOCK_ANVIL_PLACE, 0.6f, 1.6f);
 
-        // DỌN DẸP TRỄ (2 Ticks): Đảm bảo EventDamage đã chạy xong xuôi
+        
         new BukkitRunnable() {
             @Override
             public void run() {

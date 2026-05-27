@@ -14,11 +14,11 @@ import java.util.Map;
 import java.util.UUID;
 
 public class ParticleManager {
-    // Sử dụng Map để lưu người chơi và ID hiệu ứng tương ứng
+    
     private static final Map<UUID, String> activeParticles = new HashMap<>();
 
     public static void loadConfig() {
-        // Có thể dùng để reload hoặc thông báo nếu cần trong tương lai
+        
     }
 
     public static void startTask() {
@@ -51,14 +51,14 @@ public class ParticleManager {
         if (config == null || !config.contains(path)) return;
 
         try {
-            // --- 1. Core Options ---
+            
             Particle particle = Particle.valueOf(config.getString(path + ".particle", "FLAME").toUpperCase());
             int amount = config.getInt(path + ".amount", 1);
             double speed = config.getDouble(path + ".speed", 0.01);
             double freq = config.getDouble(path + ".frequency", 1.0);
             double ticks = (double) Bukkit.getCurrentTick() * freq;
 
-            // --- 2. Coordinate System với option mới ---
+            
             Location origin = p.getLocation();
             boolean useViewDirection = config.getBoolean(path + ".use-view-direction", true);
 
@@ -67,33 +67,33 @@ public class ParticleManager {
             Vector localUp;
 
             if (useViewDirection) {
-                // Chế độ cũ: theo hướng nhìn đầy đủ (yaw + pitch)
+                
                 dir = origin.getDirection().normalize();
                 Vector worldUp = new Vector(0, 1, 0);
                 right = dir.clone().crossProduct(worldUp).normalize();
                 localUp = right.clone().crossProduct(dir).normalize();
             } else {
-                // Chế độ mới: fixed quanh người (chỉ xoay theo yaw, up thẳng đứng)
-                double yawRad = Math.toRadians(origin.getYaw() + 90); // +90 để forward khớp hướng đứng
-                dir = new Vector(-Math.sin(yawRad), 0, Math.cos(yawRad)).normalize(); // forward theo yaw
-                localUp = new Vector(0, 1, 0); // luôn lên theo world
-                right = dir.clone().crossProduct(localUp).normalize(); // right vuông góc
+                
+                double yawRad = Math.toRadians(origin.getYaw() + 90); 
+                dir = new Vector(-Math.sin(yawRad), 0, Math.cos(yawRad)).normalize(); 
+                localUp = new Vector(0, 1, 0); 
+                right = dir.clone().crossProduct(localUp).normalize(); 
             }
 
-            // Tính tâm dựa trên Offset
+            
             Location center = origin.clone()
                     .add(dir.multiply(     config.getDouble(path + ".forward-offset", 0.0)))
                     .add(localUp.multiply( config.getDouble(path + ".upward-offset", 1.0)))
                     .add(right.multiply(   config.getDouble(path + ".right-offset", 0.0)));
 
-            // --- 3. Arrangement Logic ---
+            
             String arrangement = config.getString(path + ".arrangement", "SINGLE").toUpperCase();
             double radius = config.getDouble(path + ".radius", 1.0);
             int points = config.getInt(path + ".points", 1);
 
             switch (arrangement) {
-                case "ATOM": // Quỹ đạo nguyên tử xoay quanh người
-                    for (int i = 0; i < 3; i++) { // 3 quỹ đạo
+                case "ATOM": 
+                    for (int i = 0; i < 3; i++) { 
                         double angle = (ticks * 0.2) + (i * Math.PI / 3);
                         double x = Math.cos(angle) * radius;
                         double y = Math.sin(angle) * radius * Math.cos(angle + i);
@@ -102,8 +102,8 @@ public class ParticleManager {
                     }
                     break;
 
-                case "WINGS": // Hình cánh đối xứng
-                    double wingTicks = Math.sin(ticks * 0.1) * 30; // Cánh đập
+                case "WINGS": 
+                    double wingTicks = Math.sin(ticks * 0.1) * 30; 
                     for (double i = 0.1; i <= radius; i += 0.1) {
                         for (int side_val : new int[]{-1, 1}) {
                             double angle = Math.toRadians(side_val * (45 + wingTicks));
@@ -114,7 +114,7 @@ public class ParticleManager {
                     }
                     break;
 
-                case "POLYGON": // Đa giác
+                case "POLYGON": 
                     int edges = config.getInt(path + ".edges", 3);
                     for (int i = 0; i < edges; i++) {
                         double angle1 = Math.toRadians(i * (360.0 / edges) + ticks);
@@ -131,7 +131,7 @@ public class ParticleManager {
                     }
                     break;
 
-                case "SPIRAL": // Xoắn ốc
+                case "SPIRAL": 
                     for (int i = 0; i < points; i++) {
                         double angle = (ticks * 0.5) + (i * (Math.PI * 2 / points));
                         double y = (ticks * 0.05 + (i * 0.1)) % radius;
@@ -145,7 +145,7 @@ public class ParticleManager {
                     break;
             }
         } catch (Exception ignored) {
-            // Nên log lỗi trong dev: ignored.printStackTrace();
+            
         }
     }
 
@@ -167,7 +167,7 @@ public class ParticleManager {
                 ), 1, 0, 0, 0, speed);
             }
         } else {
-            // SINGLE hoặc legacy khác
+            
             p.getWorld().spawnParticle(particle, center, amount,
                     config.getDouble(path + ".dx", 0),
                     config.getDouble(path + ".dy", 0),

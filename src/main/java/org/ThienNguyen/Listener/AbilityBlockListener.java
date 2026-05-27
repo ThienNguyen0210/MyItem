@@ -20,10 +20,10 @@ AbilityBlockListener implements Listener {
 
     @EventHandler
     public void onExplode(EntityExplodeEvent event) {
-        // Chặn block hoa không bị nổ
+        
         event.blockList().removeIf(block -> block.hasMetadata("UNBREAKABLE_FLOWER"));
 
-        // Chặn EndCrystal kỹ năng không tự nổ tung địa hình khi bị tác động
+        
         if (event.getEntity() instanceof EnderCrystal && event.getEntity().hasMetadata("UNBREAKABLE_CRYSTAL")) {
             event.setCancelled(true);
         }
@@ -36,11 +36,11 @@ AbilityBlockListener implements Listener {
         }
     }
 
-    // --- LOGIC MỚI: CHẶN CRYSTAL BỊ PHÁ HỦY ---
+    
     @EventHandler
     public void onCrystalDamage(EntityDamageEvent event) {
         if (event.getEntity() instanceof EnderCrystal && event.getEntity().hasMetadata("UNBREAKABLE_CRYSTAL")) {
-            event.setCancelled(true); // Không thể bị đánh nổ
+            event.setCancelled(true); 
         }
     }
 }

@@ -13,7 +13,7 @@ public class AbilityManager {
     private static final Map<String, IAbility> abilities = new HashMap<>();
 
     static {
-        // Nạp lần đầu khi class được load
+        
         registerDefaultAbilities();
     }
 
@@ -119,8 +119,8 @@ public class AbilityManager {
      */
     public static void clearAbilities() {
         abilities.clear();
-        // Nạp lại các kỹ năng mặc định (Java)
+        
         registerDefaultAbilities();
-        // Sau đó bạn có thể gọi loadExternalAbilities() từ Main class
+        
     }
 }

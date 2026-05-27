@@ -29,7 +29,7 @@ public class ItemFlagCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Kiểm tra cấu trúc: /itemflag hide <type> <true/false>
+        
         if (args.length < 3 || !args[0].equalsIgnoreCase("hide")) {
             player.sendMessage("§cCách dùng: /itemflag hide <type> <true/false>");
             return true;
@@ -47,7 +47,7 @@ public class ItemFlagCommand implements CommandExecutor, TabCompleter {
 
         if (meta != null) {
             try {
-                // Chuyển đổi string sang Enum ItemFlag (ví dụ: attribute -> HIDE_ATTRIBUTES)
+                
                 ItemFlag flag = convertToFlag(typeStr);
 
                 if (enable) {
@@ -68,7 +68,7 @@ public class ItemFlagCommand implements CommandExecutor, TabCompleter {
     }
 
     private ItemFlag convertToFlag(String input) {
-        // Hỗ trợ gõ tắt hoặc gõ đầy đủ
+        
         return switch (input) {
             case "ENCHANTS", "ENCHANT" -> ItemFlag.HIDE_ENCHANTS;
             case "ATTRIBUTES", "ATTRIBUTE" -> ItemFlag.HIDE_ATTRIBUTES;

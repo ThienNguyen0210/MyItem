@@ -39,7 +39,7 @@ public class SkillCommand implements ISkill {
     public void execute(Player player, LivingEntity target, int level, double baseDamage) {
         if (command == null || command.isEmpty()) return;
 
-        // 1. Thay thế các biến cơ bản và sát thương gốc
+        
         String finalCommand = command.replace("%player%", player.getName())
                 .replace("%level%", String.valueOf(level))
                 .replace("%basedamage%", String.valueOf(baseDamage));
@@ -48,13 +48,13 @@ public class SkillCommand implements ISkill {
             finalCommand = finalCommand.replace("%target%", target.getName());
         }
 
-        // 2. Hỗ trợ PlaceholderAPI (Chỉ dùng cho các placeholder động khác của server)
+        
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             finalCommand = PlaceholderAPI.setPlaceholders(player, finalCommand);
         }
 
-        // 3. Thực thi lệnh
-        final String cmdToRun = finalCommand; // Cần final để dùng trong lambda nếu cần
+        
+        final String cmdToRun = finalCommand; 
 
         switch (executeAs) {
             case "console" -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmdToRun);

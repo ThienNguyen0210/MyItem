@@ -26,28 +26,28 @@ public class AbilityLore {
         ItemMeta meta = item.getItemMeta();
         NamespacedKey formatKey = new NamespacedKey(Main.getInstance(), "lore_format_id");
 
-        // --- LOGIC MỚI: Rẽ nhánh cho LoreFormat ---
+        
         if (meta.getPersistentDataContainer().has(formatKey, PersistentDataType.STRING)) {
             org.ThienNguyen.Lore.LoreGenerator.rebuild(item);
-            return; // Nếu dùng Format thì để rebuild lo, thoát luôn
+            return; 
         }
 
-        // --- LOGIC CŨ (LEGACY): Sử dụng Marker để chèn/thay thế ---
+        
         List<String> newAbilityLore = getAbilityList(item);
         List<String> lore = meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
 
-        // Sử dụng helper để đọc Integer an toàn
+        
         Integer oldStart = getSafeInteger(meta, START_KEY);
         Integer oldEnd   = getSafeInteger(meta, END_KEY);
 
-        // 1. Xóa lore cũ dựa trên vị trí đã lưu (Marker)
+        
         if (oldStart != null && oldEnd != null && oldStart >= 0 && oldEnd < lore.size()) {
             for (int i = oldEnd; i >= oldStart; i--) {
                 lore.remove(i);
             }
         }
 
-        // Nếu không có nội tại mới thì dọn dẹp NBT rồi thoát
+        
         if (newAbilityLore.isEmpty()) {
             meta.getPersistentDataContainer().remove(START_KEY);
             meta.getPersistentDataContainer().remove(END_KEY);
@@ -56,20 +56,20 @@ public class AbilityLore {
             return;
         }
 
-        // 2. Xác định vị trí chèn
+        
         int insertPos;
         if (oldStart != null && oldStart <= lore.size()) {
             insertPos = oldStart;
         } else {
             insertPos = lore.size();
-            // Tự động thêm dòng trống nếu chèn vào cuối để tránh dính lẹo
+            
             if (!lore.isEmpty() && !ChatColor.stripColor(lore.get(lore.size() - 1)).trim().isEmpty()) {
                 lore.add("§7");
                 insertPos++;
             }
         }
 
-        // 3. Chèn Lore mới và cập nhật Marker
+        
         lore.addAll(insertPos, newAbilityLore);
         meta.getPersistentDataContainer().set(START_KEY, PersistentDataType.INTEGER, insertPos);
         meta.getPersistentDataContainer().set(END_KEY, PersistentDataType.INTEGER, insertPos + newAbilityLore.size() - 1);
@@ -115,7 +115,7 @@ public class AbilityLore {
             List<String> template = config.getStringList("abilities." + key + ".lore");
             if (template.isEmpty()) continue;
 
-            // XÓA HOẶC COMMENT ĐOẠN NÀY ĐỂ KHÔNG CÁCH DÒNG TRỐNG
+            
             /*
             if (!result.isEmpty()) {
                 result.add("");
@@ -174,7 +174,7 @@ public class AbilityLore {
         return romanMap.get(l) + toRoman(number - l);
     }
     public static String getFormattedLine(String abilityId, int level) {
-        FileConfiguration config = Main.getInstance().getAbilityConfig(); // Tên config của bạn
+        FileConfiguration config = Main.getInstance().getAbilityConfig(); 
         if (config == null) return "§7Ability: §f" + abilityId + " " + toRoman(level);
 
         String path = "abilities." + abilityId + ".display-name";

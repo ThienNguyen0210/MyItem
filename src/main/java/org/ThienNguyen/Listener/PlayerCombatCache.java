@@ -11,7 +11,7 @@ public class PlayerCombatCache {
     private static final Map<UUID, CombatStats> cache = new ConcurrentHashMap<>();
 
     public static class CombatStats {
-        // --- NHÓM TẤN CÔNG ---
+        public double totalCritDamageReduction = 0.0;
         public double totalMagicDamage = 0.0;
         public Map<String, Integer> elementDefenses = new HashMap<>();
         public double totalMagicDefense = 0.0;
@@ -27,25 +27,27 @@ public class PlayerCombatCache {
         public double totalArmorPen = 0;
         public double totalElementDamage = 0;
         public double totalDeathDamage = 0;
-        // Stats mới bổ sung
-        public double totalBowDamage = 0;   // Sát thương cộng thẳng cho cung
-        public double totalAllDamage = 0;   // % Tăng sát thương toàn phần
-
-        // --- NHÓM PHÒNG THỦ ---
+        public double totalDeepWound = 0.0;
+        public double totalBowDamage = 0;   
+        public double totalAllDamage = 0;   
+        public double totalMaxMana = 0;
+        public double totalManaRegen = 0;
+        
         public double totalArmor = 0;
         public double totalPveDef = 0;
         public double totalPvpDef = 0;
         public double totalDodge = 0;
         public double totalBlock = 0;
         public double totalThorns = 0;
-        public double totalAllDefense = 0;  // % Giảm sát thương toàn phần
-
-        // --- NHÓM TIỆN ÍCH & THUỘC TÍNH ---
+        public double totalAllDefense = 0;  
+        public double totalExpBonus = 0.0;
+        
         public double totalHealthRegen = 0;
-        public double totalKnockbackResist = 0; // Kháng bật lùi (0.0 - 1.0)
-        public double totalMovementSpeed = 0;   // Tốc độ di chuyển thêm (%)
+        public double totalKnockbackResist = 0; 
+        public double totalMovementSpeed = 0;
+        public double totalDamageReduction = 0.0;
 
-        // --- NHÓM KỸ NĂNG & NGUYÊN TỐ ---
+        
         public Map<String, double[]> bestAbilities = new HashMap<>();
         public Map<String, Double> weaponElementDamage = new HashMap<>();
         public Map<String, Integer> weaponElementLevels = new HashMap<>();
@@ -55,24 +57,28 @@ public class PlayerCombatCache {
          */
         public void clear() {
             totalAccuracy = 0;
-            // Reset Tấn công
+            totalDeepWound = 0.0;
+            totalDamageReduction = 0.0;
+            totalMaxMana = 0;
+            totalManaRegen = 0;
             totalDeathDamage = 0;
             totalBonusDmg = totalPveBonus = totalPvpBonus = 0;
             totalCritChance = totalCritDamage = totalLifesteal = 0;
             totalPenetration = totalTrueDamage = totalArmorPen = 0;
             totalElementDamage = totalBowDamage = totalAllDamage = 0;
             elementDefenses.clear();
-            // Reset Phòng thủ
+            totalCritDamageReduction = 0.0;
             totalArmor = totalPveDef = totalPvpDef = 0;
             totalDodge = totalBlock = totalThorns = totalAllDefense = 0;
 
-            // Reset Tiện ích
+            
             totalHealthRegen = 0;
             totalKnockbackResist = 0;
             totalMovementSpeed = 0;
-            totalMagicDamage = 0.0; // Thêm dòng này vào hàm clear()
+            totalExpBonus = 0;
+            totalMagicDamage = 0.0; 
             totalMagicDefense = 0.0;
-            // Xóa Map
+            
             bestAbilities.clear();
             weaponElementDamage.clear();
             weaponElementLevels.clear();
@@ -87,13 +93,13 @@ public class PlayerCombatCache {
         }
     }
     public double getRealPower(Player player) {
-        // Truy cập thẳng vào Cache nội bộ của bạn
+        
         var stats = org.ThienNguyen.Listener.PlayerCombatCache.getStats(player.getUniqueId());
 
-        // Lấy chỉ số Tấn công tổng (tương đương với cái placeholder 100,000 hồi trước)
+        
         double attackDmg = stats.totalBonusDmg;
 
-        // Nếu cache trống (phòng hờ), lấy damage mặc định của Minecraft
+        
         if (attackDmg <= 0) {
             attackDmg = player.getAttribute(org.bukkit.attribute.Attribute.GENERIC_ATTACK_DAMAGE).getValue();
         }

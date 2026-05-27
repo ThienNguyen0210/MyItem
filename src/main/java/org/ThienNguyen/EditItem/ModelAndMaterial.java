@@ -35,7 +35,7 @@ public class ModelAndMaterial implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // --- Xử lý lệnh /setmodel <id> ---
+        
         if (command.getName().equalsIgnoreCase("setmodel")) {
             if (args.length < 1) {
                 player.sendMessage("§cSử dụng: /setmodel <id>");
@@ -54,7 +54,7 @@ public class ModelAndMaterial implements CommandExecutor, TabCompleter {
             }
         }
 
-        // --- Xử lý lệnh /material <type> ---
+        
         else if (command.getName().equalsIgnoreCase("material")) {
             if (args.length < 1) {
                 player.sendMessage("§cSử dụng: /material <vật_liệu>");

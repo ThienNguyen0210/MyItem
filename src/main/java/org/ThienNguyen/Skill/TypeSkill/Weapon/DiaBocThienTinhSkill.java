@@ -2,7 +2,7 @@ package org.ThienNguyen.Skill.TypeSkill.Weapon;
 
 import org.ThienNguyen.Skill.ISkill;
 import org.ThienNguyen.Main;
-import org.ThienNguyen.Listener.PlayerCombatCache; // Cầu nối lấy stats 100k
+import org.ThienNguyen.Listener.PlayerCombatCache; 
 import org.bukkit.*;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
@@ -27,7 +27,7 @@ public class DiaBocThienTinhSkill implements ISkill {
 
     @Override
     public void execute(Player player, LivingEntity targetIgnored, int level, double baseDamageFromEvent) {
-        // --- BƯỚC 1: LẤY SÁT THƯƠNG THỰC TỪ CACHE (Bỏ qua 1.2 của Event) ---
+        
         PlayerCombatCache.CombatStats stats = PlayerCombatCache.getStats(player.getUniqueId());
         double realPower = stats.totalBonusDmg;
 
@@ -35,20 +35,20 @@ public class DiaBocThienTinhSkill implements ISkill {
             realPower = player.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE).getValue();
         }
 
-        // --- BƯỚC 2: TÍNH TOÁN FINAL DAMAGE (70% + 15% mỗi cấp) ---
+        
         double finalDmg = realPower * (0.70 + (level * 0.15));
 
 
         List<ArmorStand> stones = new ArrayList<>();
         Location center = player.getLocation();
 
-        // Tạo 6 viên đá
+        
         for (int i = 0; i < 6; i++) {
             ArmorStand as = (ArmorStand) center.getWorld().spawnEntity(center.clone().add(0, -1, 0), EntityType.ARMOR_STAND);
             as.setVisible(false);
             as.setGravity(false);
             as.setMarker(true);
-            as.setSmall(false); // Để viên đá to nhìn cho ngầu
+            as.setSmall(false); 
             if (as.getEquipment() != null) {
                 as.getEquipment().setHelmet(new ItemStack(Material.STONE));
             }
@@ -70,7 +70,7 @@ public class DiaBocThienTinhSkill implements ISkill {
                 }
 
                 if (ticks >= 60) {
-                    // Khi nổ, nổ từng viên cách nhau 1 chút hoặc xử lý gộp
+                    
                     for (ArmorStand as : stones) {
                         explodeStone(player, as.getLocation().add(0, 1.45, 0), finalDmg);
                         as.remove();
@@ -112,20 +112,20 @@ public class DiaBocThienTinhSkill implements ISkill {
         for (Entity entity : loc.getWorld().getNearbyEntities(loc, 4.5, 4.5, 4.5)) {
             if (entity instanceof LivingEntity victim && !entity.equals(player) && !(entity instanceof ArmorStand)) {
 
-                // PHÁ BẤT TỬ: Cực kỳ quan trọng vì có 6 viên đá nổ cùng lúc!
+                
                 victim.setNoDamageTicks(0);
 
-                // SET METADATA LÊN VICTIM
+                
                 victim.setMetadata("IS_ABILITY", new FixedMetadataValue(Main.getInstance(), true));
 
-                // GÂY DAMAGE THỰC
+                
                 victim.damage(damage, player);
 
-                // Đẩy lùi
+                
                 Vector kb = victim.getLocation().toVector().subtract(loc.toVector()).normalize().multiply(1.2).setY(0.5);
                 victim.setVelocity(kb);
 
-                // Dọn dẹp trễ 2 ticks
+                
                 new BukkitRunnable() {
                     @Override
                     public void run() {

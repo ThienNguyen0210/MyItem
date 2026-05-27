@@ -26,16 +26,16 @@ public class TiersLore {
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
         NamespacedKey formatKey = new NamespacedKey(Main.getInstance(), "lore_format_id");
 
-        // Lưu tierId vào NBT để sau này rebuild() hoặc getTierLine() có thể lấy lại
+        
         pdc.set(TIER_KEY, PersistentDataType.STRING, tierId);
 
-        // --- LOGIC MỚI: Rẽ nhánh cho LoreFormat ---
+        
         if (pdc.has(formatKey, PersistentDataType.STRING)) {
             org.ThienNguyen.Lore.LoreGenerator.rebuild(item);
             return;
         }
 
-        // --- LOGIC CŨ (LEGACY): Tìm và thay thế dòng Tier cũ ---
+        
         List<String> lore = meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
         FileConfiguration config = Main.getInstance().getTiersConfig();
         if (config == null || config.getConfigurationSection("tiers") == null) {
@@ -52,7 +52,7 @@ public class TiersLore {
         boolean replaced = false;
         Set<String> allTierKeys = config.getConfigurationSection("tiers").getKeys(false);
 
-        // Quét ngược từ dưới lên để tìm dòng Tier cũ và thay thế (Logic của mày)
+        
         for (int i = lore.size() - 1; i >= 0; i--) {
             String currentLineStripped = ChatColor.stripColor(lore.get(i)).trim();
 
@@ -71,7 +71,7 @@ public class TiersLore {
             if (replaced) break;
         }
 
-        // Nếu không tìm thấy dòng cũ, thêm vào cuối cùng
+        
         if (!replaced) {
             lore.add(newTierLine);
         }

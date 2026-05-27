@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 
 public class Essentials implements CommandExecutor, TabCompleter {
 
-    // Bộ nhớ tạm để lưu lore khi copy
+    
     private static List<String> copiedLore = null;
 
     @Override
@@ -132,14 +132,14 @@ public class Essentials implements CommandExecutor, TabCompleter {
                     player.sendMessage("§cSử dụng: /setlore insert <số dòng> <nội dung>");
                     return;
                 }
-                int index = getIndex(args[1], lore.size() + 1); // cho phép insert sau dòng cuối
+                int index = getIndex(args[1], lore.size() + 1); 
                 if (index == -1) {
                     player.sendMessage("§cSố dòng không hợp lệ!");
                     return;
                 }
                 String content = translateColor(String.join(" ", Arrays.copyOfRange(args, 2, args.length)));
 
-                // Nếu index lớn hơn kích thước hiện tại → chèn cuối
+                
                 if (index >= lore.size()) {
                     lore.add(content);
                     player.sendMessage("§aĐã chèn dòng mới vào cuối!");

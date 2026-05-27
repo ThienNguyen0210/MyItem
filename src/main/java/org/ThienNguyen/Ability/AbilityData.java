@@ -10,7 +10,7 @@
     import java.util.List;
 
     public class AbilityData {
-        // Chúng ta nên dùng tên key là "item_abilities" (số nhiều) để phân biệt
+        
         private static final NamespacedKey ABILITY_KEY = new NamespacedKey(Main.getInstance(), "item_abilities");
 
 
@@ -23,17 +23,17 @@
             String newAbilityEntry = abilityName.toUpperCase() + ":" + level + ":" + chance;
 
             if (currentData == null || currentData.isEmpty()) {
-                // Nếu chưa có kỹ năng nào, lưu mới luôn
+                
                 pdc.set(ABILITY_KEY, PersistentDataType.STRING, newAbilityEntry);
             } else {
-                // Nếu đã có, kiểm tra xem kỹ năng này đã tồn tại trong danh sách chưa
+                
                 String[] abilities = currentData.split(",");
                 boolean found = false;
                 StringBuilder finalData = new StringBuilder();
 
                 for (String entry : abilities) {
                     if (entry.startsWith(abilityName.toUpperCase() + ":")) {
-                        // Nếu trùng tên, thay thế bằng dữ liệu mới (Level/Chance mới)
+                        
                         finalData.append(newAbilityEntry);
                         found = true;
                     } else {
@@ -43,11 +43,11 @@
                 }
 
                 if (!found) {
-                    // Nếu chưa có kỹ năng này trong danh sách, thêm nó vào cuối
+                    
                     finalData.append(newAbilityEntry);
                 }
 
-                // Xóa dấu phẩy thừa ở cuối nếu có
+                
                 String result = finalData.toString();
                 if (result.endsWith(",")) result = result.substring(0, result.length() - 1);
 

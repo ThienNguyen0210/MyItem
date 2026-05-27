@@ -14,7 +14,7 @@ public class Hunger implements IAbility {
     @Override
     public void execute(Player attacker, LivingEntity target, int level, double baseDamage) {
         if (!(target instanceof Player victim)) return;
-        // Hiệu ứng đói khát cấp độ level
+        
         victim.addPotionEffect(new PotionEffect(PotionEffectType.HUNGER, level * 20 * 3, level));
     }
 }

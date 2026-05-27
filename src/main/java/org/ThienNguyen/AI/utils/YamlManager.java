@@ -52,7 +52,7 @@ public class YamlManager {
             ConfigurationSection dataToSave = null;
             if (!tempConfig.getKeys(false).isEmpty()) {
                 String firstKey = tempConfig.getKeys(false).iterator().next();
-                // Kiểm tra nếu root là một ID hoặc tên item, nếu không thì lấy cả config
+                
                 if (tempConfig.isConfigurationSection(firstKey)) {
                     dataToSave = tempConfig.getConfigurationSection(firstKey);
                 } else {
@@ -87,7 +87,7 @@ public class YamlManager {
     public static ItemStack buildItemFromConfig(ConfigurationSection section) {
         if (section == null) return null;
 
-        // 1. Khởi tạo Material
+        
         String matName = section.getString("material", "NETHERITE_SWORD").toUpperCase();
         Material mat = Material.matchMaterial(matName);
         ItemStack item = new ItemStack(mat != null ? mat : Material.NETHERITE_SWORD);
@@ -95,9 +95,9 @@ public class YamlManager {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
 
-        // 2. NẠP DỮ LIỆU VÀO PDC TRƯỚC (Để các hàm Render có dữ liệu để đọc)
+        
 
-        // Xử lý Unbreaking
+        
         if (section.getBoolean("unbreaking", false)) {
             meta.setUnbreakable(true);
         }
@@ -106,12 +106,12 @@ public class YamlManager {
             meta.getPersistentDataContainer().set(new NamespacedKey(Main.getInstance(), "lore_format_id"), PersistentDataType.STRING, section.getString("lore_format"));
         }
 
-        // Nạp Tier ID (Rất quan trọng để TiersLore.getTierLine hoạt động)
+        
         if (section.contains("tier")) {
             meta.getPersistentDataContainer().set(new NamespacedKey(Main.getInstance(), "item_tier_id"), PersistentDataType.STRING, section.getString("tier"));
         }
 
-        // Nạp Stats
+        
         if (section.contains("stats")) {
             ConfigurationSection statsSec = section.getConfigurationSection("stats");
             for (String key : statsSec.getKeys(false)) {
@@ -124,7 +124,7 @@ public class YamlManager {
             }
         }
 
-        // Nạp Skill
+        
         if (section.contains("skill")) {
             ConfigurationSection skillSec = section.getConfigurationSection("skill");
             for (String key : skillSec.getKeys(false)) {
@@ -132,31 +132,31 @@ public class YamlManager {
             }
         }
 
-        // --- CẬP NHẬT META VÀO ITEM LẦN 1 ---
+        
         item.setItemMeta(meta);
 
-        // 3. RENDER LORE (Lúc này gọi các hàm Lore mới có dữ liệu)
+        
         List<String> rawLore = section.getStringList("lore");
         List<String> finalLore = new ArrayList<>();
 
         for (String line : rawLore) {
             String renderedLine = line.trim();
 
-            // Làm sạch dấu gạch ngang rác
+            
             if (renderedLine.startsWith("-") && !renderedLine.contains("&m-")) {
                 renderedLine = renderedLine.substring(1).trim();
             }
 
-            // Thay thế Placeholder Tier
+            
             if (renderedLine.contains("{tier}")) {
                 renderedLine = renderedLine.replace("{tier}", TiersLore.getTierLine(item));
             } else if (renderedLine.contains("{tier:")) {
                 String key = extractKey(renderedLine, "{tier:");
-                // Vẫn dùng getTierLine(item) vì ID đã nằm trong PDC của item rồi
+                
                 renderedLine = renderedLine.replace("{tier:" + key + "}", TiersLore.getTierLine(item));
             }
 
-            // Thay thế Placeholder Stats
+            
             if (renderedLine.contains("{stats:")) {
                 Pattern pattern = Pattern.compile("\\{stats:([^}]+)\\}");
                 Matcher matcher = pattern.matcher(renderedLine);
@@ -167,7 +167,7 @@ public class YamlManager {
                 }
             }
 
-            // Render Element
+            
             if (renderedLine.contains("{element:")) {
                 String eleId = extractKey(renderedLine, "{element:");
                 int level = section.getInt("elements." + eleId, 0);
@@ -176,7 +176,7 @@ public class YamlManager {
                 } else { renderedLine = ""; }
             }
 
-            // Render Effect
+            
             else if (renderedLine.contains("{effect:")) {
                 String effId = extractKey(renderedLine, "{effect:");
                 int level = section.getInt("effects." + effId, 0);
@@ -190,7 +190,7 @@ public class YamlManager {
                 } else { renderedLine = ""; }
             }
 
-            // Render Ability
+            
             else if (renderedLine.contains("{ability:")) {
                 String abilityKey = extractKey(renderedLine, "{ability:");
                 String rawVal = section.getString("ability." + abilityKey);
@@ -211,7 +211,7 @@ public class YamlManager {
                 }
             }
 
-            // Render Skill
+            
             if (renderedLine.contains("{skill:")) {
                 String key = extractKey(renderedLine, "{skill:");
                 int level = section.getInt("skill." + key);
@@ -221,13 +221,13 @@ public class YamlManager {
             if (!renderedLine.isEmpty()) finalLore.add(formatColor(renderedLine));
         }
 
-        // 4. CẬP NHẬT LẠI DISPLAY NAME & LORE CUỐI CÙNG
-        ItemMeta finalMeta = item.getItemMeta(); // Lấy lại meta đã có PDC từ item
+        
+        ItemMeta finalMeta = item.getItemMeta(); 
         finalMeta.setDisplayName(formatColor(section.getString("display_name")));
         finalMeta.setLore(finalLore);
         item.setItemMeta(finalMeta);
 
-        // 5. NẠP DỮ LIỆU PHỨC TẠP QUA API NGOÀI (NẾU CÓ)
+        
         if (section.contains("elements")) {
             ConfigurationSection eleSec = section.getConfigurationSection("elements");
             for (String key : eleSec.getKeys(false)) {
@@ -258,7 +258,7 @@ public class YamlManager {
         return item;
     }
 
-    // Hàm bổ trợ để lấy Key chính xác hơn
+    
     private static String extractKey(String line, String prefix) {
         try {
             int start = line.indexOf(prefix) + prefix.length();
@@ -271,7 +271,7 @@ public class YamlManager {
 
     private static String formatColor(String text) {
         if (text == null || text.isEmpty()) return "";
-        // Hỗ trợ mã Hex &#FFFFFF
+        
         Pattern hexPattern = Pattern.compile("&#([A-Fa-f0-9]{6})");
         Matcher matcher = hexPattern.matcher(text);
         StringBuilder sb = new StringBuilder();
@@ -284,7 +284,7 @@ public class YamlManager {
             matcher.appendReplacement(sb, replacement.toString());
         }
         matcher.appendTail(sb);
-        // Hỗ trợ mã màu truyền thống &c, &l...
+        
         return ChatColor.translateAlternateColorCodes('&', sb.toString());
     }
 }

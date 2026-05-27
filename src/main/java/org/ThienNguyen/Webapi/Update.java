@@ -27,7 +27,7 @@ public class Update {
     private static final String DOWNLOAD_URL_TEMPLATE = "http://103.188.83.137/api/downloads/MyItem-%s.jar";
     public static NamespacedKey GUI_KEY;
 
-    // GUI 1: Thông tin phiên bản hiện tại
+    
     public static void openVersionGUI(Player player, Main plugin) {
         GUI_KEY = new NamespacedKey(plugin, "update_gui_locked");
         Inventory gui = Bukkit.createInventory(null, 27, "§0MyItem - Plugin Version");
@@ -50,7 +50,7 @@ public class Update {
         upLore.add("§7Tên file sẽ tải: §f" + getJarName(plugin));
         upMeta.setLore(upLore);
         upMeta.getPersistentDataContainer().set(GUI_KEY, PersistentDataType.BYTE, (byte) 1);
-        // Đánh dấu hành động mở List
+        
         upMeta.getPersistentDataContainer().set(new NamespacedKey(plugin, "action_open_list"), PersistentDataType.BYTE, (byte) 1);
         updateIcon.setItemMeta(upMeta);
 
@@ -73,7 +73,7 @@ public class Update {
                 String data = jsonContent.toString();
 
                 Bukkit.getScheduler().runTask(plugin, () -> {
-                    // SỬA: Đổi kích thước thành 54 ô
+                    
                     Inventory gui = Bukkit.createInventory(null, 54, "§0MyItem - Danh sách Update");
 
                     try {
@@ -85,10 +85,10 @@ public class Update {
                             String versionsPart = cleanData.substring(startArr + 1, endArr);
                             String[] objects = versionsPart.split("\\}( ?), ?\\{");
 
-                            // Bắt đầu từ slot 10 (hàng 2)
+                            
                             int slot = 10;
                             for (String obj : objects) {
-                                if (slot >= 44) break; // Giới hạn không đè vào hàng cuối
+                                if (slot >= 44) break; 
 
                                 String jsonObject = obj;
                                 if (!jsonObject.startsWith("{")) jsonObject = "{" + jsonObject;
@@ -120,12 +120,12 @@ public class Update {
                                 item.setItemMeta(meta);
 
                                 gui.setItem(slot++, item);
-                                // Nhảy hàng nếu chạm mép phải (slot 17 -> 19)
+                                
                                 if (slot % 9 == 8) slot += 2;
                             }
                         }
 
-                        // --- THÊM Ô DONATE Ở CUỐI GUI (SLOT 53) ---
+                        
                         ItemStack donate = new ItemStack(Material.PAPER);
                         ItemMeta dMeta = donate.getItemMeta();
                         dMeta.setDisplayName("§d§l❤ DONATE AUTHOR §d§l❤");
@@ -138,11 +138,11 @@ public class Update {
                         dLore.add("");
                         dLore.add("§d§oCảm ơn sự đóng góp của bạn!");
                         dMeta.setLore(dLore);
-                        // Đánh dấu để không cho lấy item ra khỏi GUI
+                        
                         dMeta.getPersistentDataContainer().set(new NamespacedKey(plugin, "update_gui_locked"), PersistentDataType.BYTE, (byte) 1);
                         donate.setItemMeta(dMeta);
                         gui.setItem(53, donate);
-                        // -----------------------------------------
+                        
 
                     } catch (Exception ex) {
                         player.sendMessage("§c[MyItem] Lỗi hiển thị: JSON không đúng định dạng!");
@@ -169,7 +169,7 @@ public class Update {
             return "Lỗi";
         }
     }
-    // Sửa lại hàm này: Thêm tham số String version
+    
     public static void downloadAndUpdate(Main plugin, String version, Player player) {
         String downloadUrl = String.format(DOWNLOAD_URL_TEMPLATE, version);
         player.sendMessage("§e[MyItem] Đang tiến hành tải bản " + version + "...");
@@ -180,7 +180,7 @@ public class Update {
         client.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream())
                 .thenAccept(response -> {
                     if (response.statusCode() == 200) {
-                        // TRUYỀN version vào hàm save
+                        
                         saveToUpdateFolder(plugin, response.body(), player, version);
                     } else {
                         player.sendMessage("§c[MyItem] Không thể tải! Lỗi API: " + response.statusCode());
@@ -192,10 +192,10 @@ public class Update {
                 });
     }
 
-    // Sửa lại hàm này: Đổi tên file theo version được truyền vào
+    
     private static void saveToUpdateFolder(Main plugin, InputStream inputStream, Player player, String version) {
         try {
-            // TỰ ĐỊNH NGHĨA TÊN FILE THEO VERSION CLICK TRÊN GUI
+            
             String jarName = "MyItem-" + version + ".jar";
 
             File updateFolder = new File(plugin.getDataFolder(), "Update");
@@ -203,7 +203,7 @@ public class Update {
 
             File targetFile = new File(updateFolder, jarName);
 
-            // Luồng dữ liệu (InputStream) từ Web sẽ được ghi trực tiếp vào file có tên MyItem-{version}.jar
+            
             Files.copy(inputStream, targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
             player.sendMessage("");

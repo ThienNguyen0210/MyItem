@@ -24,30 +24,30 @@ public class DarkImpact implements IAbility {
 
         Plugin plugin = JavaPlugin.getProvidingPlugin(getClass());
 
-        // 1. Tính toán sát thương: 80% + (level-1) * 15%
+        
         double damageMultiplier = 0.8 + ((level - 1) * 0.15);
         double finalDamage = baseDamage * damageMultiplier;
 
-        // 2. Gây sát thương an toàn
+        
         applySafeDamage(target, attacker, finalDamage, plugin);
 
-        // 3. Xử lý đảo tầm nhìn (Chỉ áp dụng nếu mục tiêu là Người chơi)
+        
         if (target instanceof Player victim) {
             Location loc = victim.getLocation();
 
-            // Đảo hướng 180 độ: Yaw hiện tại + 180
+            
             float newYaw = loc.getYaw() + 180f;
             loc.setYaw(newYaw);
 
-            // Teleport để cập nhật góc nhìn ngay lập tức
+            
             victim.teleport(loc);
 
-            // Thêm hiệu ứng âm thanh và hạt tối tăm ngay tại đầu mục tiêu
+            
             victim.playSound(victim.getLocation(), Sound.ENTITY_ZOMBIE_VILLAGER_CONVERTED, 1.0f, 0.5f);
             victim.getWorld().spawnParticle(Particle.SMOKE_LARGE, victim.getEyeLocation(), 15, 0.2, 0.2, 0.2, 0.05);
         }
 
-        // 4. Hiệu ứng hình ảnh Impact (Vụ nổ bóng tối)
+        
         Location targetLoc = target.getLocation().add(0, 1, 0);
         targetLoc.getWorld().spawnParticle(Particle.SONIC_BOOM, targetLoc, 1);
         targetLoc.getWorld().spawnParticle(Particle.SQUID_INK, targetLoc, 20, 0.3, 0.3, 0.3, 0.1);

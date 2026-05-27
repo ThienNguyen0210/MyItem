@@ -28,7 +28,7 @@ public class LilacBloomBomb implements IAbility {
         Location center = target.getLocation();
         List<Block> placedFlowers = new ArrayList<>();
 
-        // 2. Trồng hoa Lilac (Bán kính 3 block)
+        
         for (double t = 0; t < 2 * Math.PI; t += Math.PI / 6) {
             double x = 3.0 * Math.cos(t);
             double z = 3.0 * Math.sin(t);
@@ -38,7 +38,7 @@ public class LilacBloomBomb implements IAbility {
             if (block.getType() == Material.AIR) {
                 block.setType(Material.LILAC);
 
-                // --- QUAN TRỌNG: Gắn nhãn để Listener chặn phá block ---
+                
                 block.setMetadata("UNBREAKABLE_FLOWER", new FixedMetadataValue(Main.getInstance(), true));
 
                 placedFlowers.add(block);
@@ -48,11 +48,11 @@ public class LilacBloomBomb implements IAbility {
 
         center.getWorld().playSound(center, Sound.BLOCK_AZALEA_PLACE, 1.0f, 1.2f);
 
-        // 3. Sau 2 giây phát nổ
+        
         new BukkitRunnable() {
             @Override
             public void run() {
-                // Xóa hoa và gỡ nhãn Metadata
+                
                 for (Block b : placedFlowers) {
                     if (b.getType() == Material.LILAC) {
                         b.removeMetadata("UNBREAKABLE_FLOWER", Main.getInstance());
@@ -69,7 +69,7 @@ public class LilacBloomBomb implements IAbility {
                 explosionLoc.getWorld().playSound(explosionLoc, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.5f);
                 explosionLoc.getWorld().playSound(explosionLoc, Sound.ENTITY_FIREWORK_ROCKET_TWINKLE, 1.0f, 0.8f);
 
-                // Gây sát thương chống loop
+                
                 target.setNoDamageTicks(0);
                 target.setMetadata("IS_ABILITY", new FixedMetadataValue(Main.getInstance(), true));
                 target.damage(damageToDeal, attacker);

@@ -1,0 +1,11 @@
+# Hệ thống cấu hình hạn sử dụng vật phẩm (Expire System)
+# Khoảng thời gian giữa mỗi lượt quét toàn server (tính bằng GIÂY)
+#format lệnh /myitem expire <date> với <date> định dạng sau 1d 2h 4m 6s ví dụ /myitem expire 3d 12h 6h 30m
+# thiện dev
+#định dạng message mới
+#expire:
+#  expired: "§c[!] Vật phẩm {item} của bạn đã hết hạn sử dụng và bị hủy!"
+#  success-applied: "§a[✓] Đã gắn hạn sử dụng cho vật phẩm: §e{time}"
+#  invalid-format: "§c[!] Định dạng thời gian không hợp lệ! Ví dụ: 1mo 2d 5h"
+#  no-item: "§c[!] Bạn phải cầm một vật phẩm trên tay!"
+scan-interval-seconds: 60

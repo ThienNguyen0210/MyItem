@@ -18,7 +18,7 @@ public class KnockbackResistance {
         if (item == null) return;
         var meta = item.getItemMeta();
         if (meta == null) return;
-        // Giới hạn giá trị trong khoảng 0.0 - 1.0
+        
         double finalValue = Math.max(0, Math.min(1, value));
         if (finalValue == 0) meta.getPersistentDataContainer().remove(KEY);
         else meta.getPersistentDataContainer().set(KEY, PersistentDataType.DOUBLE, finalValue);

@@ -60,7 +60,7 @@ public class GUI implements Listener {
                 lore.add("");
                 lore.add("§fTỉ lệ thành công: §a" + (int) chance + "%");
 
-                // Render chi phí nâng cấp
+                
                 lore.add("§fChi phí: §6" + String.format("%,.0f", cost) + "$");
 
                 ItemStack protect = inv.getItem(SLOT_PROTECT);
@@ -86,7 +86,7 @@ public class GUI implements Listener {
     public void onInventoryClick(InventoryClickEvent event) {
         if (!event.getView().getTitle().equals(GUI_TITLE)) return;
 
-        var lang = Main.getInstance().getLangManager(); // Thêm manager ở đây
+        var lang = Main.getInstance().getLangManager(); 
         int slot = event.getRawSlot();
         Inventory inv = event.getInventory();
         Player player = (Player) event.getWhoClicked();
@@ -115,12 +115,12 @@ public class GUI implements Listener {
         if (event.getClick().isShiftClick() && event.getRawSlot() >= inv.getSize()) {
             if (currentItem != null && currentItem.getType() != Material.AIR) {
                 if (upgradeProcessor.isValidGem(currentItem) || upgradeProcessor.isProtectionScroll(currentItem)) {
-                    // Để mặc định
+                    
                 } else {
                     if (inv.getItem(SLOT_ITEM) == null || inv.getItem(SLOT_ITEM).getType() == Material.AIR) {
                         if (currentItem.getAmount() > 1) {
                             event.setCancelled(true);
-                            // Sửa ở đây
+                            
                             player.sendMessage(lang.getMessage("upgrade.only-one-item"));
                             return;
                         }
@@ -136,7 +136,7 @@ public class GUI implements Listener {
             if (slot == SLOT_ITEM) {
                 if (cursorItem.getAmount() > 1) {
                     event.setCancelled(true);
-                    // Sửa ở đây
+                    
                     player.sendMessage(lang.getMessage("upgrade.only-one-item"));
                     return;
                 }
@@ -145,7 +145,7 @@ public class GUI implements Listener {
             if (slot == SLOT_GEM) {
                 if (!upgradeProcessor.isValidGem(cursorItem)) {
                     event.setCancelled(true);
-                    // Sửa ở đây
+                    
                     player.sendMessage(lang.getMessage("upgrade.not-a-gem"));
                     return;
                 }
@@ -154,7 +154,7 @@ public class GUI implements Listener {
             if (slot == SLOT_PROTECT) {
                 if (!upgradeProcessor.isProtectionScroll(cursorItem)) {
                     event.setCancelled(true);
-                    // Sửa ở đây
+                    
                     player.sendMessage(lang.getMessage("upgrade.not-a-scroll"));
                     return;
                 }
@@ -183,7 +183,7 @@ public class GUI implements Listener {
 
         if (item == null || item.getType() == Material.AIR ||
                 gem == null || gem.getType() == Material.AIR) {
-            updateButton(inv, 0, 0); // Không có đồ thì cost = 0
+            updateButton(inv, 0, 0); 
             return;
         }
 
@@ -193,10 +193,10 @@ public class GUI implements Listener {
             return;
         }
 
-        // Tính tỷ lệ thành công
+        
         double realChance = upgradeProcessor.calculateFinalChance(item, gem);
 
-        // Tính chi phí dựa trên cấp độ tiếp theo (level hiện tại + 1)
+        
         int nextLevel = upgradeProcessor.getItemLevel(item) + 1;
         double cost = upgradeProcessor.getUpgradeCost(nextLevel);
 
@@ -204,19 +204,19 @@ public class GUI implements Listener {
     }
 
     private void handleUpgradeAction(Player player, Inventory inv) {
-        var lang = Main.getInstance().getLangManager(); // Thêm manager ở đây
+        var lang = Main.getInstance().getLangManager(); 
         ItemStack item = inv.getItem(SLOT_ITEM);
         ItemStack gem = inv.getItem(SLOT_GEM);
         ItemStack protect = inv.getItem(SLOT_PROTECT);
 
         if (item == null || item.getType().isAir() || gem == null || gem.getType().isAir()) {
-            // Sửa ở đây
+            
             player.sendMessage(lang.getMessage("upgrade.missing-materials"));
             return;
         }
 
         if (inv.getItem(SLOT_RESULT) != null && inv.getItem(SLOT_RESULT).getType() != Material.AIR) {
-            // Sửa ở đây
+            
             player.sendMessage(lang.getMessage("upgrade.take-result-first"));
             return;
         }

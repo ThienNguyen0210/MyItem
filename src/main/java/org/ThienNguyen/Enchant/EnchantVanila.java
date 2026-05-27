@@ -30,18 +30,18 @@ public class EnchantVanila {
             meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
             List<String> lore = meta.hasLore() ? meta.getLore() : new ArrayList<>();
 
-            // Lấy danh sách enchant thực tế trên item
+            
             Map<Enchantment, Integer> currentEnchants = item.getEnchantments();
-            // Danh sách dùng để theo dõi xem enchant nào chưa có dòng trong Lore
+            
             Map<Enchantment, Integer> pending = new HashMap<>(currentEnchants);
 
-            // 1. Duyệt qua Lore cũ để cập nhật (Giữ nguyên vị trí)
+            
             for (int i = 0; i < lore.size(); i++) {
                 String line = lore.get(i);
 
                 for (Enchantment ent : currentEnchants.keySet()) {
-                    // DÙNG TOSTRING() ĐỂ TRÁNH LỖI BIÊN DỊCH NAMESPACEDKEY
-                    // minecraft:sharpness -> lấy "sharpness"
+                    
+                    
                     String fullKey = ent.getKey().toString().toLowerCase();
                     String enchantKey = fullKey.contains(":") ? fullKey.split(":")[1] : fullKey;
 
@@ -57,14 +57,14 @@ public class EnchantVanila {
                         String levelDisplay = (level >= 1 && level <= 10) ? toRoman(level) : String.valueOf(level);
                         String newLine = ChatColor.translateAlternateColorCodes('&', rawFormat.replace("{value}", levelDisplay));
 
-                        lore.set(i, newLine); // Ghi đè đúng vị trí i
-                        pending.remove(ent); // Đã có chỗ đứng, xóa khỏi danh sách chờ
+                        lore.set(i, newLine); 
+                        pending.remove(ent); 
                         break;
                     }
                 }
             }
 
-            // 2. Nếu là Enchant mới hoàn toàn thì mới add vào cuối
+            
             for (Map.Entry<Enchantment, Integer> entry : pending.entrySet()) {
                 String fullKey = entry.getKey().getKey().toString().toLowerCase();
                 String enchantKey = fullKey.contains(":") ? fullKey.split(":")[1] : fullKey;

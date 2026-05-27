@@ -87,7 +87,7 @@ public class GemRemover implements Listener {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return false;
 
-        // Cập nhật PDC
+        
         NamespacedKey socketKey = new NamespacedKey(Main.getInstance(), "item_sockets");
         String currentData = meta.getPersistentDataContainer().get(socketKey, PersistentDataType.STRING);
         if (currentData == null || currentData.isEmpty()) return false;
@@ -100,7 +100,7 @@ public class GemRemover implements Listener {
 
         player.sendMessage("§e[DEBUG] PDC cập nhật: " + newData);
 
-        // === BUỘC XỬ LÝ LORE THỦ CÔNG THEO type.yml ===
+        
         restoreEmptySocketLore(item, gemIdToRemove, gemType, player);
 
         item.setItemMeta(meta);
@@ -135,7 +135,7 @@ public class GemRemover implements Listener {
 
             player.sendMessage("§7[DEBUG] Dòng " + (i+1) + ": §f" + line);
 
-            // ƯU TIÊN: Tìm dòng chứa ký tự ︵ (đây là đặc trưng của ngọc bạn dùng)
+            
             if (line.contains("︵") || stripped.contains("Sát Thương I") && line.contains("︵")) {
                 lore.set(i, coloredEmpty);
                 player.sendMessage("§a[DEBUG] ✓ ĐÃ THAY THÀNH CÔNG dòng " + (i+1) + " (dòng có ︵) → " + coloredEmpty);
@@ -143,7 +143,7 @@ public class GemRemover implements Listener {
                 break;
             }
 
-            // Fallback: Nếu không có ︵ thì tìm theo "Sát Thương I"
+            
             if (!replaced && stripped.contains("Sát Thương I")) {
                 lore.set(i, coloredEmpty);
                 player.sendMessage("§a[DEBUG] ✓ Thay dòng " + (i+1) + " theo Sát Thương I");
@@ -153,7 +153,7 @@ public class GemRemover implements Listener {
         }
 
         if (!replaced && !lore.isEmpty()) {
-            // Thay dòng cuối cùng nếu vẫn không tìm thấy
+            
             lore.set(lore.size() - 1, coloredEmpty);
             player.sendMessage("§e[DEBUG] Fallback: Thay dòng cuối cùng");
             replaced = true;
@@ -167,7 +167,7 @@ public class GemRemover implements Listener {
         }
     }
 
-    // Phần tạo item ngọc trả lại
+    
     private ItemStack createGemItem(String gemId) {
         FileConfiguration gemConfig = Main.getInstance().getGemConfig();
         if (gemId == null || !gemConfig.contains(gemId)) return null;

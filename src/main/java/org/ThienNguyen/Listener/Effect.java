@@ -19,7 +19,7 @@ public class Effect {
     public void updatePlayerEffects(Player player) {
         if (player == null || !player.isOnline()) return;
 
-        // Quét 6 vị trí: 4 món giáp + 2 tay
+        
         ItemStack[] items = {
                 player.getInventory().getHelmet(),
                 player.getInventory().getChestplate(),
@@ -32,10 +32,10 @@ public class Effect {
         for (ItemStack item : items) {
             if (item == null || item.getType().isAir()) continue;
 
-            // Kiểm tra level yêu cầu từ MMOCore (nếu có hook)
+            
             if (!MMOCORE.canUse(player, item)) continue;
 
-            // Lấy Map hiệu ứng từ PDC của item thông qua BuffData
+            
             Map<String, Integer> effects = BuffData.getEffects(item);
 
             for (Map.Entry<String, Integer> entry : effects.entrySet()) {
@@ -44,8 +44,8 @@ public class Effect {
                     int level = entry.getValue();
                     if (level <= 0) continue;
 
-                    // Amplifier = level - 1 (Vì trong code 0 là Level I)
-                    // Duration = 80 ticks (4 giây) để hiệu ứng không bị nhấp nháy khi lặp lại mỗi 2 giây
+                    
+                    
                     player.addPotionEffect(new PotionEffect(type, 80, level - 1, true, false, true));
                 }
             }

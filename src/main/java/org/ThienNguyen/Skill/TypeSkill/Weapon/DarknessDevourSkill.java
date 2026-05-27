@@ -2,7 +2,7 @@ package org.ThienNguyen.Skill.TypeSkill.Weapon;
 
 import org.ThienNguyen.Skill.ISkill;
 import org.ThienNguyen.Main;
-import org.ThienNguyen.Listener.PlayerCombatCache; // Cầu nối lấy stats
+import org.ThienNguyen.Listener.PlayerCombatCache; 
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.ArmorStand;
@@ -21,7 +21,7 @@ public class DarknessDevourSkill implements ISkill {
 
     @Override
     public void execute(Player player, LivingEntity targetIgnored, int level, double baseDamageFromEvent) {
-        // --- BƯỚC 1: LẤY SÁT THƯƠNG THỰC TỪ CACHE (Bỏ qua 1.2 của Event) ---
+        
         PlayerCombatCache.CombatStats stats = PlayerCombatCache.getStats(player.getUniqueId());
         double realPower = stats.totalBonusDmg;
 
@@ -29,8 +29,8 @@ public class DarknessDevourSkill implements ISkill {
             realPower = player.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE).getValue();
         }
 
-        // --- BƯỚC 2: TÍNH SÁT THƯƠNG MỖI NHỊP QUÉT ---
-        // Ví dụ: 10% base + 5% mỗi level dựa trên 100k
+        
+        
         double damagePerPulse = realPower * (0.10 + (level * 0.05));
 
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_WARDEN_ANGRY, 1.0f, 0.5f);
@@ -48,7 +48,7 @@ public class DarknessDevourSkill implements ISkill {
 
                 Location center = player.getLocation();
 
-                // 1. Hiệu ứng hạt (Particle)
+                
                 for (int i = 0; i < 30; i++) {
                     double angle = Math.random() * 2 * Math.PI;
                     double r = Math.random() * 3.0;
@@ -61,28 +61,28 @@ public class DarknessDevourSkill implements ISkill {
                     player.getWorld().spawnParticle(Particle.REDSTONE, particleLoc, 2, new Particle.DustOptions(Color.BLACK, 1.5f));
                 }
 
-                // 2. Quét thực thể xung quanh Player
+                
                 for (Entity entity : player.getNearbyEntities(3, 3, 3)) {
                     if (entity instanceof LivingEntity victim && !entity.equals(player) && !(entity instanceof ArmorStand)) {
 
-                        // Áp dụng hiệu ứng khống chế
+                        
                         victim.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 100, 0));
                         victim.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 60, 0));
 
-                        // --- QUY TRÌNH GÂY SÁT THƯƠNG CHUẨN ---
-                        // 1. Phá bất tử (Cực kỳ quan trọng cho các skill quét nhiều lần)
+                        
+                        
                         victim.setNoDamageTicks(0);
 
-                        // 2. Set Metadata lên NẠN NHÂN (để EventDamage bỏ qua)
+                        
                         victim.setMetadata("IS_ABILITY", new FixedMetadataValue(Main.getInstance(), true));
 
-                        // 3. Gây damage thực thi
+                        
                         victim.damage(damagePerPulse, player);
 
-                        // Hiệu ứng hạt linh hồn
+                        
                         victim.getWorld().spawnParticle(Particle.SQUID_INK, victim.getEyeLocation(), 5, 0.2, 0.2, 0.2, 0.05);
 
-                        // 4. Xóa metadata sau 2 ticks
+                        
                         new BukkitRunnable() {
                             @Override
                             public void run() {

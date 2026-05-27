@@ -30,13 +30,13 @@ public class ThousandSwordsSkill implements ISkill {
 
         double damagePerSword = realPower * (0.25 + (level * 0.05));
 
-        // --- BƯỚC 1: LƯU TRỮ GÓC NHÌN NGAY LÚC CAST ---
+        
         final Vector fixedDir = player.getEyeLocation().getDirection().normalize();
 
         List<ArmorStand> swords = new ArrayList<>();
         Location center = player.getLocation();
 
-        // 2. Triệu hồi 8 cây Kiếm Sắt xoay sau lưng
+        
         for (int i = 0; i < 8; i++) {
             double angle = Math.toRadians(i * (360.0 / 8));
             double x = Math.cos(angle) * 1.5;
@@ -58,7 +58,7 @@ public class ThousandSwordsSkill implements ISkill {
 
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ILLUSIONER_MIRROR_MOVE, 1.0f, 1.0f);
 
-        // 3. Giai đoạn 2: Bắn kiếm theo hướng fixedDir đã lưu
+        
         new BukkitRunnable() {
             int swordIndex = 0;
 
@@ -70,7 +70,7 @@ public class ThousandSwordsSkill implements ISkill {
                 }
 
                 ArmorStand currentSword = swords.get(swordIndex);
-                // Truyền fixedDir vào đây
+                
                 launchSword(player, currentSword, damagePerSword, fixedDir);
 
                 player.getWorld().playSound(player.getLocation(), Sound.ITEM_TRIDENT_THROW, 0.8f, 1.2f);
@@ -82,7 +82,7 @@ public class ThousandSwordsSkill implements ISkill {
     private void launchSword(Player player, ArmorStand as, double damage, Vector direction) {
         new BukkitRunnable() {
             int distance = 0;
-            // Sử dụng direction được truyền vào từ lúc cast
+            
             final Vector dir = direction.clone();
             Location currentPos = as.getLocation();
 
@@ -95,7 +95,7 @@ public class ThousandSwordsSkill implements ISkill {
                 }
 
                 currentPos.add(dir.clone().multiply(1.2));
-                // Teleport kiếm theo hướng cố định
+                
                 as.teleport(currentPos.clone().setDirection(dir));
 
                 currentPos.getWorld().spawnParticle(Particle.SWEEP_ATTACK, currentPos, 1, 0, 0, 0, 0);

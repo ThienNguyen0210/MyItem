@@ -6,10 +6,10 @@ import org.bukkit.entity.Player;
 public interface ISkill {
     String getName();
 
-    // Trả về loại skill: "Weapon", "Command", hoặc "MythicLib"
+    
     String getType();
 
-    // Trả về điều kiện kích hoạt: HIT, SNEAK, RIGHT_CLICK, v.v.
+    
     String getTrigger();
 
     /**

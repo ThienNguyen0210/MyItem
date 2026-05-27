@@ -77,7 +77,7 @@ public class MyItemCommand implements CommandExecutor {
                     return true;
                 }
 
-                // Debug
+                
                 if (!plugin.getLoreFormatConfig().contains(formatId)) {
                     player.sendMessage("§cFormat ID §f" + formatId + " §ckhông tồn tại!");
                     return true;
@@ -97,7 +97,7 @@ public class MyItemCommand implements CommandExecutor {
                 if (!(sender instanceof Player player)) return true;
                 if (!checkAdmin(player)) return true;
 
-                // Lệnh: /mi ic add <id> hoặc /mi ic unadd
+                
                 if (args.length >= 2) {
                     String subAction = args[1].toLowerCase();
                     ItemStack item = player.getInventory().getItemInMainHand();
@@ -122,7 +122,7 @@ public class MyItemCommand implements CommandExecutor {
                             player.sendMessage("§a[MyItem] Đã gắn mã Combo §e" + id + " §avào vật phẩm!");
                         }
                         case "unadd" -> {
-                            // Kiểm tra xem item có mã combo không trước khi gỡ
+                            
                             if (meta.getPersistentDataContainer().has(COMBO_KEY, PersistentDataType.STRING)) {
                                 meta.getPersistentDataContainer().remove(COMBO_KEY);
                                 item.setItemMeta(meta);
@@ -143,10 +143,10 @@ public class MyItemCommand implements CommandExecutor {
                     AIExperienceGUI.openEulaGUI(player);
                     return true;
                 }
-                // 1. Lấy FileConfiguration từ hàm getAIConfig() trong Main
+                
                 FileConfiguration config = Main.getInstance().getAIConfig();
 
-                // 2. Trỏ đúng vào đường dẫn 'ai.profiles'
+                
                 ConfigurationSection profilesSection = config.getConfigurationSection("ai.profiles");
 
                 if (profilesSection == null) {
@@ -162,7 +162,7 @@ public class MyItemCommand implements CommandExecutor {
 
                 String id = args[1].toLowerCase();
 
-                // 3. Lấy profile cụ thể từ Section đã trỏ
+                
                 ConfigurationSection profile = profilesSection.getConfigurationSection(id);
 
                 if (profile == null) {
@@ -178,7 +178,7 @@ public class MyItemCommand implements CommandExecutor {
 
                 player.setMetadata("ai_prompt_mode", new FixedMetadataValue(Main.getInstance(), id));
 
-                // Task hủy sau 2 phút
+                
                 Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
                     if (player.hasMetadata("ai_prompt_mode")) {
                         player.removeMetadata("ai_prompt_mode", Main.getInstance());
@@ -199,7 +199,7 @@ public class MyItemCommand implements CommandExecutor {
                 }
 
                 String id = args[1];
-                // Gọi hàm lấy item từ file AI/Item.yml
+                
                 ItemStack aiItem = org.ThienNguyen.AI.utils.YamlManager.getItemFromAiFolder(id);
 
                 if (aiItem != null) {
@@ -228,13 +228,13 @@ public class MyItemCommand implements CommandExecutor {
             }
 
             case "load" -> {
-                // 1. Kiểm tra quyền Admin (Sender có thể là Console hoặc Player)
+                
                 if (!sender.hasPermission("myitem.admin")) {
                     sender.sendMessage("§c[MyItem] Bạn không có quyền!");
                     return true;
                 }
 
-                // 2. Kiểm tra tham số
+                
                 if (args.length < 2) {
                     sender.sendMessage("§cSử dụng: /mi load <id> [player]");
                     return true;
@@ -242,17 +242,17 @@ public class MyItemCommand implements CommandExecutor {
 
                 String id = args[1];
 
-                // 3. Xác định mục tiêu (Target) nhận item
+                
                 Player target;
                 if (args.length >= 3) {
-                    // Nếu có nhập tên player ở args[2]
+                    
                     target = Bukkit.getPlayer(args[2]);
                     if (target == null) {
                         sender.sendMessage("§cNgười chơi §f" + args[2] + " §ckhông online!");
                         return true;
                     }
                 } else {
-                    // Nếu không nhập tên, người nhận là chính người gửi lệnh
+                    
                     if (sender instanceof Player p) {
                         target = p;
                     } else {
@@ -261,16 +261,16 @@ public class MyItemCommand implements CommandExecutor {
                     }
                 }
 
-                // 4. Load item từ Database
+                
                 ItemStack loadedItem = Main.getInstance().getItemDatabase().loadItem(id);
 
                 if (loadedItem != null) {
-                    // Thêm vào kho đồ của target
+                    
                     target.getInventory().addItem(loadedItem);
 
-                    // Thông báo cho người gửi lệnh
+                    
                     sender.sendMessage("§a[MyItem] Successfully sent item §f" + id + " §ato §e" + target.getName());
-                    // Thông báo cho người nhận (nếu người nhận không phải người gửi)
+                    
                     if (target != sender) {
                         target.sendMessage(lang.getMessage("item.receive-msg", "{id}", id));                    }
                 } else {
@@ -297,7 +297,7 @@ public class MyItemCommand implements CommandExecutor {
             case "element" -> {
                 if (!(sender instanceof Player player)) return true;
 
-                // Cấu trúc: /mi element <type> <id> <level>
+                
                 if (args.length < 4) {
                     player.sendMessage("§6§l[MyItem] §7Sử dụng:");
                     player.sendMessage("§e/mi element attack <id> <level> §7- Tăng sát thương");
@@ -311,10 +311,10 @@ public class MyItemCommand implements CommandExecutor {
                     return true;
                 }
 
-                String type = args[1].toLowerCase(); // attack hoặc defense
+                String type = args[1].toLowerCase(); 
                 String elementId = args[2].toUpperCase();
 
-                // Kiểm tra xem ID nguyên tố có trong file elements.yml không
+                
                 if (!Main.getInstance().getElementConfig().contains(elementId)) {
                     player.sendMessage("§cNguyên tố §f" + elementId + " §ckhông tồn tại!");
                     return true;
@@ -324,12 +324,12 @@ public class MyItemCommand implements CommandExecutor {
                     int level = Integer.parseInt(args[3]);
 
                     if (type.equals("attack")) {
-                        // Sử dụng hàm addElement có sẵn của bạn
+                        
                         org.ThienNguyen.Element.ElementCore.addElement(item, elementId, level);
                         player.sendMessage("§a[MyItem] Đã thêm §6Tấn công " + elementId + " §acấp §e" + level);
                     }
                     else if (type.equals("defense")) {
-                        // Gọi hàm addDefenseElement (nhớ thêm hàm này vào ElementCore.java như tôi hướng dẫn ở trên)
+                        
                         org.ThienNguyen.Element.ElementCore.addDefenseElement(item, elementId, level);
                         player.sendMessage("§b[MyItem] Đã thêm §3Phòng thủ " + elementId + " §bcấp §e" + level);
                     }
@@ -338,7 +338,7 @@ public class MyItemCommand implements CommandExecutor {
                         return true;
                     }
 
-                    // Cập nhật Lore và Cache
+                    
                     org.ThienNguyen.Lore.ElementLore.updateLore(item);
                     org.ThienNguyen.Listener.CacheListener.refreshCache(player);
 
@@ -350,15 +350,15 @@ public class MyItemCommand implements CommandExecutor {
              case "stats" -> {
                     if (!(sender instanceof Player player)) return true;
 
-                    // Kiểm tra cấu trúc: /mi stats <loại> <giá trị> [slot]
+                    
                     if (args.length < 3) {
                     player.sendMessage("§cSử dụng: /mi stats <loại> <giá trị> [any/mainhand/offhand/head/chest/legs/feet]");
                     return true;
                 }
 
-                // Lấy slot nếu có, nếu không mặc định là "any"
+                
                 String slot = (args.length >= 4) ? args[3].toLowerCase() : "any";
-                // Gọi hàm handleCommand với 3 tham số (đã khớp với Stats.java mới)
+                
                 statsHandler.handleCommand(player, args, slot);
                  org.ThienNguyen.Listener.CacheListener.refreshCache(player);
 
@@ -366,9 +366,9 @@ public class MyItemCommand implements CommandExecutor {
             case "evo" -> {
                 if (!(sender instanceof Player player)) return true;
 
-                // Cấu trúc: /mi evo <target> <required_amount> <next_item_id>
-                // Ví dụ: /mi evo ZOMBIE 100 kiem_cap_2
-                // Ví dụ: /mi evo ALL 50 giap_than
+                
+                
+                
                 if (args.length < 4) {
                     player.sendMessage("§6§l[Evolution] §cSử dụng: /mi evo <target|ALL> <số lượng> <ID_Item_Mới>");
                     player.sendMessage("§7- target: Tên mob (ZOMBIE, SKELETON...) hoặc ID MythicMobs.");
@@ -392,13 +392,13 @@ public class MyItemCommand implements CommandExecutor {
                 }
                 String nextId = args[3];
 
-                // Kiểm tra xem ID item mới có tồn tại trong Database không
+                
                 if (Main.getInstance().getItemDatabase().loadItem(nextId) == null) {
                     player.sendMessage("§cID '" + nextId + "' không tồn tại trong Item Database!");
                     return true;
                 }
 
-                // Gán dữ liệu vào PDC thông qua EvolutionManager
+                
                 org.bukkit.inventory.meta.ItemMeta meta = item.getItemMeta();
                 org.bukkit.persistence.PersistentDataContainer pdc = meta.getPersistentDataContainer();
 
@@ -409,7 +409,7 @@ public class MyItemCommand implements CommandExecutor {
 
                 item.setItemMeta(meta);
 
-                // Cập nhật Lore lần đầu để người chơi thấy dòng tiến độ
+                
                 org.ThienNguyen.Evolution.EvolutionManager.addProgress(player,item, "INITIALIZE_ONLY");
 
                 player.sendMessage("§a§l✔ §fĐã thiết lập tiến hóa cho vật phẩm!");
@@ -515,23 +515,23 @@ public class MyItemCommand implements CommandExecutor {
                     return true;
                 }
 
-                // Khởi tạo class GUI và mở giao diện cường hóa
-                // Lưu ý: Đảm bảo bạn đã import org.ThienNguyen.Utils.GUI;
+                
+                
                 new org.ThienNguyen.Utils.GUI().openUpgrade(player);
 
                 return true;
             }
             case "givegem" -> {
-                // 1. Kiểm tra quyền
+                
                 if (!sender.hasPermission("myitem.admin")) {
                     sender.sendMessage("§cBạn không có quyền thực hiện lệnh này!");
                     return true;
                 }
 
-                // 2. Sửa logic: Không bắt buộc người gửi phải là Player nữa
-                // (Admin đứng ở Console vẫn có thể give cho người chơi được)
+                
+                
 
-                // 3. Kiểm tra tham số (Cần ít nhất 4 tham số: givegem, id, player, amount)
+                
                 if (args.length < 4) {
                     sender.sendMessage("§6§l[!] §7Sử dụng: §e/myitem givegem <id> <player> <amount>");
                     return true;
@@ -542,13 +542,13 @@ public class MyItemCommand implements CommandExecutor {
                     Player targetPlayer = Bukkit.getPlayer(args[2]);
                     int amount = Integer.parseInt(args[3]);
 
-                    // Kiểm tra người chơi có online không
+                    
                     if (targetPlayer == null || !targetPlayer.isOnline()) {
                         sender.sendMessage("§c§l✘ §7Người chơi §e" + args[2] + " §7không trực tuyến!");
                         return true;
                     }
 
-                    // 4. Gọi hàm lấy Gem từ config (Lưu ý: class Upgrade đã được sửa để đọc 'amount' từ Gem.yml)
+                    
                     ItemStack gem = org.ThienNguyen.Utils.Upgrade.createGemFromConfig(id);
 
                     if (gem == null) {
@@ -556,10 +556,10 @@ public class MyItemCommand implements CommandExecutor {
                         return true;
                     }
 
-                    // --- QUAN TRỌNG: Ghi đè số lượng người dùng nhập từ lệnh ---
+                    
                     gem.setAmount(amount);
 
-                    // 5. Thêm vào kho đồ người nhận và xử lý nếu túi đồ đầy
+                    
                     Map<Integer, ItemStack> overFlow = targetPlayer.getInventory().addItem(gem);
                     if (!overFlow.isEmpty()) {
                         for (ItemStack left : overFlow.values()) {
@@ -570,10 +570,10 @@ public class MyItemCommand implements CommandExecutor {
 
                     String gemName = gem.getItemMeta().hasDisplayName() ? gem.getItemMeta().getDisplayName() : gem.getType().name();
 
-                    // Giữ nguyên sendMessage của bạn cho người nhận
+                    
                     targetPlayer.sendMessage(lang.getMessage("upgrade.gem-received", "{gem}", gemName));
 
-                    // Thông báo cho người gửi lệnh thành công
+                    
                     sender.sendMessage("§a§l✔ §7Đã gửi §e" + amount + "x " + gemName + " §7cho §f" + targetPlayer.getName());
 
                 } catch (NumberFormatException e) {
@@ -582,13 +582,13 @@ public class MyItemCommand implements CommandExecutor {
                 return true;
             }
             case "giveamulet" -> {
-                // 1. Kiểm tra quyền admin
+                
                 if (!sender.hasPermission("myitem.admin")) {
                     sender.sendMessage("§cBạn không có quyền thực hiện lệnh này!");
                     return true;
                 }
 
-                // 2. Kiểm tra tham số: /mi giveamulet <player> <amount>
+                
                 if (args.length < 3) {
                     sender.sendMessage("§6§l[!] §7Sử dụng: §e/myitem giveamulet <player> <amount>");
                     return true;
@@ -604,7 +604,7 @@ public class MyItemCommand implements CommandExecutor {
                     int amount = Integer.parseInt(args[2]);
                     if (amount <= 0) amount = 1;
 
-                    // 3. Tạo vật phẩm Bùa Hộ Mệnh từ hàm static trong class Upgrade
+                    
                     ItemStack amulet = org.ThienNguyen.Utils.Upgrade.createProtectionScroll();
 
                     if (amulet == null) {
@@ -614,7 +614,7 @@ public class MyItemCommand implements CommandExecutor {
 
                     amulet.setAmount(amount);
 
-                    // 4. Thêm vào kho đồ hoặc rơi ra đất nếu đầy
+                    
                     if (target.getInventory().firstEmpty() == -1) {
                         target.getWorld().dropItemNaturally(target.getLocation(), amulet);
                     } else {
@@ -625,7 +625,7 @@ public class MyItemCommand implements CommandExecutor {
                             "{amount}", String.valueOf(amount),
                             "{player}", target.getName()));
 
-// Gửi thông báo cho người nhận
+
                     target.sendMessage(lang.getMessage("upgrade.amulet-received",
                             "{amount}", String.valueOf(amount)));
 
@@ -657,19 +657,19 @@ public class MyItemCommand implements CommandExecutor {
                 var meta = item.getItemMeta();
                 if (meta == null) return true;
 
-                // 1. Khai báo các Key giống hệt bên SkillLore
+                
                 NamespacedKey skillKey = new NamespacedKey(Main.getInstance(), "item_skills");
                 NamespacedKey loreStartKey = new NamespacedKey(Main.getInstance(), "skill_lore_start");
                 NamespacedKey loreEndKey = new NamespacedKey(Main.getInstance(), "skill_lore_end");
 
-                // 2. Kiểm tra dữ liệu kỹ năng
+                
                 String oldData = meta.getPersistentDataContainer().get(skillKey, PersistentDataType.STRING);
                 if (oldData == null || oldData.trim().isEmpty()) {
                     player.sendMessage("§cVật phẩm này không có kỹ năng nào để gỡ!");
                     return true;
                 }
 
-                // 3. Xử lý xóa kỹ năng trong dữ liệu (Persistent Data)
+                
                 List<String> skillList = new ArrayList<>();
                 boolean removed = false;
                 for (String entry : oldData.split(",")) {
@@ -688,13 +688,13 @@ public class MyItemCommand implements CommandExecutor {
                     return true;
                 }
 
-                // 4. THUẬT TOÁN XÓA LORE: Đọc vị trí khối cũ từ PDC tương tự SkillLore
+                
                 if (meta.hasLore()) {
                     List<String> lore = new ArrayList<>(meta.getLore());
                     Integer oldStart = meta.getPersistentDataContainer().get(loreStartKey, PersistentDataType.INTEGER);
                     Integer oldEnd = meta.getPersistentDataContainer().get(loreEndKey, PersistentDataType.INTEGER);
 
-                    // Xóa khối lore cũ nếu tọa độ hợp lệ
+                    
                     if (oldStart != null && oldEnd != null && oldStart >= 0 && oldEnd >= oldStart && oldEnd < lore.size()) {
                         for (int i = oldEnd; i >= oldStart; i--) {
                             lore.remove(i);
@@ -703,10 +703,10 @@ public class MyItemCommand implements CommandExecutor {
                     }
                 }
 
-                // 5. Cập nhật lại dữ liệu kỹ năng vào PDC
+                
                 if (skillList.isEmpty()) {
                     meta.getPersistentDataContainer().remove(skillKey);
-                    // Xóa luôn tọa độ lore vì không còn kỹ năng nào
+                    
                     meta.getPersistentDataContainer().remove(loreStartKey);
                     meta.getPersistentDataContainer().remove(loreEndKey);
                 } else {
@@ -716,13 +716,13 @@ public class MyItemCommand implements CommandExecutor {
 
                 item.setItemMeta(meta);
 
-                // 6. Gọi update để vẽ lại Lore mới (nếu còn skill khác)
-                // Nếu đã hết skill, hàm này sẽ tự dọn dẹp
+                
+                
                 org.ThienNguyen.Lore.SkillLore.updateLore(item);
 
                 player.sendMessage("§a[Skill] Đã gỡ kỹ năng §f" + skillToRemove + " §athành công!");
             }
-            // Thêm vào switch (subCommand) trong MyItemCommand.java
+            
             case "enchant" -> {
                 if (!(sender instanceof Player player)) return true;
                 if (args.length < 3) {
@@ -731,7 +731,7 @@ public class MyItemCommand implements CommandExecutor {
                 }
 
                 ItemStack item = player.getInventory().getItemInMainHand();
-                // Chuyển tên người dùng nhập (ví dụ: sharpness) thành NamespacedKey
+                
                 org.bukkit.NamespacedKey key = org.bukkit.NamespacedKey.minecraft(args[1].toLowerCase());
                 org.bukkit.enchantments.Enchantment enchant = org.bukkit.enchantments.Enchantment.getByKey(key);
 
@@ -742,10 +742,10 @@ public class MyItemCommand implements CommandExecutor {
 
                 try {
                     int level = Integer.parseInt(args[2]);
-                    // addUnsafeEnchantment để phá vỡ giới hạn cấp độ (lv 1000 thoải mái)
+                    
                     item.addUnsafeEnchantment(enchant, level);
 
-                    // Cập nhật lại Lore tùy chỉnh
+                    
                     org.ThienNguyen.Enchant.EnchantVanila.updateEnchantLore(item);
 
                     player.sendMessage("§aĐã ép §e" + args[1] + " §acấp §f" + level);
@@ -760,7 +760,7 @@ public class MyItemCommand implements CommandExecutor {
                     return true;
                 }
 
-                // /mi gemstone give <type> <id> <player> <amount>
+                
                 if (args.length < 5 || !args[1].equalsIgnoreCase("give")) {
                     sender.sendMessage("§c[!] Sử dụng: /mi gemstone give <gem|drill|remover> <id> <player> <amount>");
                     sender.sendMessage("§7Ví dụ:");
@@ -808,9 +808,9 @@ public class MyItemCommand implements CommandExecutor {
                         }
                     }
                     case "remover" -> {
-                        // Hỗ trợ đá gỡ ngọc
-                        FileConfiguration removerConfig = Main.getInstance().getGemConfig(); // Có thể dùng chung gemConfig hoặc tạo riêng
-                        // Nếu bạn muốn config riêng cho remover, thay bằng getRemoverConfig() sau này
+                        
+                        FileConfiguration removerConfig = Main.getInstance().getGemConfig(); 
+                        
 
                         if (removerConfig.contains(id)) {
                             itemResult = createGemItem(id, removerConfig, "REMOVER");
@@ -841,18 +841,18 @@ public class MyItemCommand implements CommandExecutor {
 
                 String link = "https://windycraft.com/editor";
 
-                // Tạo tin nhắn có thể click
+                
                 net.md_5.bungee.api.chat.TextComponent message = new net.md_5.bungee.api.chat.TextComponent("§a[MyItem] §fTruy cập trang thiết kế tại: ");
 
                 net.md_5.bungee.api.chat.TextComponent linkComponent = new net.md_5.bungee.api.chat.TextComponent("§b§n" + link);
 
-                // Hiệu ứng khi di chuột vào (Hover)
+                
                 linkComponent.setHoverEvent(new net.md_5.bungee.api.chat.HoverEvent(
                         net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT,
                         new net.md_5.bungee.api.chat.ComponentBuilder("§eClick để sao chép link thiết kế!").create()
                 ));
 
-                // Hành động khi Click: Sao chép vào bộ nhớ tạm (Copy to Clipboard)
+                
                 linkComponent.setClickEvent(new net.md_5.bungee.api.chat.ClickEvent(
                         net.md_5.bungee.api.chat.ClickEvent.Action.COPY_TO_CLIPBOARD,
                         link
@@ -860,17 +860,79 @@ public class MyItemCommand implements CommandExecutor {
 
                 message.addExtra(linkComponent);
 
-                // Gửi tin nhắn cho người chơi
+                
                 player.spigot().sendMessage(message);
             }
+            case "expire" -> {
+                if (!(sender instanceof Player player)) {
+                    sender.sendMessage("§cChỉ người chơi mới có thể dùng lệnh này!");
+                    return true;
+                }
+                if (!player.hasPermission("myitem.admin")) {
+                    player.sendMessage("§cBạn không có quyền!");
+                    return true;
+                }
+
+                FileConfiguration expConfig = Main.getInstance().setupConfig("Listener/Expire.yml");
+
+                if (args.length < 2) {
+                    player.sendMessage("§6§l[!] §7Sử dụng: §e/myitem expire <thời gian>");
+                    player.sendMessage("§7Định dạng: §fmo§7(tháng), §fd§7(ngày), §fh§7(giờ), §fm§7(phút), §fs§7(giây)");
+                    player.sendMessage("§7Ví dụ: §e/myitem expire 1h 5m 2s §7hoặc §e/myitem expire 2d");
+                    return true;
+                }
+
+                ItemStack item = player.getInventory().getItemInMainHand();
+                if (item == null || item.getType().isAir()) {
+                    player.sendMessage(expConfig.getString("messages.no-item", "§c[!] Bạn phải cầm vật phẩm trên tay!"));
+                    return true;
+                }
+
+                
+                long durationMs = org.ThienNguyen.Listener.Expire.parseDuration(args, 1);
+
+                if (durationMs <= 0) {
+                    player.sendMessage(expConfig.getString("messages.invalid-format", "§c[!] Định dạng thời gian không hợp lệ!"));
+                    return true;
+                }
+
+                long finalExpiryTimestamp = System.currentTimeMillis() + durationMs;
+
+                var meta = item.getItemMeta();
+                if (meta != null) {
+                    
+                    meta.getPersistentDataContainer().set(
+                            org.ThienNguyen.Listener.Expire.getInstance().getExpireKey(),
+                            PersistentDataType.LONG,
+                            finalExpiryTimestamp
+                    );
+                    item.setItemMeta(meta);
+
+                    
+                    org.ThienNguyen.Lore.LoreGenerator.rebuild(item);
+
+                    String successMsg = expConfig.getString("messages.success-applied", "§a[✓] Đã gắn hạn sử dụng thành công!");
+
+                    
+                    StringBuilder timeVisual = new StringBuilder();
+                    for (int i = 1; i < args.length; i++) {
+                        timeVisual.append(args[i]).append(" ");
+                    }
+                    player.sendMessage(successMsg.replace("{time}", timeVisual.toString().trim()));
+
+                    
+                    org.ThienNguyen.Listener.CacheListener.refreshCache(player);
+                }
+                return true;
+            }
             case "consume" -> {
-                // Kiểm tra quyền hạn
+                
                 if (!sender.hasPermission("myitem.admin")) {
                     sender.sendMessage("§cBạn không có quyền sử dụng lệnh này!");
                     return true;
                 }
 
-                // Cú pháp: /myitem consume give <id> <amount> <player>
+                
                 if (args.length < 5) {
                     sender.sendMessage("§cSử dụng: /myitem consume give <id> <amount> <player>");
                     return true;
@@ -879,7 +941,7 @@ public class MyItemCommand implements CommandExecutor {
                 if (args[1].equalsIgnoreCase("give")) {
                     String consumeId = args[2];
 
-                    // Kiểm tra số lượng có phải là số không
+                    
                     int amount;
                     try {
                         amount = Integer.parseInt(args[3]);
@@ -888,14 +950,14 @@ public class MyItemCommand implements CommandExecutor {
                         return true;
                     }
 
-                    // Kiểm tra người chơi
+                    
                     Player target = Bukkit.getPlayer(args[4]);
                     if (target == null) {
                         sender.sendMessage("§cNgười chơi §f" + args[4] + " §ckhông trực tuyến!");
                         return true;
                     }
 
-                    // Gọi hàm tạo item từ ConsumeManager
+                    
                     ItemStack consumeItem = org.ThienNguyen.Consume.ConsumeManager.getConsumeItem(consumeId, amount);
 
                     if (consumeItem == null) {
@@ -903,31 +965,31 @@ public class MyItemCommand implements CommandExecutor {
                         return true;
                     }
 
-                    // Đưa item cho người chơi
+                    
                     target.getInventory().addItem(consumeItem);
                     sender.sendMessage("§aĐã gửi §f" + amount + "x " + consumeId + " §acho §e" + target.getName());
                 }
             }
             case "connect" -> {
-                // 1. Kiểm tra quyền hạn (Thường admin mới được dùng lệnh này để tránh spam)
+                
                 if (!sender.hasPermission("myitem.admin")) {
                     sender.sendMessage("§cBạn không có quyền thực hiện lệnh này!");
                     return true;
                 }
 
-                // 2. Kiểm tra nếu sender là người chơi (vì cần lấy inventory để give đồ)
+                
                 if (!(sender instanceof Player player)) {
                     sender.sendMessage("§cLệnh này chỉ dành cho người chơi trong game!");
                     return true;
                 }
 
-                // 3. Kiểm tra xem có nhập mã code chưa (/mi connect <mã>)
+                
                 if (args.length < 2) {
                     player.sendMessage("§8[§4§l?§8] §cSử dụng: /myitem connect <mã_web>");
                     return true;
                 }
 
-                // 4. Lấy mã code và gọi class Web xử lý
+                
                 String code = args[1].toUpperCase();
                 org.ThienNguyen.Webapi.Web.connectItem(player, code);
             }
@@ -939,7 +1001,7 @@ public class MyItemCommand implements CommandExecutor {
                 Main.getInstance().reloadPluginConfigs();
                 sender.sendMessage("§a[MyItem] Đã nạp lại toàn bộ cấu hình hệ thống!");
             }
-            // [THÊM VÀO TRONG HÀM ONCOMMAND - PHẦN SWITCH CASE]
+            
 
             case "particle" -> {
                 if (!(sender instanceof Player player)) {
@@ -962,14 +1024,14 @@ public class MyItemCommand implements CommandExecutor {
                 }
 
                 String particleId = args[1];
-                // Kiểm tra xem ID có tồn tại trong config không (tùy chọn nhưng nên có)
+                
                 if (!Main.getInstance().getParticleConfig().contains("effects." + particleId)) {
                     player.sendMessage("§e[!] Cảnh báo: ID '" + particleId + "' chưa được định nghĩa trong Particle.yml");
                 }
 
                 var meta = item.getItemMeta();
                 if (meta != null) {
-                    // Ghi ID particle vào PDC
+                    
                     meta.getPersistentDataContainer().set(
                             new NamespacedKey(Main.getInstance(), "item_particle"),
                             PersistentDataType.STRING,
@@ -978,7 +1040,7 @@ public class MyItemCommand implements CommandExecutor {
                     item.setItemMeta(meta);
                     player.sendMessage("§a[✓] Đã thêm hiệu ứng '" + particleId + "' vào vật phẩm!");
 
-                    // Cập nhật lại stats ngay lập tức để hiện particle
+                    
                     new org.ThienNguyen.Listener.StatsListener().updatePlayerStats(player);
                 }
                 return true;
@@ -998,19 +1060,19 @@ public class MyItemCommand implements CommandExecutor {
                 if (meta != null) {
                     NamespacedKey key = new NamespacedKey(Main.getInstance(), "item_particle");
 
-                    // Kiểm tra xem item có particle không trước khi xóa
+                    
                     if (!meta.getPersistentDataContainer().has(key, PersistentDataType.STRING)) {
                         player.sendMessage("§c[!] Vật phẩm này không có hiệu ứng particle nào để xóa.");
                         return true;
                     }
 
-                    // Chỉ xóa đúng cái NBT lưu Particle ID
+                    
                     meta.getPersistentDataContainer().remove(key);
                     item.setItemMeta(meta);
 
                     player.sendMessage("§e[✓] Đã gỡ bỏ hiệu ứng particle khỏi vật phẩm trên tay!");
 
-                    // Cập nhật lại stats để hiệu ứng biến mất ngay lập tức
+                    
                     new org.ThienNguyen.Listener.StatsListener().updatePlayerStats(player);
                 }
                 return true;
@@ -1037,7 +1099,7 @@ public class MyItemCommand implements CommandExecutor {
                     return true;
                 }
 
-                // Kiểm tra số lượng đối số: /mi tooltip <add/undo> [loại]
+                
                 if (args.length < 2) {
                     player.sendMessage("§8§m-------§r §6§lTOOLTIP SYSTEM §8§m-------");
                     player.sendMessage("§7» §e/mi tooltip add <loại> §f: Thêm khung tooltip");
@@ -1055,24 +1117,24 @@ public class MyItemCommand implements CommandExecutor {
                             return true;
                         }
                         String type = args[2].toLowerCase();
-                        // Gọi Utils xử lý logic
+                        
                         org.ThienNguyen.Utils.Tooltips.applyTooltip(player, type);
                     }
                     case "undo" -> {
-                        // Gọi Utils xử lý hoàn tác
+                        
                         org.ThienNguyen.Utils.Tooltips.handleUndo(player);
                     }
                     default -> player.sendMessage("§c[!] Hành động không hợp lệ. Sử dụng 'add' hoặc 'undo'.");
                 }
             }
             case "update" -> {
-                // 1. Kiểm tra quyền
+                
                 if (!sender.hasPermission("myitem.admin")) {
                     sender.sendMessage("§c[MyItem] Bạn không có quyền!");
                     return true;
                 }
 
-                // 2. Nếu người dùng chỉ gõ /myitem update (không có version) -> Mở GUI danh sách
+                
                 if (args.length < 2) {
                     if (sender instanceof Player player) {
                         org.ThienNguyen.Webapi.Update.openUpdateListGUI(player, plugin);
@@ -1082,25 +1144,25 @@ public class MyItemCommand implements CommandExecutor {
                     return true;
                 }
 
-                // 3. Nếu có nhập version (ví dụ: /myitem update 1.0-SNAPSHOT)
+                
                 String updateVersion = args[1];
 
                 if (sender instanceof Player player) {
-                    // Nếu là người chơi: Gọi hàm tải và gửi thông báo
+                    
                     org.ThienNguyen.Webapi.Update.downloadAndUpdate(plugin, updateVersion, player);
                 } else {
-                    // Nếu là Console: Bạn cần một hàm download dành riêng cho Console (không có biến player)
-                    // Hoặc tạm thời thông báo Console không hỗ trợ tải trực tiếp nếu chưa làm hàm riêng
+                    
+                    
                     sender.sendMessage("§e[MyItem] Console đang tải bản " + updateVersion + " (Xem log tại Console)...");
-                    // org.ThienNguyen.Webapi.Update.downloadAndUpdateConsole(plugin, updateVersion);
+                    
                 }
                 return true;
             }
             case "sync" -> {
-                // Gọi sang class StationCMD để xử lý logic update
+                
                 return new StationCMD(plugin, stationDb).onCommand(sender, command, label, args);
             }
-            case "tiers" -> { // Sử dụng dấu ngoặc nhọn để tạo scope riêng, tránh trùng biến player
+            case "tiers" -> { 
                 if (args.length < 2) {
                     sender.sendMessage("§cSử dụng: /mi tiers <id>");
                     return true;
@@ -1117,10 +1179,10 @@ public class MyItemCommand implements CommandExecutor {
                     return true;
                 }
 
-                // Gọi class xử lý
+                
                 org.ThienNguyen.Lore.TiersLore.applyTier(itemTier, args[1].toLowerCase());
                 pTiers.sendMessage("§a§l✔ §7Đã cập nhật phẩm chất vật phẩm!");
-                break; // Bắt buộc có break khi dùng kiểu case ":"
+                break; 
             }
             default -> sendHelp(sender, 1);
         }
@@ -1142,7 +1204,7 @@ public class MyItemCommand implements CommandExecutor {
             org.bukkit.inventory.meta.ItemMeta meta = item.getItemMeta();
 
             if (meta != null) {
-                // Đặt tên và Lore
+                
                 meta.setDisplayName(org.bukkit.ChatColor.translateAlternateColorCodes('&',
                         config.getString(id + ".display-name", id)));
 
@@ -1152,12 +1214,12 @@ public class MyItemCommand implements CommandExecutor {
                 }
                 meta.setLore(lore);
 
-                // Đặt Model ID (nếu có)
+                
                 if (config.contains(id + ".model-id")) {
                     meta.setCustomModelData(config.getInt(id + ".model-id"));
                 }
 
-                // LƯU PDC: Để biết đây là đá gì và loại gì
+                
                 NamespacedKey typeKey = new NamespacedKey(Main.getInstance(), "gem_item_type");
                 NamespacedKey idKey = new NamespacedKey(Main.getInstance(), "gem_item_id");
 
@@ -1178,35 +1240,35 @@ public class MyItemCommand implements CommandExecutor {
         String basicPrefix = "§8[§4§l?§8]§3 /";
         String rpgPrefix = "§8[§4§l?§8]§3 /rpginv ";
 
-        // Trang 1: Quản lý và Chỉ số
+        
         helpLines.add(miPrefix + "save <id> §7- Lưu item vào database");
         helpLines.add(miPrefix + "load <id> §7- Lấy item từ database");
         helpLines.add(miPrefix + "delete <id> §7- Xóa item database");
         helpLines.add(miPrefix + "stats <loại> <giá trị> §7- Chỉnh chỉ số");
         helpLines.add(miPrefix + "element <id> <lv> §7- Cường hóa nguyên tố");
 
-        // Trang 2: Kỹ năng và Hiệu ứng
+        
         helpLines.add(miPrefix + "ability <tên> <lv> <%> §7- Gán nội tại");
         helpLines.add(miPrefix + "buff <tên> <lv> §7- Gán hiệu ứng tốt");
         helpLines.add(miPrefix + "debuff <tên> <lv> §7- Gán hiệu ứng xấu");
         helpLines.add(miPrefix + "skill <type> <tên> <trig> <cd> <lv>");
         helpLines.add(miPrefix + "unskill <tên> §7- Gỡ kỹ năng khỏi item");
 
-        // Trang 3: Chỉnh sửa cơ bản
+        
         helpLines.add(basicPrefix + "setname <tên> §7- Đổi tên vật phẩm");
         helpLines.add(basicPrefix + "setlore <line> <text> §7- Sửa lore");
         helpLines.add(basicPrefix + "material <loại> §7- Đổi vật liệu");
         helpLines.add(basicPrefix + "setmodel <id> §7- Đặt CustomModelData");
         helpLines.add(basicPrefix + "unbreaking §7- Làm item không hỏng");
 
-        // Trang 4: Thuộc tính và Gemstone hệ cũ
+        
         helpLines.add(basicPrefix + "attribute <attr> <val> §7- Thuộc tính gốc");
         helpLines.add(basicPrefix + "itemflag <flag> §7- Ẩn flags vật phẩm");
         helpLines.add(miPrefix + "enchant <enchant> <level> §7- Enchant item");
         helpLines.add(miPrefix + "gemstone give <typegem> <id> <p> <amt> §7- Gem cũ");
         helpLines.add(miPrefix + "reload §7- Nạp lại toàn bộ config");
 
-        // Trang 5: Hệ thống Cường hóa & Trang sức (Cập nhật mới)
+        
         helpLines.add(miPrefix + "upgrade §7- Mở giao diện Cường Hóa");
         helpLines.add(miPrefix + "trans §7- Mở giao diện Chuyển Hóa Cấp Độ");
         helpLines.add(miPrefix + "givegem <id> §7- lấy đá cường hoá");
@@ -1232,7 +1294,7 @@ public class MyItemCommand implements CommandExecutor {
         helpLines.add(miPrefix + "evo <entity> <amount> <evoDatabase> §7- Tiến hoá cho item");
         helpLines.add(miPrefix + "getai <id>  §7- Nhận Item từ AI trong Item.yml §c§lNEW");
         helpLines.add(miPrefix + "ai <profile> §7- Tạo item từ AI §c§lNEW");
-
+        helpLines.add(miPrefix + "expire <time> §7- Thiết lập hạn sử dụng cho vật phẩm");
         int itemsPerPage = 5;
         int maxPages = (int) Math.ceil((double) helpLines.size() / itemsPerPage);
 
@@ -1247,7 +1309,7 @@ public class MyItemCommand implements CommandExecutor {
             sender.sendMessage(helpLines.get(i));
         }
 
-        // Thêm dòng giới thiệu tác giả và ghi chú
+        
         sender.sendMessage("§7[§b◀§7]§8§m ----------------------------§7 [§b▶§7]");
         sender.sendMessage("§bDiscord:§f cache1236799");
 

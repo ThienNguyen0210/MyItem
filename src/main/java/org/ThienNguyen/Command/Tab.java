@@ -27,7 +27,7 @@ public class Tab implements TabCompleter {
             "gemstone", "enchant", "unskill", "upgrade", "givegem", "giveamulet", "trans",
             "connect", "editor", "stats", "update", "version", "particle", "unparticle",
             "tiers", "consume", "tooltip", "loreformat",
-            "ic", "evo", "ai", "getai"
+            "ic", "evo", "ai", "getai", "expire"
     );
 
     private static final List<String> IC_SUBCOMMANDS = Arrays.asList("add", "unadd");
@@ -42,7 +42,7 @@ public class Tab implements TabCompleter {
     private static final List<String> COMMON_LEVEL = Arrays.asList("1", "2", "3", "4", "5", "10", "20", "50", "100");
     private static final List<String> COMMON_AMPLIFIER = Arrays.asList("0", "1", "2", "3", "4", "5", "10");
     private static final List<String> COMMON_DURATION_TICKS = Arrays.asList("20", "40", "60", "100", "200", "400", "600");
-    private static final List<String> COMMON_CHANCE_PERCENT = Arrays.asList("5", "10", "20", "30", "50", "70", "100");
+    private static final List<String> COMMON_CENT = Arrays.asList("5", "10", "20", "30", "50", "70", "100");
     private static final List<String> COMMON_AMOUNTS = Arrays.asList("1", "16", "32", "64");
 
     @Override
@@ -53,9 +53,9 @@ public class Tab implements TabCompleter {
             suggestions.addAll(MAIN_SUBCOMMANDS);
         }
 
-        // ────────────────────────────────────────────────
-        // Lệnh /ic → gợi ý subcommand add / unadd
-        // ────────────────────────────────────────────────
+        
+        
+        
         else if (args.length == 2 && args[0].equalsIgnoreCase("ic")) {
             suggestions.addAll(IC_SUBCOMMANDS);
         }
@@ -66,23 +66,23 @@ public class Tab implements TabCompleter {
             if (icSub.equals("add") || icSub.equals("unadd")) {
                 FileConfiguration comboConfig = Main.getInstance().getComboConfig();
                 if (comboConfig != null) {
-                    // Lấy toàn bộ các Key (ID combo) từ file combo.yml
+                    
                     suggestions.addAll(comboConfig.getKeys(false));
                 }
             }
         }
 
-        // ────────────────────────────────────────────────
-        // Các lệnh cũ (giữ nguyên, chỉ thêm case cho ic ở trên)
-        // ────────────────────────────────────────────────
+        
+        
+        
         else if (args.length == 2) {
             String sub = args[0].toLowerCase();
             switch (sub) {
                 case "evo" -> {
                     suggestions.add("ALL");
-                    suggestions.add("mm_"); // Gợi ý tiền tố MythicMob
-                    suggestions.add("mm_<id Mythicmob>"); // Gợi ý tiền tố MythicMob
-                    // Gợi ý thêm các quái Vanilla phổ biến
+                    suggestions.add("mm_"); 
+                    suggestions.add("mm_<id Mythicmob>"); 
+                    
                     suggestions.addAll(Arrays.asList("ZOMBIE", "SKELETON", "CREEPER", "SPIDER", "ENDERMAN"));
                 }
                 case "consume" -> suggestions.add("give");
@@ -117,7 +117,7 @@ public class Tab implements TabCompleter {
                         "critical_chance", "critical_damage", "lifesteal", "dodge_rate", "block_rate", "penetration",
                         "level_require", "true_damage", "thorns", "class_require", "max_mana", "mana_regen",
                         "exp_bonus", "attack_speed", "movement_speed", "health_regen", "armor_pen", "all_damage", "all_defense", "bow_damage", "knockback_resistance", "death_damage", "durability",
-                        "magic_damage", "magic_defense", "Accuracy"
+                        "magic_damage", "magic_defense", "Accuracy", "critical_damage_reduction", "damage_reduction"
                 ));
                 case "sync" -> suggestions.addAll(Arrays.asList("clear", "addcode", "update", "check"));
                 case "ability" -> suggestions.addAll(Arrays.asList(
@@ -163,7 +163,7 @@ public class Tab implements TabCompleter {
                 }
                 case "gemstone" -> suggestions.addAll(Arrays.asList("Gem", "Drill", "Remover"));
                 case "element" -> {
-                    // Sau khi chọn attack/defense, gợi ý các ID nguyên tố từ config
+                    
                     FileConfiguration eConfig = Main.getInstance().getElementConfig();
                     if (eConfig != null) suggestions.addAll(eConfig.getKeys(false));
                 }
@@ -192,15 +192,15 @@ public class Tab implements TabCompleter {
                         FileConfiguration config = Main.getInstance().getDucLoConfig();
                         if (config != null) suggestions.addAll(config.getKeys(false));
                     }
-                    else if (type.equals("remover")) {                    // ← THÊM hỗ trợ remover
-                        FileConfiguration config = Main.getInstance().getGemConfig(); // Dùng chung GemConfig
-                        // Nếu sau này bạn tạo file riêng (remover.yml) thì thay bằng getRemoverConfig()
+                    else if (type.equals("remover")) {                    
+                        FileConfiguration config = Main.getInstance().getGemConfig(); 
+                        
                         if (config != null) suggestions.addAll(config.getKeys(false));
                     }
                 }
-                case "element" -> suggestions.addAll(COMMON_LEVEL); // Gợi ý level sau khi chọn ID
+                case "element" -> suggestions.addAll(COMMON_LEVEL); 
                 case "skill" -> suggestions.addAll(TRIGGERS);
-                case "ability" -> suggestions.addAll(COMMON_CHANCE_PERCENT);
+                case "ability" -> suggestions.addAll(COMMON_CENT);
                 case "buff", "debuff" -> suggestions.addAll(COMMON_DURATION_TICKS);
                 case "givegem" -> suggestions.addAll(COMMON_AMOUNTS);
             }

@@ -13,11 +13,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ElementCore {
-    // Prefix để phân biệt dữ liệu trong NBT
+    
     private static final String ATK_PREFIX = "elem_";
     private static final String DEF_PREFIX = "elem_def_";
 
-    // Các key cũ (để tương thích ngược nếu cần)
+    
     private static final NamespacedKey ELEMENT_KEY = new NamespacedKey(Main.getInstance(), "item_element");
     private static final NamespacedKey LEVEL_KEY = new NamespacedKey(Main.getInstance(), "item_element_level");
 
@@ -45,7 +45,7 @@ public class ElementCore {
         PersistentDataContainer pdc = item.getItemMeta().getPersistentDataContainer();
         for (NamespacedKey key : pdc.getKeys()) {
             String k = key.getKey();
-            // Lấy các key bắt đầu bằng elem_ nhưng không phải elem_def_
+            
             if (k.startsWith(ATK_PREFIX) && !k.startsWith(DEF_PREFIX)) {
                 String elementId = k.replace(ATK_PREFIX, "").toUpperCase();
                 int level = getSafeInt(pdc, key);
@@ -53,7 +53,7 @@ public class ElementCore {
             }
         }
 
-        // Tương thích ngược với hệ thống setElement cũ (item_element)
+        
         String oldId = pdc.get(ELEMENT_KEY, PersistentDataType.STRING);
         int oldLv = getSafeInt(pdc, LEVEL_KEY);
         if (oldId != null && oldLv > 0) {
@@ -152,7 +152,7 @@ public class ElementCore {
         } catch (Exception ignored) {}
     }
 
-    // --- CÁC HÀM LEGACY (DÙNG CHO CÁC PLUGIN CŨ HOẶC ITEM CŨ) ---
+    
 
     public static void setElement(ItemStack item, String elementId, int level) {
         if (item == null || item.getType().isAir()) return;
@@ -174,6 +174,6 @@ public class ElementCore {
     }
 
     public static Map<String, Integer> getItemDefenses(ItemStack item) {
-        return getAllDefenses(item); // Alias cho đồng bộ code
+        return getAllDefenses(item); 
     }
 }

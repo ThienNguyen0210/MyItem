@@ -1,6 +1,6 @@
 package org.ThienNguyen.Evolution;
 
-import io.lumine.mythic.bukkit.MythicBukkit;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -14,15 +14,27 @@ public class EvolutionListener implements Listener {
         Player killer = event.getEntity().getKiller();
         if (killer == null) return;
 
-        String mobId;
+        String mobId = null;
 
-        // Kiểm tra xem có phải là MythicMob không
-        if (MythicBukkit.inst().getMobManager().isMythicMob(event.getEntity())) {
-            // Nếu là MythicMob, thêm tiền tố mm_ vào trước Internal Name
-            String internalName = MythicBukkit.inst().getMobManager().getMythicMobInstance(event.getEntity()).getType().getInternalName();
-            mobId = "mm_" + internalName;
-        } else {
-            // Nếu là quái Vanilla, giữ nguyên tên EntityType (Ví dụ: ZOMBIE)
+        
+        if (Bukkit.getPluginManager().isPluginEnabled("MythicMobs")) {
+            try {
+                
+                if (io.lumine.mythic.bukkit.MythicBukkit.inst().getMobManager().isMythicMob(event.getEntity())) {
+                    String internalName = io.lumine.mythic.bukkit.MythicBukkit.inst()
+                            .getMobManager()
+                            .getMythicMobInstance(event.getEntity())
+                            .getType()
+                            .getInternalName();
+                    mobId = "mm_" + internalName;
+                }
+            } catch (Throwable ignored) {
+                
+            }
+        }
+
+        
+        if (mobId == null) {
             mobId = event.getEntityType().name();
         }
 
@@ -30,18 +42,19 @@ public class EvolutionListener implements Listener {
     }
 
     private void checkAndApply(Player player, String mobId) {
-        // 1. Kiểm tra vũ khí trên tay chính
+        
         ItemStack mainHand = player.getInventory().getItemInMainHand();
         if (mainHand != null && !mainHand.getType().isAir()) {
             EvolutionManager.addProgress(player, mainHand, mobId);
         }
 
-        // 2. Kiểm tra bộ giáp (Mũ, Áo, Quần, Giày)
+        
         ItemStack[] armorContents = player.getInventory().getArmorContents();
         for (ItemStack armor : armorContents) {
             if (armor != null && !armor.getType().isAir()) {
                 EvolutionManager.addProgress(player, armor, mobId);
             }
         }
+
     }
 }

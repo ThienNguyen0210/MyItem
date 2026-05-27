@@ -14,7 +14,7 @@ public class Blind implements IAbility {
     @Override
     public void execute(Player attacker, LivingEntity target, int level, double baseDamage) {
         if (target == null || target.isDead()) return;
-        // Nausea cấp độ 1 là đủ để rung màn hình
+        
         target.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, level * 20 * 4, 0));
     }
 }

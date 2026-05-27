@@ -29,7 +29,7 @@ public class WindBladeSkill implements ISkill {
 
         double finalDamage = realPower * (0.60 + (level * 0.15));
 
-        // Đẩy vị trí bắt đầu ra phía trước 1 block để tránh kẹt vào người chơi hoặc block chân
+        
         Location startLoc = player.getEyeLocation().add(player.getLocation().getDirection().multiply(1.0));
         Vector direction = player.getLocation().getDirection().normalize();
 
@@ -49,15 +49,15 @@ public class WindBladeSkill implements ISkill {
                     return;
                 }
 
-                // Tăng tốc độ bay (kiếm khí bay nhanh nhìn mới phê)
+                
                 for (int i = 0; i < 3; i++) {
                     distance += 0.4;
                     Location currentLoc = startLoc.clone().add(direction.clone().multiply(distance));
 
-                    // Vẽ hiệu ứng (Đã thay hạt dễ nhìn hơn)
+                    
                     drawWindEffect(currentLoc, direction);
 
-                    // Kiểm tra block trước khi quét quái
+                    
                     if (currentLoc.getBlock().getType().isSolid()) {
                         currentLoc.getWorld().spawnParticle(Particle.CLOUD, currentLoc, 5, 0.1, 0.1, 0.1, 0.05);
                         this.cancel();
@@ -91,14 +91,14 @@ public class WindBladeSkill implements ISkill {
     }
 
     private void drawWindEffect(Location loc, Vector dir) {
-        // Tạo vector vuông góc để vẽ lưỡi kiếm dọc
+        
         Vector right = new Vector(-dir.getZ(), 0, dir.getX()).normalize();
 
-        // Vẽ lưỡi kiếm bằng hạt lửa pháo hoa (màu trắng sáng) và khói
+        
         for (double i = -0.8; i <= 0.8; i += 0.4) {
             Location pLoc = loc.clone().add(right.clone().multiply(i * 0.3)).add(0, i, 0);
 
-            // Hạt FIREWORKS_SPARK cực kỳ dễ nhìn thấy
+            
             loc.getWorld().spawnParticle(Particle.FIREWORKS_SPARK, pLoc, 1, 0.02, 0.02, 0.02, 0.01);
             loc.getWorld().spawnParticle(Particle.CLOUD, pLoc, 1, 0, 0, 0, 0.01);
         }

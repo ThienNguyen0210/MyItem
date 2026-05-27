@@ -16,7 +16,7 @@ public class MovementSpeed {
         return val != null ? val : 0;
     }
 
-    // THIẾU HÀM NÀY NÊN BỊ LỖI COMPILATION ERROR
+    
     public static void set(ItemStack item, double value) {
         if (item == null || item.getType().isAir()) return;
         ItemMeta meta = item.getItemMeta();

@@ -7,9 +7,12 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.inventory.ItemStack;
 
 import java.net.URL;
 import java.util.Scanner;
@@ -46,44 +49,66 @@ public class UpdateListener implements Listener {
             });
         }
     }
+    @EventHandler
+    public void onInventoryDrag(InventoryDragEvent event) {
+        String title = event.getView().getTitle();
 
+        if (title.equals("§0MyItem - Plugin Version") ||
+                title.equals("§0MyItem - Danh sách Update")) {
+            event.setCancelled(true);
+        }
+    }
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         String title = event.getView().getTitle();
 
-        // FIX 1: Khóa cứng toàn bộ GUI dựa trên tiêu đề (An toàn 100%)
-        if (title.equals("§0MyItem - Plugin Version") || title.equals("§0MyItem - Danh sách Update")) {
-            event.setCancelled(true); // Không ai bốc được gì ra ngoài nữa
+        if (!title.equals("§0MyItem - Plugin Version") &&
+                !title.equals("§0MyItem - Danh sách Update")) {
+            return;
+        }
 
-            if (event.getCurrentItem() == null || event.getCurrentItem().getItemMeta() == null) return;
+        
+        event.setCancelled(true);
 
-            Player player = (Player) event.getWhoClicked();
-            var container = event.getCurrentItem().getItemMeta().getPersistentDataContainer();
+        
+        if (event.getClick() != ClickType.LEFT && event.getClick() != ClickType.RIGHT) {
+            return;
+        }
 
-            // Xử lý Click GUI Version (Mở danh sách)
-            NamespacedKey actionOpenList = new NamespacedKey(plugin, "action_open_list");
-            if (container.has(actionOpenList, PersistentDataType.BYTE)) {
+        ItemStack clickedItem = event.getCurrentItem();
+        if (clickedItem == null || !clickedItem.hasItemMeta()) return;
+
+        Player player = (Player) event.getWhoClicked();
+        var container = clickedItem.getItemMeta().getPersistentDataContainer();
+
+        
+        NamespacedKey actionOpenList = new NamespacedKey(plugin, "action_open_list");
+        if (container.has(actionOpenList, PersistentDataType.BYTE)) {
+            Bukkit.getScheduler().runTask(plugin, () -> {
                 player.closeInventory();
                 Update.openUpdateListGUI(player, plugin);
-                return;
-            }
+            });
+            return;
+        }
 
-            // Xử lý Click GUI Danh sách (Bắt đầu tải)
-            NamespacedKey updateVerKey = new NamespacedKey(plugin, "update_ver");
-            if (container.has(updateVerKey, PersistentDataType.STRING)) {
-                String targetVersion = container.get(updateVerKey, PersistentDataType.STRING);
+        NamespacedKey updateVerKey = new NamespacedKey(plugin, "update_ver");
+        if (container.has(updateVerKey, PersistentDataType.STRING)) {
+            String targetVersion = container.get(updateVerKey, PersistentDataType.STRING);
+            Bukkit.getScheduler().runTask(plugin, () -> {
                 player.closeInventory();
                 Update.downloadAndUpdate(plugin, targetVersion, player);
-                return;
-            }
+            });
+            return;
+        }
 
-            // Xử lý nút Update bản mới nhất trực tiếp (nếu có)
-            NamespacedKey actionKey = new NamespacedKey(plugin, "action_update");
-            if (container.has(actionKey, PersistentDataType.STRING)) {
+        
+        NamespacedKey actionKey = new NamespacedKey(plugin, "action_update");
+        if (container.has(actionKey, PersistentDataType.STRING)) {
+            Bukkit.getScheduler().runTask(plugin, () -> {
                 player.closeInventory();
                 String targetVersion = (latestVersionCache != null) ? latestVersionCache : "latest";
                 Update.downloadAndUpdate(plugin, targetVersion, player);
-            }
+            });
         }
     }
 

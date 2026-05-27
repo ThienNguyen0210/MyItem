@@ -21,15 +21,15 @@ public class FireVortex implements IAbility {
     public void execute(Player attacker, LivingEntity target, int level, double baseDamage) {
         if (target == null || target.isDead() || target.hasMetadata("IS_ABILITY")) return;
 
-        // 1. Tính toán sát thương
+        
         double tickPercent = 2.0 + (level * 1.0);
         double damagePerTick = baseDamage * (tickPercent / 100.0);
         final Location center = target.getLocation();
 
-        // 2. Hiệu ứng âm thanh tối giản
+        
         center.getWorld().playSound(center, Sound.ITEM_FIRECHARGE_USE, 0.8f, 1.2f);
 
-        // 3. Vòng lặp xoáy lửa (3 giây)
+        
         new BukkitRunnable() {
             int ticks = 0;
 
@@ -40,18 +40,18 @@ public class FireVortex implements IAbility {
                     return;
                 }
 
-                // HIỆU ỨNG HẠT TỐI GIẢN (Chỉ 2 hạt mỗi tick đối xứng nhau)
+                
                 for (int i = 0; i < 2; i++) {
-                    double angle = (ticks * 0.4) + (i * Math.PI); // Xoay mượt mà
+                    double angle = (ticks * 0.4) + (i * Math.PI); 
                     double x = Math.cos(angle) * 1.0;
                     double z = Math.sin(angle) * 1.0;
 
                     Location particleLoc = center.clone().add(x, 0.1, z);
-                    // Giảm count xuống 1, speed cực thấp
+                    
                     center.getWorld().spawnParticle(Particle.FLAME, particleLoc, 1, 0, 0, 0, 0.01);
                 }
 
-                // Gây sát thương mỗi 1 giây (20 ticks)
+                
                 if (ticks % 20 == 0) {
                     center.getWorld().playSound(center, Sound.BLOCK_FIRE_AMBIENT, 0.5f, 1.5f);
 

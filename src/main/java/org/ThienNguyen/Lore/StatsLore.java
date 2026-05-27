@@ -17,11 +17,11 @@ import java.util.regex.Pattern;
 
 public class StatsLore {
 
-    // --- BẢNG ĐỘ RỘNG PIXEL CHUẨN CỦA MINECRAFT ---
+    
     private static int getCharWidth(char c) {
         if ("i!|;:,.".indexOf(c) != -1) return 2;
         if ("l'".indexOf(c) != -1) return 3;
-        if ("tI[] ".indexOf(c) != -1) return 4; // Khoảng trắng = 4px
+        if ("tI[] ".indexOf(c) != -1) return 4; 
         if ("fk<>()*".indexOf(c) != -1) return 5;
         return 6;
     }
@@ -35,15 +35,22 @@ public class StatsLore {
         return width;
     }
 
-    public static void updateLore(ItemStack item) {
+    /**
+     * Cập nhật Lore của vật phẩm dựa trên các chỉ số trong PersistentDataContainer.
+     * * @param item Vật phẩm cần cập nhật.
+     * @param allowRebuild Nếu là true, sẽ ưu tiên gọi LoreGenerator để xây dựng lại lore theo template.
+     * Nếu là false, sẽ bỏ qua template và chỉ cập nhật trực tiếp các dòng chỉ số.
+     */
+    public static void updateLore(ItemStack item, boolean allowRebuild) {
         if (item == null || !item.hasItemMeta()) return;
 
         ItemMeta meta = item.getItemMeta();
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
         NamespacedKey formatKey = new NamespacedKey(Main.getInstance(), "lore_format_id");
 
-        if (pdc.has(formatKey, PersistentDataType.STRING)) {
-             org.ThienNguyen.Lore.LoreGenerator.rebuild(item);
+        
+        if (allowRebuild && pdc.has(formatKey, PersistentDataType.STRING)) {
+            org.ThienNguyen.Lore.LoreGenerator.rebuild(item);
             return;
         }
 
@@ -57,7 +64,7 @@ public class StatsLore {
             String format = statsConfig.getString(key);
             if (format == null) continue;
 
-            // Keyword để nhận diện (Ví dụ: "Sát thương:")
+            
             String keyword = ChatColor.stripColor(formatColor(format.split("\\{")[0]))
                     .replace("+", "")
                     .trim();
@@ -73,22 +80,13 @@ public class StatsLore {
                     String currentLineStripped = ChatColor.stripColor(currentLineRaw);
 
                     if (currentLineStripped.contains(keyword)) {
-                        // --- FIX LOGIC TẠI ĐÂY ---
-                        // Thay vì split phức tạp, ta kiểm tra xem dòng cũ có "tiền tố lạ" (adsadsa) không.
-                        // Nếu dòng cũ dài hơn format chuẩn của keyword, ta giữ phần đầu.
-
                         int keywordIndexInStripped = currentLineStripped.indexOf(keyword);
 
                         if (keywordIndexInStripped > 0) {
-                            // Trích xuất phần tiền tố dựa trên index của keyword trong chuỗi đã strip
-                            // Sau đó lấy độ dài đó áp dụng vào chuỗi gốc (có màu)
-                            // Đây là cách lấy "adsadsadsa" an toàn nhất
-                            String colorCodePrefix = "";
-                            // Tìm vị trí tương đối của keyword trong chuỗi có màu
-                            // (Dùng tạm Regex thay thế để giữ cấu trúc)
+                            
                             lore.set(i, currentLineRaw.substring(0, findIndexInColorRaw(currentLineRaw, keyword)) + newLine);
                         } else {
-                            // Nếu keyword nằm ngay đầu dòng, thay thẳng bằng newLine
+                            
                             lore.set(i, newLine);
                         }
 
@@ -101,12 +99,21 @@ public class StatsLore {
                     lore.add(newLine);
                 }
             } else {
+                
                 lore.removeIf(line -> ChatColor.stripColor(line).contains(keyword));
             }
         }
 
         meta.setLore(lore);
         item.setItemMeta(meta);
+    }
+
+    /**
+     * Hàm Overload để giữ tương thích với các lệnh gọi cũ.
+     * Mặc định sẽ cho phép rebuild nếu có template.
+     */
+    public static void updateLore(ItemStack item) {
+        updateLore(item, true);
     }
 
     /**
@@ -123,7 +130,7 @@ public class StatsLore {
 
             char c = raw.charAt(i);
             if (c == '§' || c == '&') {
-                i++; // Bỏ qua ký tự mã màu
+                i++; 
             } else {
                 currentStrippedPos++;
             }
@@ -140,7 +147,7 @@ public class StatsLore {
         if (statsConfig == null) return statsLore;
 
         for (String key : statsConfig.getKeys(false)) {
-            // Kiểm tra loại trừ: Nếu key này đã được render riêng thì bỏ qua
+            
             if (excludedKeys != null && excludedKeys.contains(key.toLowerCase())) {
                 continue;
             }
@@ -183,10 +190,10 @@ public class StatsLore {
         String format = config.getString(statType.toLowerCase());
         if (format == null) format = "&7" + statType + " {value}";
 
-        // ====================== XỬ LÝ KIỂU DỮ LIỆU ======================
+        
         String displayValue = getDisplayValue(statType, value, pdc);
 
-        // Regex tìm {value:số}
+        
         Pattern pattern = Pattern.compile("\\{value:(\\d+)\\}");
         Matcher matcher = pattern.matcher(format);
 
@@ -202,20 +209,20 @@ public class StatsLore {
             StringBuilder sb = new StringBuilder();
             while (pixelNeeded > 0) {
                 sb.append(" ");
-                pixelNeeded -= 4; // Khoảng trắng mặc định 4px
+                pixelNeeded -= 4; 
             }
 
-            // ====================== FIX LOGIC REPLACE Ở ĐÂY ======================
-            // Kiểm tra xem phía trước {value:xx} có dấu '+' không
+            
+            
             if (format.contains("+" + matcher.group(0))) {
-                // Nếu có dấu +, replace cả cụm "+{value:xx}" bằng "khoảng_trắng + giá_trị"
+                
                 format = format.replace("+" + matcher.group(0), sb.toString() + "+" + displayValue);
             } else {
-                // Nếu không có dấu +, replace bình thường "{value:xx}" bằng "khoảng_trắng giá_trị"
+                
                 format = format.replace(matcher.group(0), sb.toString() + displayValue);
             }
         } else {
-            // Trường hợp chỉ dùng {value} bình thường
+            
             format = format.replace("{value}", displayValue);
         }
 
@@ -223,9 +230,9 @@ public class StatsLore {
     }
 
     private static String getDisplayValue(String statType, Object value, PersistentDataContainer pdc) {
-        // THÊM ĐOẠN NÀY ĐỂ FIX LỖI NULL
+        
         if (value == null) {
-            return "0"; // Hoặc trả về chuỗi trống "" tùy bạn
+            return "0"; 
         }
 
         if (value instanceof String) {

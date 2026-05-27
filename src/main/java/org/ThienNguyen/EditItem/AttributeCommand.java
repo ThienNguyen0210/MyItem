@@ -57,7 +57,7 @@ public class AttributeCommand implements CommandExecutor, TabCompleter {
                 AttributeModifier.Operation operation = args[3].equalsIgnoreCase("scalar") ?
                         AttributeModifier.Operation.ADD_SCALAR : AttributeModifier.Operation.ADD_NUMBER;
 
-                // Xử lý Slot chi tiết
+                
                 EquipmentSlot slot = null;
                 if (args.length >= 5) {
                     slot = parseSlot(args[4]);
@@ -97,7 +97,7 @@ public class AttributeCommand implements CommandExecutor, TabCompleter {
             case "chest", "chestplate" -> EquipmentSlot.CHEST;
             case "leggings" -> EquipmentSlot.LEGS;
             case "boots", "feet" -> EquipmentSlot.FEET;
-            default -> null; // Tương ứng với 'any'
+            default -> null; 
         };
     }
 

@@ -23,14 +23,14 @@ public class Bleed implements IAbility {
     public void execute(Player attacker, LivingEntity target, int level, double baseDamage) {
         if (target == null || target.isDead()) return;
 
-        // --- CỰC KỲ QUAN TRỌNG: CHẶN VÒNG LẶP ---
-        // Nếu mục tiêu đang nhận sát thương từ một kỹ năng, không kích hoạt Bleed nữa.
+        
+        
         if (target.hasMetadata("IS_ABILITY")) return;
 
         double tickPercent = 1.0 + (level * 0.5);
         double damagePerTick = baseDamage * (tickPercent / 100.0);
 
-        // Gia hạn nếu đang chảy máu
+        
         if (target.hasMetadata(METADATA_IS_BLEEDING)) {
             if (target.hasMetadata(METADATA_TASK)) {
                 Object old = target.getMetadata(METADATA_TASK).get(0).value();
@@ -42,7 +42,7 @@ public class Bleed implements IAbility {
             return;
         }
 
-        // Bắt đầu chảy máu mới
+        
         target.setMetadata(METADATA_IS_BLEEDING, new FixedMetadataValue(Main.getInstance(), true));
         target.getWorld().playSound(target.getLocation(), Sound.ENTITY_PLAYER_HURT_SWEET_BERRY_BUSH, 1.0f, 0.8f);
 
@@ -62,13 +62,13 @@ public class Bleed implements IAbility {
                     return;
                 }
 
-                // Đánh dấu bắt đầu gây sát thương kỹ năng
+                
                 target.setMetadata("IS_ABILITY", new FixedMetadataValue(Main.getInstance(), true));
 
-                // Gây damage (Hàm này sẽ kích hoạt EventDamage nhưng sẽ bị 'return' ngay lập tức)
+                
                 target.damage(damagePerTick, attacker);
 
-                // Xóa nhãn sau 1 tick để các đòn đánh thường tiếp theo của Player vẫn kích hoạt được chiêu
+                
                 new BukkitRunnable() {
                     @Override
                     public void run() {
@@ -76,7 +76,7 @@ public class Bleed implements IAbility {
                     }
                 }.runTaskLater(Main.getInstance(), 1L);
 
-                // Hiệu ứng
+                
                 target.getWorld().spawnParticle(Particle.BLOCK_CRACK, target.getLocation().add(0, 1, 0), 10, 0.1, 0.2, 0.1,
                         Material.REDSTONE_BLOCK.createBlockData());
                 target.getWorld().playSound(target.getLocation(), Sound.BLOCK_CANDLE_EXTINGUISH, 0.5f, 0.8f);

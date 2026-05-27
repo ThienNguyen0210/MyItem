@@ -27,18 +27,18 @@ public class SkillLore {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
 
-        // --- LOGIC MỚI: Rẽ nhánh cho LoreFormat ---
+        
         NamespacedKey formatKey = new NamespacedKey(Main.getInstance(), "lore_format_id");
         if (meta.getPersistentDataContainer().has(formatKey, PersistentDataType.STRING)) {
             org.ThienNguyen.Lore.LoreGenerator.rebuild(item);
-            return; // Dùng Format thì thoát luôn
+            return; 
         }
 
-        // --- LOGIC CŨ (LEGACY) ---
+        
         NamespacedKey skillKey = new NamespacedKey(Main.getInstance(), "item_skills");
         if (!meta.getPersistentDataContainer().has(skillKey, PersistentDataType.STRING)) return;
 
-        List<String> newLoreLines = getSkillList(item); // Tận dụng hàm getSkillList bên dưới
+        List<String> newLoreLines = getSkillList(item); 
         if (newLoreLines.isEmpty()) return;
 
         List<String> lore = meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
@@ -46,7 +46,7 @@ public class SkillLore {
         Integer oldStart = meta.getPersistentDataContainer().get(SKILL_LORE_START, PersistentDataType.INTEGER);
         Integer oldEnd   = meta.getPersistentDataContainer().get(SKILL_LORE_END, PersistentDataType.INTEGER);
 
-        // Xóa lore cũ dựa trên marker
+        
         if (oldStart != null && oldEnd != null && oldStart >= 0 && oldEnd < lore.size()) {
             for (int i = oldEnd; i >= oldStart; i--) {
                 lore.remove(i);
@@ -58,7 +58,7 @@ public class SkillLore {
             insertPos = oldStart;
         } else {
             insertPos = lore.size();
-            // Tự động xuống dòng nếu chèn vào cuối
+            
             if (!lore.isEmpty() && !ChatColor.stripColor(lore.get(lore.size() - 1)).trim().isEmpty()) {
                 lore.add("§7");
                 insertPos++;
@@ -67,7 +67,7 @@ public class SkillLore {
 
         lore.addAll(insertPos, newLoreLines);
 
-        // Lưu lại vị trí để lần sau xóa/update
+        
         meta.getPersistentDataContainer().set(SKILL_LORE_START, PersistentDataType.INTEGER, insertPos);
         meta.getPersistentDataContainer().set(SKILL_LORE_END, PersistentDataType.INTEGER, insertPos + newLoreLines.size() - 1);
 
@@ -116,7 +116,7 @@ public class SkillLore {
             FileConfiguration config;
             String path;
 
-            // Xác định config file dựa trên type
+            
             if (type.equalsIgnoreCase("MythicMob") || type.equalsIgnoreCase("MythicMobs") || type.equalsIgnoreCase("MythicLib")) {
                 config = Main.getInstance().getSkillMythicLibConfig();
                 path = skillId + ".lore";
@@ -141,7 +141,7 @@ public class SkillLore {
                         .replace("%name%", skillId)));
             }
 
-            // Cách giữa các kỹ năng bằng 1 dòng trống nếu cần
+            
             if (!skillLoreTotal.isEmpty() && !processedSkill.isEmpty()) {
                 skillLoreTotal.add("");
             }
@@ -183,7 +183,7 @@ public class SkillLore {
         return romanMap.get(l) + toRoman(number - l);
     }
     public static String getFormattedLine(String skillId, int level) {
-        FileConfiguration config = Main.getInstance().getSkillConfig(); // Hoặc config lưu skill của bạn
+        FileConfiguration config = Main.getInstance().getSkillConfig(); 
         if (config == null) return "§7Skill: §f" + skillId + " " + toRoman(level);
 
         String path = "skills." + skillId + ".display-name";
@@ -191,7 +191,7 @@ public class SkillLore {
 
         if (displayName == null) return "§7Skill: §f" + skillId + " " + toRoman(level);
 
-        // Format lại theo ý bạn, ví dụ: "❂ Kỹ năng: Lửa Cấp II"
+        
         return formatColor(displayName + " " + toRoman(level));
     }
 }

@@ -1,4 +1,7 @@
 language: en.yml
+regeneration:
+  enabled: true
+  percent-per-second: 1.0 # Hồi 1% máu mỗi giây
 text-display:
   enabled: true
 

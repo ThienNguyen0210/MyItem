@@ -37,21 +37,21 @@ public class ElementLore {
         boolean horizontal = loreConfig.getBoolean("settings.horizontal-display", false);
 
         if (horizontal) {
-            // --- CHẾ ĐỘ DÙNG LỆNH GỘP DÒNG ---
+            
             Map<String, Integer> attacks = ElementCore.getAllElements(item);
             Map<String, Integer> defenses = ElementCore.getAllDefenses(item);
 
-            // Lấy các dòng đã gộp (StringJoiner đã xử lý trong getElementList)
+            
             List<String> newElementLines = getElementList(item);
 
-            // Xóa sạch các dòng nguyên tố cũ trước khi ghi đè dòng gộp mới
+            
             removeOldElementLore(currentLore, loreConfig);
 
-            // Tìm vị trí thích hợp để chèn (thường là cuối cùng hoặc sau một dòng nhất định)
-            // Ở đây mình add vào cuối cho đơn giản, nhưng vì đã xóa dòng cũ nên nó sẽ không bị lặp.
+            
+            
             currentLore.addAll(newElementLines);
         } else {
-            // --- CHẾ ĐỘ DÒNG DỌC KIỂU CŨ ---
+            
             List<String> elementLines = getElementList(item);
             removeOldElementLore(currentLore, loreConfig);
             currentLore.addAll(elementLines);
@@ -79,7 +79,7 @@ public class ElementLore {
         Map<String, Integer> attacks = ElementCore.getAllElements(item);
         Map<String, Integer> defenses = ElementCore.getAllDefenses(item);
 
-        // 1. Xử lý Tấn Công (Attack)
+        
         if (horizontal) {
             StringJoiner attackJoiner = new StringJoiner(separator);
             attacks.forEach((id, lv) -> {
@@ -92,7 +92,7 @@ public class ElementLore {
             });
         }
 
-        // 2. Xử lý Phòng Thủ (Defense)
+        
         if (horizontal) {
             StringJoiner defenseJoiner = new StringJoiner(separator);
             defenses.forEach((id, lv) -> {
@@ -117,10 +117,10 @@ public class ElementLore {
 
         boolean useRoman = loreConfig.getBoolean("settings.use-roman", false);
 
-        // Thử tìm trong group attack trước
+        
         String result = getFormattedElementFromSection(loreConfig, "attack", elementId, level, useRoman);
 
-        // Nếu kết quả trả về là fallback mặc định (Atk...), thử tìm trong defense
+        
         if (result.contains("Atk " + elementId)) {
             String defResult = getFormattedElementFromSection(loreConfig, "defense", elementId, level, useRoman);
             if (!defResult.contains("Def " + elementId)) return defResult;
@@ -143,8 +143,8 @@ public class ElementLore {
      * Xóa các dòng Lore cũ để tránh bị lặp khi cập nhật item
      */
     private static void removeOldElementLore(List<String> lore, FileConfiguration config) {
-        // Các dấu hiệu nhận biết dòng này là dòng nguyên tố
-        // 1. Dựa vào prefix trong config
+        
+        
         Set<String> prefixes = new HashSet<>();
         for (String section : Arrays.asList("attack", "defense")) {
             ConfigurationSection sec = config.getConfigurationSection(section);
@@ -158,14 +158,14 @@ public class ElementLore {
             }
         }
 
-        // 2. Tiến hành xóa những dòng chứa các dấu hiệu trên
+        
         lore.removeIf(line -> {
             String stripped = ChatColor.stripColor(line).trim();
-            // Xóa nếu dòng bắt đầu bằng bất kỳ prefix nào trong config
+            
             for (String pre : prefixes) {
                 if (stripped.startsWith(pre)) return true;
             }
-            // Hoặc xóa nếu dòng có chứa các icon đặc trưng (Lửa, Băng, Sét...) để tránh sót dòng gộp
+            
             return stripped.contains("🔥") || stripped.contains("❄") || stripped.contains("⚡") || stripped.contains("🛡");
         });
     }

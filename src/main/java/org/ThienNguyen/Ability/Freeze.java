@@ -32,15 +32,15 @@ public class Freeze implements IAbility {
         final Location standLoc = center.clone().add(0.5, 0.0, 0.5);
         standLoc.setDirection(target.getLocation().getDirection());
 
-        // Đánh dấu mục tiêu
+        
         target.setMetadata("IS_ABILITY_FREEZE", new FixedMetadataValue(Main.getInstance(), true));
 
-        // KHÓA AI: Quái sẽ đứng bất động hoàn toàn nhưng vẫn chịu Gravity
+        
         if (target instanceof Mob mob) {
             mob.setAI(false);
         }
 
-        // Teleport vào giữa block ngay lập tức 1 lần duy nhất
+        
         target.teleport(standLoc);
 
         List<Block> iceBlocks = new ArrayList<>();
@@ -66,16 +66,16 @@ public class Freeze implements IAbility {
                     return;
                 }
 
-                // Giữ vị trí XZ nhưng cho phép Y thay đổi (rơi tự do)
-                // Nếu quái bị đẩy, ta kéo nó lại tâm XZ của khối băng
+                
+                
                 Location current = target.getLocation();
                 if (current.getX() != standLoc.getX() || current.getZ() != standLoc.getZ()) {
                     Location loc = standLoc.clone();
-                    loc.setY(current.getY()); // Giữ nguyên độ cao hiện tại để nó rơi tự nhiên
+                    loc.setY(current.getY()); 
                     target.teleport(loc);
                 }
 
-                // Bảo vệ khối băng
+                
                 for (Block b : iceBlocks) {
                     if (b.getType() != Material.PACKED_ICE) b.setType(Material.PACKED_ICE);
                 }
@@ -88,7 +88,7 @@ public class Freeze implements IAbility {
             }
 
             private void cleanup() {
-                // Trả lại AI
+                
                 if (target instanceof Mob mob) {
                     mob.setAI(true);
                 }
@@ -97,7 +97,7 @@ public class Freeze implements IAbility {
                     target.removeMetadata("IS_ABILITY_FREEZE", Main.getInstance());
                 }
 
-                // Khôi phục địa hình
+                
                 for (int i = 0; i < iceBlocks.size(); i++) {
                     iceBlocks.get(i).setType(oldMaterials.get(i));
                 }

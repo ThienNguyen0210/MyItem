@@ -26,7 +26,7 @@ public class Stats {
      * HÀM GỐC (2 tham số): Để tránh lỗi COMPILATION ERROR trong MyItemCommand hoặc các class cũ.
      */
     public void handleCommand(Player player, String[] args) {
-        // Tự động gọi hàm 3 tham số với slot mặc định là "any"
+        
         handleCommand(player, args, "any");
     }
 
@@ -52,16 +52,26 @@ public class Stats {
             ClassRequire.set(item, rawValue);
         } else {
             try {
-                double value = Double.parseDouble(rawValue);
-                // Cập nhật giá trị và lưu kèm thông tin slot vào PDC
-                updatePDCNumeric(item, type, value, slot);
+                boolean isPercent = rawValue.endsWith("%");
+                double value;
+
+                if (isPercent) {
+                    
+                    String numStr = rawValue.substring(0, rawValue.length() - 1);
+                    value = Double.parseDouble(numStr);
+                } else {
+                    value = Double.parseDouble(rawValue);
+                }
+
+                
+                updatePDCNumeric(item, type, value, slot, isPercent);
             } catch (NumberFormatException e) {
-                player.sendMessage("§cGiá trị cho chỉ số này phải là một con số!");
+                player.sendMessage("§cGiá trị cho chỉ số này phải là một con số hoặc định dạng % (Ví dụ: 10 hoặc 10%)!");
                 return;
             }
         }
 
-        // Vẽ lại Lore (Sử dụng hệ thống tự động quét PDC của StatsLore)
+        
         updateItemLore(item);
 
         player.sendMessage("§a[MyItem] Đã cập nhật §f" + type + " §athành §e" + rawValue + " §7(Slot: §b" + slot + "§7)");
@@ -75,64 +85,91 @@ public class Stats {
     }
 
     /**
-     * Cập nhật chỉ số vào PDC và lưu kèm Key quy định Slot sử dụng.
+     * Overload hàm updatePDCNumeric cũ để không làm lỗi các class khác khi gọi.
      */
     public void updatePDCNumeric(ItemStack item, String type, double value, String slot) {
-        // 1. Gọi các class Stat để lưu giá trị (Logic cũ)
-        switch (type) {
-            case "damage" -> Damage.setDamage(item, value);
-            case "health" -> Health.setHealth(item, value);
-            case "armor" -> Armor.setArmor(item, value);
-            case "pve_damage" -> PveDamage.set(item, value);
-            case "pvp_damage" -> PvpDamage.set(item, value);
-            case "pve_defense" -> PveDefense.set(item, value);
-            case "pvp_defense" -> PvpDefense.set(item, value);
-            case "critical_chance" -> CriticalChance.set(item, value);
-            case "critical_damage" -> CriticalDamage.set(item, value);
-            case "lifesteal" -> Lifesteal.set(item, value);
-            case "dodge_rate" -> DodgeRate.set(item, value);
-            case "block_rate" -> BlockRate.set(item, value);
-            case "penetration" -> Penetration.set(item, value);
-            case "level_require" -> LevelRequire.set(item, (int) value);
-            case "true_damage" -> TrueDamage.set(item, value);
-            case "thorns" -> Thorns.set(item, value);
-            case "max_mana" -> MaxMana.set(item, value);
-            case "mana_regen" -> ManaRegen.set(item, value);
-            case "exp_bonus" -> ExpBonus.set(item, value);
-            case "attack_speed" -> AttackSpeed.set(item, value);
-            case "death_damage" -> DeathDamage.set(item, value);
-            case "movement_speed" -> MovementSpeed.set(item, value);
-            case "armor_pen" -> ArmorPen.set(item, value);
-            case "health_regen" -> HealthRegen.set(item, value);
-            case "all_damage" -> AllDamage.set(item, value); // Sát thương toàn phần (%)
-            case "all_defense" -> AllDefense.set(item, value); // Giảm damage toàn phần (%)
-            case "bow_damage" -> BowDamage.set(item, value); // Sát thương cung tên
-            case "knockback_resistance" -> KnockbackResistance.set(item, value);
-            case "accuracy" -> Accuracy.set(item, value); // Thêm dòng này
-            case "durability" -> {
-                ItemMeta meta = item.getItemMeta();
-                if (meta instanceof org.bukkit.inventory.meta.Damageable damageable) {
-                    // 1. Lưu vào PDC (Số hiển thị trong Lore)
-                    var pdc = meta.getPersistentDataContainer();
-                    pdc.set(new NamespacedKey(Main.getInstance(), "durability"), PersistentDataType.DOUBLE, value);
-                    pdc.set(new NamespacedKey(Main.getInstance(), "max_durability"), PersistentDataType.DOUBLE, value);
+        updatePDCNumeric(item, type, value, slot, false);
+    }
 
-                    // 2. Set độ bền Vanilla (Minecraft mặc định)
-                    damageable.setDamage(0); // 0 damage = Thanh độ bền đầy 100%
-                    item.setItemMeta(damageable);
-                }
-            }
-            case "magic_damage" -> MagicDamage.set(item, value); // Giả sử bạn đã tạo class Stat tương ứng
-            case "magic_defense" -> MagicDefense.set(item, value);
-            default -> {}
-        }
-
-        // 2. Lưu Slot quy định cho chỉ số này vào PDC (Ví dụ: slot_damage = "mainhand")
+    /**
+     * Cập nhật chỉ số vào PDC, lưu tách biệt hoàn toàn giữa chỉ số cố định và phần trăm.
+     */
+    public void updatePDCNumeric(ItemStack item, String type, double value, String slot, boolean isPercent) {
         ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            NamespacedKey slotKey = new NamespacedKey(Main.getInstance(), "slot_" + type);
-            meta.getPersistentDataContainer().set(slotKey, PersistentDataType.STRING, slot.toLowerCase());
+        if (meta == null) return;
+        var pdc = meta.getPersistentDataContainer();
+
+        if (isPercent) {
+            
+            
+            
+            NamespacedKey pctValueKey = new NamespacedKey(Main.getInstance(), "pct_" + type);
+            pdc.set(pctValueKey, PersistentDataType.DOUBLE, value);
+
+            
+            NamespacedKey pctSlotKey = new NamespacedKey(Main.getInstance(), "slot_pct_" + type);
+            pdc.set(pctSlotKey, PersistentDataType.STRING, slot.toLowerCase());
+
             item.setItemMeta(meta);
+        } else {
+            
+            
+            
+            item.setItemMeta(meta); 
+
+            switch (type) {
+                case "damage" -> Damage.setDamage(item, value);
+                case "health" -> Health.setHealth(item, value);
+                case "armor" -> Armor.setArmor(item, value);
+                case "pve_damage" -> PveDamage.set(item, value);
+                case "pvp_damage" -> PvpDamage.set(item, value);
+                case "pve_defense" -> PveDefense.set(item, value);
+                case "pvp_defense" -> PvpDefense.set(item, value);
+                case "critical_chance" -> CriticalChance.set(item, value);
+                case "critical_damage" -> CriticalDamage.set(item, value);
+                case "lifesteal" -> Lifesteal.set(item, value);
+                case "dodge_rate" -> DodgeRate.set(item, value);
+                case "block_rate" -> BlockRate.set(item, value);
+                case "penetration" -> Penetration.set(item, value);
+                case "level_require" -> LevelRequire.set(item, (int) value);
+                case "true_damage" -> TrueDamage.set(item, value);
+                case "thorns" -> Thorns.set(item, value);
+                case "max_mana" -> MaxMana.set(item, value);
+                case "mana_regen" -> ManaRegen.set(item, value);
+                case "exp_bonus" -> ExpBonus.set(item, value);
+                case "attack_speed" -> AttackSpeed.set(item, value);
+                case "death_damage" -> DeathDamage.set(item, value);
+                case "movement_speed" -> MovementSpeed.set(item, value);
+                case "armor_pen" -> ArmorPen.set(item, value);
+                case "health_regen" -> HealthRegen.set(item, value);
+                case "all_damage" -> AllDamage.set(item, value);
+                case "all_defense" -> AllDefense.set(item, value);
+                case "bow_damage" -> BowDamage.set(item, value);
+                case "knockback_resistance" -> KnockbackResistance.set(item, value);
+                case "accuracy" -> Accuracy.set(item, value);
+                case "crit_damage_reduction" -> CritDamageReduction.set(item, value);
+                case "durability" -> {
+                    meta = item.getItemMeta();
+                    if (meta instanceof org.bukkit.inventory.meta.Damageable damageable) {
+                        var dPdc = damageable.getPersistentDataContainer();
+                        dPdc.set(new NamespacedKey(Main.getInstance(), "durability"), PersistentDataType.DOUBLE, value);
+                        dPdc.set(new NamespacedKey(Main.getInstance(), "max_durability"), PersistentDataType.DOUBLE, value);
+                        damageable.setDamage(0);
+                        item.setItemMeta(damageable);
+                    }
+                }
+                case "magic_damage" -> MagicDamage.set(item, value);
+                case "magic_defense" -> MagicDefense.set(item, value);
+                default -> {}
+            }
+
+            
+            meta = item.getItemMeta();
+            if (meta != null) {
+                NamespacedKey slotKey = new NamespacedKey(Main.getInstance(), "slot_" + type);
+                meta.getPersistentDataContainer().set(slotKey, PersistentDataType.STRING, slot.toLowerCase());
+                item.setItemMeta(meta);
+            }
         }
     }
 
@@ -140,6 +177,6 @@ public class Stats {
      * Overload hàm updatePDCNumeric cũ để không lỗi các chỗ gọi khác.
      */
     public void updatePDCNumeric(ItemStack item, String type, double value) {
-        updatePDCNumeric(item, type, value, "any");
+        updatePDCNumeric(item, type, value, "any", false);
     }
 }

@@ -63,7 +63,7 @@ public class Web {
 
     private static void giveItem(Player player, JsonObject json) {
         try {
-            // 1. Khởi tạo vật phẩm cơ bản
+            
             String matName = json.has("material") ? json.get("material").getAsString().toUpperCase() : "DIAMOND_SWORD";
             Material mat = Material.matchMaterial(matName);
             if (mat == null) mat = Material.STONE;
@@ -72,7 +72,7 @@ public class Web {
             ItemMeta meta = item.getItemMeta();
             if (meta == null) return;
 
-            // Thiết lập tên và CustomModelData
+            
             if (json.has("name")) meta.setDisplayName(formatColor(json.get("name").getAsString()));
             if (json.has("modelId") && !json.get("modelId").getAsString().isEmpty()) {
                 try {
@@ -81,8 +81,8 @@ public class Web {
             }
             item.setItemMeta(meta);
 
-            // 2. GÁN DỮ LIỆU VÀO PERSISTENT DATA CONTAINER (PDC)
-            // Lưu dữ liệu thô vào item trước khi render lore
+            
+            
             if (json.has("stats")) {
                 JsonObject statsJson = json.get("stats").getAsJsonObject();
                 for (String type : statsJson.keySet()) {
@@ -129,11 +129,11 @@ public class Web {
                 }
             }
 
-            // 3. XỬ LÝ LORE TEMPLATE (Quan trọng: Biến template phải nằm trong block này)
+            
             if (json.has("lore_template")) {
                 String template = json.get("lore_template").getAsString();
 
-                // 3.1 Render Stats
+                
                 if (json.has("stats")) {
                     JsonObject statsJson = json.get("stats").getAsJsonObject();
                     for (String type : statsJson.keySet()) {
@@ -147,7 +147,7 @@ public class Web {
                     }
                 }
 
-                // 3.2 Render Abilities
+                
                 if (json.has("abilities")) {
                     JsonObject abJson = json.get("abilities").getAsJsonObject();
                     for (String abName : abJson.keySet()) {
@@ -161,7 +161,7 @@ public class Web {
                     }
                 }
 
-                // 3.3 Render Elements
+                
                 if (json.has("elements")) {
                     JsonObject eleJson = json.get("elements").getAsJsonObject();
                     for (String eleId : eleJson.keySet()) {
@@ -172,7 +172,7 @@ public class Web {
                             if (el != null && !el.getAsString().isEmpty()) {
                                 int level = el.getAsInt();
                                 if (level > 0) {
-                                    // GỌI ĐÚNG HÀM TỪ CLASS ElementLore
+                                    
                                     replacement = org.ThienNguyen.Lore.ElementLore.getFormattedElement(eleId, level);
                                 }
                             }
@@ -181,7 +181,7 @@ public class Web {
                     }
                 }
 
-                // 3.4 Render Effects
+                
                 if (json.has("effects")) {
                     JsonObject effJson = json.get("effects").getAsJsonObject();
                     for (String effName : effJson.keySet()) {
@@ -193,7 +193,7 @@ public class Web {
                     }
                 }
 
-                // 4. CẬP NHẬT LORE CUỐI CÙNG
+                
                 List<String> finalLore = new ArrayList<>();
                 for (String line : template.split("\n")) {
                     String formatted = formatColor(line);
@@ -209,7 +209,7 @@ public class Web {
                 }
             }
 
-            // Trao vật phẩm cho người chơi
+            
             player.getInventory().addItem(item);
             player.sendMessage("§a[MyItem] §fKết nối thành công: " + item.getItemMeta().getDisplayName());
 
@@ -219,7 +219,7 @@ public class Web {
         }
     }
 
-    // Helper xử lý màu Hex + Color code truyền thống
+    
     private static String formatColor(String text) {
         if (text == null || text.isEmpty()) return text;
         java.util.regex.Pattern hexPattern = java.util.regex.Pattern.compile("&#([A-Fa-f0-9]{6})");
@@ -251,7 +251,7 @@ public class Web {
             String formatted = line
                     .replace("{level}", levelToDisplay)
                     .replace("{chance}", String.valueOf(chance));
-            lines.add(formatColor(formatted)); // Format màu HEX trong template
+            lines.add(formatColor(formatted)); 
         }
 
         return String.join("\n", lines);
@@ -272,10 +272,10 @@ public class Web {
         boolean useRoman = config.getBoolean("use-roman", true);
         String levelStr = useRoman ? toRoman(level) : String.valueOf(level);
 
-        // Hard-code format sạch, không dấu -, có thể tùy chỉnh màu/icon
+        
         String result = "§7" + displayName + " §f" + levelStr;
-        // Hoặc đẹp hơn tí:
-        // String result = "§b✦ " + displayName + " §f" + levelStr;
+        
+        
 
         return formatColor(result);
     }
@@ -323,20 +323,20 @@ public class Web {
             case "movement_speed" -> MovementSpeed.set(item, value);
             case "health_regen" -> HealthRegen.set(item, value);
             case "armor_pen" -> ArmorPen.set(item, value);
-            case "all_damage" -> AllDamage.set(item, value);           // Sát thương toàn phần (%)
-            case "all_defense" -> AllDefense.set(item, value);         // Giảm damage toàn phần (%)
-            case "bow_damage" -> BowDamage.set(item, value);           // Sát thương cung tên
+            case "all_damage" -> AllDamage.set(item, value);           
+            case "all_defense" -> AllDefense.set(item, value);         
+            case "bow_damage" -> BowDamage.set(item, value);           
             case "knockback_resistance" -> KnockbackResistance.set(item, value);
             case "durability" -> {
                 ItemMeta meta = item.getItemMeta();
                 if (meta instanceof org.bukkit.inventory.meta.Damageable damageable) {
-                    // 1. Lưu vào PDC (Số hiển thị trong Lore)
+                    
                     var pdc = meta.getPersistentDataContainer();
                     pdc.set(new NamespacedKey(Main.getInstance(), "durability"), PersistentDataType.DOUBLE, value);
                     pdc.set(new NamespacedKey(Main.getInstance(), "max_durability"), PersistentDataType.DOUBLE, value);
 
-                    // 2. Set độ bền Vanilla (Minecraft mặc định)
-                    damageable.setDamage(0); // 0 damage = Thanh độ bền đầy 100%
+                    
+                    damageable.setDamage(0); 
                     item.setItemMeta(damageable);
                 }
             }

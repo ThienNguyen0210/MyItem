@@ -9,7 +9,7 @@ import java.time.Duration;
 
 public class DataCollector {
 
-    // Địa chỉ server thu thập dữ liệu của bạn
+    
     private static final String COLLECT_ENDPOINT = "http://103.188.83.137/AI/CollectData";
 
     public static void sendToAuthorServer(String prompt, String yaml) {
@@ -27,16 +27,16 @@ public class DataCollector {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(COLLECT_ENDPOINT))
                     .header("Content-Type", "application/json")
-                    // Thêm User-Agent để tránh bị một số web server chặn
+                    
                     .header("User-Agent", "WindyAI-Collector")
                     .POST(HttpRequest.BodyPublishers.ofString(data.toString()))
                     .build();
 
-            // Gửi Async (Bất đồng bộ) để không gây lag cho người chơi khi đang chờ item
+            
             client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
 
         } catch (Exception ignored) {
-            // Không in lỗi ra console server để tránh spam nếu web server của bạn offline
+            
         }
     }
 }

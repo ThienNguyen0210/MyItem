@@ -10,14 +10,14 @@ import java.util.List;
 
 public class GemLogic {
 
-    // Lấy tổng một chỉ số Stat bất kỳ (damage, health, armor_pen...)
+    
     public static double getTotalStat(ItemStack item, String statName) {
         double total = 0;
         FileConfiguration config = Main.getInstance().getGemConfig();
         for (String gemId : getGemsOnItem(item)) {
             List<String> stats = config.getStringList(gemId + ".apply.stats");
             for (String line : stats) {
-                // Định dạng "damage: 50"
+                
                 String[] parts = line.split(":");
                 if (parts.length == 2 && parts[0].trim().equalsIgnoreCase(statName)) {
                     total += Double.parseDouble(parts[1].trim());
@@ -27,18 +27,18 @@ public class GemLogic {
         return total;
     }
 
-    // Lấy danh sách Ability (LIGHTNING, POISON...)
+    
     public static List<String> getAbilities(ItemStack item) {
         List<String> abilities = new ArrayList<>();
         FileConfiguration config = Main.getInstance().getGemConfig();
         for (String gemId : getGemsOnItem(item)) {
-            // Định dạng "lightning: 5 100" -> Trả về "LIGHTNING:5:100" để khớp với AbilityData của bạn
+            
             List<String> gemAbils = config.getStringList(gemId + ".apply.ability");
             for (String line : gemAbils) {
-                String[] parts = line.split(":"); // lightning: 5 100
+                String[] parts = line.split(":"); 
                 if (parts.length == 2) {
                     String name = parts[0].trim().toUpperCase();
-                    String[] val = parts[1].trim().split(" "); // "5 100"
+                    String[] val = parts[1].trim().split(" "); 
                     if (val.length == 2) {
                         abilities.add(name + ":" + val[0] + ":" + val[1]);
                     }
@@ -48,18 +48,18 @@ public class GemLogic {
         return abilities;
     }
 
-    // Lấy danh sách BUFF (SPEED, JUMP...)
+    
     public static List<String> getBuffs(ItemStack item) {
         List<String> buffs = new ArrayList<>();
         FileConfiguration config = Main.getInstance().getGemConfig();
         for (String gemId : getGemsOnItem(item)) {
-            // Định dạng "SPEED: 2"
+            
             buffs.addAll(config.getStringList(gemId + ".apply.BUFF"));
         }
         return buffs;
     }
 
-    // Hàm phụ lấy ID ngọc từ PDC
+    
     public static List<String> getGemsOnItem(ItemStack item) {
         List<String> gems = new ArrayList<>();
         if (item == null || !item.hasItemMeta()) return gems;

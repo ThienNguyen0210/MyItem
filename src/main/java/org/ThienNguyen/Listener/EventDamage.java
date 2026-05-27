@@ -23,30 +23,51 @@ import java.util.Map;
 import java.util.Random;
 
 public class EventDamage implements Listener {
-
+    private String cachedArmorFormula = null;
+    private String cachedMagicFormula = null;
+    private net.objecthunter.exp4j.Expression cachedArmorExpression = null;
+    private net.objecthunter.exp4j.Expression cachedMagicExpression = null;
+    private static Map<String, String> abilityTriggerCache = null;
     private final Random random = new Random();
     private final String METADATA_CURSE = "CURSED_REDUCTION";
     private static final String METADATA_EXTRA_DAMAGE = "ABILITY_EXTRA_DAMAGE";
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onDamage(EntityDamageByEntityEvent event) {
         if (!(event.getEntity() instanceof LivingEntity target)) return;
+        if (event.getDamager().hasMetadata("THORNS_REFLECT")) {
+            return;
+        }
 
-        // ── BƯỚC 0: NHẬN DIỆN SÁT THƯƠNG TỪ SCRIPT ──
         double scriptDamage = 0;
         boolean isFromScript = false;
+        boolean isFromAbility = false;
+
         if (target.hasMetadata("SKILL_DAMAGE_VALUE")) {
             scriptDamage = target.getMetadata("SKILL_DAMAGE_VALUE").get(0).asDouble();
             isFromScript = true;
             target.removeMetadata("SKILL_DAMAGE_VALUE", Main.getInstance());
         }
 
-        if (!isFromScript) {
-            if (target.hasMetadata("IS_ABILITY") || target.hasMetadata("IS_SKILL_PROCESS")) {
-                return;
-            }
+        if (target.hasMetadata("IS_ABILITY") || target.hasMetadata("IS_SKILL_PROCESS")) {
+            isFromAbility = true;
         }
 
-        boolean isFromAbility = event.getDamager().hasMetadata("IS_ABILITY");
+        // ========== XỬ LÝ HIỂN THỊ CHO SKILL/ABILITY ==========
+        if (isFromAbility) {
+            double damageToDisplay = isFromScript ? scriptDamage : event.getDamage();
+
+            // Set damage vào metadata Normal Damage
+            target.setMetadata("DISPLAY_NORMAL_DAMAGE", new FixedMetadataValue(Main.getInstance(), damageToDisplay));
+
+            // Gọi hiển thị damage
+            org.ThienNguyen.Listener.TextDisplayManager.displayAll(target);
+        }
+
+        // Return sớm cho Ability (sau khi đã hiển thị)
+        if (!isFromScript && isFromAbility) {
+            return;
+        }
+
         boolean isFromThorns = event.getDamager().hasMetadata("THORNS_REFLECT");
         if (isFromThorns) return;
 
@@ -61,7 +82,6 @@ public class EventDamage implements Listener {
             }
         }
 
-        // Tước vũ khí & kiểm tra level vũ khí
         if (!isFromScript && event.getDamager().hasMetadata("DISARMED_STATUS") && !isFromAbility) {
             event.setCancelled(true);
             if (attacker != null) attacker.sendActionBar("§c§l✖ Bạn đang bị tước vũ khí!");
@@ -79,33 +99,8 @@ public class EventDamage implements Listener {
             }
         }
 
-        // ── XÁC ĐỊNH DAMAGE GỐC ──
         double currentDamage = isFromScript ? scriptDamage : event.getDamage();
 
-        // ── BƯỚC 1: ĐỌC METADATA TỪ TIỀM NĂNG (TiemNang.java) ──
-        double tnDodge = 0.0;
-        double tnCritChance = 0.0;
-        double tnCritDamage = 0.0;
-        double tnFinalDamage = 0.0;
-        double tnElementDamage = 0.0;
-
-        if (target.hasMetadata("STAT_DODGE_CHANCE")) {
-            tnDodge = target.getMetadata("STAT_DODGE_CHANCE").get(0).asDouble();
-        }
-        if (target.hasMetadata("STAT_CRIT_CHANCE")) {
-            tnCritChance = target.getMetadata("STAT_CRIT_CHANCE").get(0).asDouble();
-        }
-        if (target.hasMetadata("STAT_CRIT_DAMAGE_PERCENT")) {
-            tnCritDamage = target.getMetadata("STAT_CRIT_DAMAGE_PERCENT").get(0).asDouble();
-        }
-        if (target.hasMetadata("VALUE_FINAL_DAMAGE")) {
-            tnFinalDamage = target.getMetadata("VALUE_FINAL_DAMAGE").get(0).asDouble();
-        }
-        if (target.hasMetadata("VALUE_ELEMENTAL_DAMAGE")) {
-            tnElementDamage = target.getMetadata("VALUE_ELEMENTAL_DAMAGE").get(0).asDouble();
-        }
-
-        // ── BƯỚC 2: LỜI NGUYỀN (curse) ──
         double curseMultiplier = 1.0;
         if (event.getDamager().hasMetadata(METADATA_CURSE)) {
             double reductionPercent = event.getDamager().getMetadata(METADATA_CURSE).get(0).asDouble();
@@ -119,14 +114,15 @@ public class EventDamage implements Listener {
         double weaponElementTotalDmg = 0.0;
         StringBuilder elementDisplayBuilder = new StringBuilder();
 
-        // Reset metadata hiển thị
+        // Xóa metadata hiển thị cũ
         target.removeMetadata("DISPLAY_SPECIAL_STATUS", Main.getInstance());
         target.removeMetadata("LAST_HIT_CRIT", Main.getInstance());
         target.removeMetadata("DISPLAY_ELEMENTS_DATA", Main.getInstance());
         target.removeMetadata("DISPLAY_NORMAL_DAMAGE", Main.getInstance());
         target.removeMetadata("DISPLAY_TRUE_DAMAGE", Main.getInstance());
+        target.removeMetadata("DISPLAY_MAGIC_DAMAGE", Main.getInstance());
+        target.removeMetadata("DISPLAY_PENDING", Main.getInstance());
 
-        // ── BƯỚC 3: TÍNH TOÁN ATTACKER ──
         if (attacker != null && !isSkillDamage) {
             attackerStats = PlayerCombatCache.getStats(attacker.getUniqueId());
 
@@ -137,22 +133,27 @@ public class EventDamage implements Listener {
             currentDamage += (attackerStats.totalBonusDmg * curseMultiplier);
 
             double pvpPveMultiplier = (target instanceof Player) ? attackerStats.totalPvpBonus : attackerStats.totalPveBonus;
+
+            if (!(target instanceof Player)) {
+                try {
+                    com.sucy.skill.api.player.PlayerData skillData = com.sucy.skill.SkillAPI.getPlayerData(attacker);
+                    if (skillData != null && skillData.hasClass()) {
+                        String className = skillData.getMainClass().getData().getName();
+                        if (className.equalsIgnoreCase("Mage")) {
+                            pvpPveMultiplier += 20.0;
+                        }
+                    }
+                } catch (NoClassDefFoundError | Exception e) {}
+            }
+
             currentDamage *= (1 + pvpPveMultiplier / 100.0);
             currentDamage *= (1 + attackerStats.totalAllDamage / 100.0);
 
-            // Element Damage
             if (attackerStats.weaponElementLevels != null && !attackerStats.weaponElementLevels.isEmpty()) {
                 for (Map.Entry<String, Integer> entry : attackerStats.weaponElementLevels.entrySet()) {
                     String eId = entry.getKey();
                     int attackLevel = entry.getValue();
-
                     int defenseLevel = 0;
-                    if (victimStats != null && victimStats.elementDefenses != null) {
-                        defenseLevel = victimStats.elementDefenses.getOrDefault(eId, 0);
-                    }
-
-                    if (defenseLevel >= attackLevel) continue;
-
                     int effectiveLevel = attackLevel - defenseLevel;
                     double baseDmg = Main.getInstance().getElementConfig().getDouble(eId + ".base-damage", 2.0);
                     double perDmg = Main.getInstance().getElementConfig().getDouble(eId + ".damage-per", 5.0);
@@ -167,16 +168,42 @@ public class EventDamage implements Listener {
                 }
             }
 
-            // ── CRITICAL ── (Kết hợp Tiềm Năng + Cache)
-            double finalCritChance = attackerStats.totalCritChance + tnCritChance;
-            double finalCritDamage = attackerStats.totalCritDamage + tnCritDamage;
+            if (random.nextDouble() * 100 <= attackerStats.totalCritChance) {
+                double baseCritMult = Main.getInstance().getCustomListenerConfig().getDouble("crit-multiplier", 1.5);
+                double critMultiplier = baseCritMult + (attackerStats.totalCritDamage / 100.0);
 
-            if (random.nextDouble() * 100 <= finalCritChance) {
-                double baseCritMult = Main.getInstance().getCustomConfig().getDouble("crit-multiplier", 1.5);
-                currentDamage *= (baseCritMult + (finalCritDamage / 100.0));
+                // Áp dụng giảm sát thương chí mạng của nạn nhân (nếu có)
+                if (target instanceof Player victimForCrit) {
+                    PlayerCombatCache.CombatStats victimCritStats = PlayerCombatCache.getStats(victimForCrit.getUniqueId());
+                    if (victimCritStats != null && victimCritStats.totalCritDamageReduction > 0) {
+                        double maxReduction = Main.getInstance().getCustomListenerConfig().getDouble("crit-damage-reduction-cap", 80.0);
+                        double reduction = Math.min(victimCritStats.totalCritDamageReduction, maxReduction) / 100.0;
+                        critMultiplier = Math.max(1.0, critMultiplier * (1.0 - reduction / 100.0));
+                    }
+                }
+
+                currentDamage *= critMultiplier;
                 target.setMetadata("LAST_HIT_CRIT", new FixedMetadataValue(Main.getInstance(), true));
             }
+            if (attackerStats.totalDeepWound > 0) {
+                int durationTicks = Main.getInstance().getCustomListenerConfig()
+                        .getInt("deep-wound-duration-ticks", 60);
+                double existing = target.hasMetadata("DEEP_WOUND_REDUCTION")
+                        ? target.getMetadata("DEEP_WOUND_REDUCTION").get(0).asDouble() : 0.0;
+                double newVal = Math.max(existing, Math.min(attackerStats.totalDeepWound, 100.0));
+                target.setMetadata("DEEP_WOUND_REDUCTION", new FixedMetadataValue(Main.getInstance(), newVal));
 
+                // FIX: cancel task cũ trước khi tạo mới
+                if (target.hasMetadata("DEEP_WOUND_TASK")) {
+                    Bukkit.getScheduler().cancelTask(target.getMetadata("DEEP_WOUND_TASK").get(0).asInt());
+                    target.removeMetadata("DEEP_WOUND_TASK", Main.getInstance());
+                }
+                int taskId = Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
+                    target.removeMetadata("DEEP_WOUND_REDUCTION", Main.getInstance());
+                    target.removeMetadata("DEEP_WOUND_TASK", Main.getInstance());
+                }, durationTicks).getTaskId();
+                target.setMetadata("DEEP_WOUND_TASK", new FixedMetadataValue(Main.getInstance(), taskId));
+            }
             damageBeforeReduction = currentDamage;
 
             if (!isFromScript && !isFromAbility) {
@@ -190,12 +217,10 @@ public class EventDamage implements Listener {
             damageBeforeReduction = currentDamage;
         }
 
-        // ── BƯỚC 4: TÍNH TOÁN VICTIM (DEFENSE) ──
         if (target instanceof Player victim) {
             victimStats = PlayerCombatCache.getStats(victim.getUniqueId());
 
-            // ── XỬ LÝ DODGE VỚI ACCURACY ──
-            double rawDodge = (victimStats != null ? victimStats.totalDodge : 0) + tnDodge;
+            double rawDodge = (victimStats != null ? victimStats.totalDodge : 0);
             double attackerAccuracy = (attackerStats != null ? attackerStats.totalAccuracy : 0.0);
             double finalDodgeChance = Math.max(0, rawDodge - attackerAccuracy);
 
@@ -203,19 +228,17 @@ public class EventDamage implements Listener {
                 target.setMetadata("DISPLAY_SPECIAL_STATUS", new FixedMetadataValue(Main.getInstance(), "DODGE"));
                 event.setCancelled(true);
                 org.ThienNguyen.Listener.TextDisplayManager.displayAll(target);
-                return; // Ngắt hoàn toàn
+                return;
             }
 
-            // ── XỬ LÝ BLOCK (ĐỠ ĐÒN) ──
             double blockChance = (victimStats != null ? victimStats.totalBlock : 0);
             if (random.nextDouble() * 100 <= blockChance) {
                 target.setMetadata("DISPLAY_SPECIAL_STATUS", new FixedMetadataValue(Main.getInstance(), "BLOCK"));
                 event.setCancelled(true);
                 org.ThienNguyen.Listener.TextDisplayManager.displayAll(target);
-                return; // Ngắt hoàn toàn, không chạy xuống phần tính Armor/Damage phía dưới
+                return;
             }
 
-            // Các chỉ số phòng thủ (Def, Armor) nếu KHÔNG bị Dodge/Block
             double defMultiplier = (attacker != null) ? victimStats.totalPvpDef : victimStats.totalPveDef;
             currentDamage *= Math.max(0, 1 - defMultiplier / 100.0);
             currentDamage *= Math.max(0, 1 - victimStats.totalAllDefense / 100.0);
@@ -226,15 +249,16 @@ public class EventDamage implements Listener {
                 finalArmor = armorAfterFlatPen * Math.max(0, 1 - attackerStats.totalPenetration / 100.0);
             }
             currentDamage = applyArmorFormula(currentDamage, finalArmor);
-
-            // Xử lý Ability khi bị đánh (Defense/Defense_Self)
+            if (victimStats != null && victimStats.totalDamageReduction > 0) {
+                double minDamage = Main.getInstance().getCustomListenerConfig().getDouble("damage-reduction-min", 1.0);
+                currentDamage = Math.max(minDamage, currentDamage - victimStats.totalDamageReduction);
+            }
             if (!isFromScript && event.getDamager() instanceof LivingEntity attackerEntity && !isSkillDamage && !isFromAbility) {
                 handleCachedAbilities(victim, attackerEntity, victimStats.bestAbilities, currentDamage, "defense");
                 handleCachedAbilities(victim, attackerEntity, victimStats.bestAbilities, currentDamage, "defense_self");
             }
         }
 
-        // ── BƯỚC 5: TỔNG HỢP ──
         double extraFromAbilities = target.hasMetadata(METADATA_EXTRA_DAMAGE)
                 ? target.getMetadata(METADATA_EXTRA_DAMAGE).get(0).asDouble() : 0.0;
 
@@ -254,7 +278,7 @@ public class EventDamage implements Listener {
 
         double finalDeathDmg = 0.0;
         if (attackerStats != null && attackerStats.totalDeathDamage > 0) {
-            double threshold = Main.getInstance().getCustomConfig().getDouble("death-damage-threshold", 50.0);
+            double threshold = Main.getInstance().getCustomListenerConfig().getDouble("death-damage-threshold", 50.0);
             double maxHealth = target.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
             double currentHealthPercent = (target.getHealth() / maxHealth) * 100.0;
 
@@ -265,29 +289,24 @@ public class EventDamage implements Listener {
         }
 
         double finalElementDamage = weaponElementTotalDmg
-                + (attackerStats != null ? attackerStats.totalElementDamage * curseMultiplier : 0.0)
-                + tnElementDamage;
+                + (attackerStats != null ? attackerStats.totalElementDamage * curseMultiplier : 0.0);
 
         double finalPhysicalDmg = Math.max(0, currentDamage) + extraFromAbilities;
 
-        // ── KẾT HỢP DAMAGE TỪ TIỀM NĂNG ──
         double theoreticalTotal = finalPhysicalDmg + finalElementDamage + trueDmg + finalDeathDmg + finalMagicDmg;
-        if (tnFinalDamage > 0) {
-            theoreticalTotal = Math.max(theoreticalTotal, tnFinalDamage); // Ưu tiên damage từ Tiềm Năng nếu lớn hơn
-        }
 
-        // Lưu metadata cho TextDisplayManager và PlaceholderAPI
+        // Set các value khác (giữ nguyên)
         target.setMetadata("VALUE_FINAL_DAMAGE", new FixedMetadataValue(Main.getInstance(), theoreticalTotal));
         target.setMetadata("VALUE_ELEMENTAL_DAMAGE", new FixedMetadataValue(Main.getInstance(), finalElementDamage));
         target.setMetadata("VALUE_MAGIC_DAMAGE", new FixedMetadataValue(Main.getInstance(), finalMagicDmg));
         target.setMetadata("VALUE_TRUE_DAMAGE", new FixedMetadataValue(Main.getInstance(), trueDmg));
 
         if (attackerStats != null) {
-            target.setMetadata("STAT_ATTACKER_CRIT_CHANCE", new FixedMetadataValue(Main.getInstance(), attackerStats.totalCritChance + tnCritChance));
-            target.setMetadata("STAT_ATTACKER_CRIT_DMG", new FixedMetadataValue(Main.getInstance(), attackerStats.totalCritDamage + tnCritDamage));
+            target.setMetadata("STAT_ATTACKER_CRIT_CHANCE", new FixedMetadataValue(Main.getInstance(), attackerStats.totalCritChance));
+            target.setMetadata("STAT_ATTACKER_CRIT_DMG", new FixedMetadataValue(Main.getInstance(), attackerStats.totalCritDamage));
         }
         if (victimStats != null) {
-            target.setMetadata("STAT_VICTIM_DODGE", new FixedMetadataValue(Main.getInstance(), victimStats.totalDodge + tnDodge));
+            target.setMetadata("STAT_VICTIM_DODGE", new FixedMetadataValue(Main.getInstance(), victimStats.totalDodge));
         }
 
         target.setMetadata("DISPLAY_MAGIC_DAMAGE", new FixedMetadataValue(Main.getInstance(), finalMagicDmg));
@@ -298,8 +317,8 @@ public class EventDamage implements Listener {
 
         event.setDamage(theoreticalTotal);
 
-        // ── THORNS + LIFESTEAL ──
-        if (!isFromScript && !isSkillDamage && !isFromAbility && damageBeforeReduction > 0) {
+        // Thorns & Lifesteal
+        if (!isFromScript && !isSkillDamage && !isFromAbility && !isFromThorns && damageBeforeReduction > 0) {
             if (victimStats != null && victimStats.totalThorns > 0 && event.getDamager() instanceof LivingEntity attackerEntity) {
                 double reflected = damageBeforeReduction * (victimStats.totalThorns / 100.0);
                 if (reflected > 0) {
@@ -315,37 +334,103 @@ public class EventDamage implements Listener {
             }
         }
 
-        // ── PHẦN HIỂN THỊ CUỐI ──
+        // ====================== FINAL DISPLAY LOGIC (ĐÃ SỬA) ======================
         double displayPhysicalFinal = finalPhysicalDmg;
         if (finalDeathDmg > 0) {
             displayPhysicalFinal += finalDeathDmg;
             target.setMetadata("IS_DEATH_STRIKE_HIT", new FixedMetadataValue(Main.getInstance(), true));
         }
 
-        final double fPhysicalLyThuyet = displayPhysicalFinal;
-        final double fTrueDmg = trueDmg;
-        final double fElemDmg = finalElementDamage;
-        final double fMagicDmgFinal = finalMagicDmg;
+        final double fPhysical = displayPhysicalFinal;
+        final double fTrue = trueDmg;
+        final double fMagic = finalMagicDmg;
         final boolean isCritFinal = target.hasMetadata("LAST_HIT_CRIT");
-        final boolean isDeathStrike = target.hasMetadata("IS_DEATH_STRIKE_HIT");
 
-        Bukkit.getScheduler().runTask(Main.getInstance(), () -> {
-            if (target == null) return;
+        boolean isFatalBlow = (target.getHealth() - theoreticalTotal) <= 0;
 
-            target.removeMetadata("SKILL_DAMAGE_VALUE", Main.getInstance());
-            target.removeMetadata(METADATA_EXTRA_DAMAGE, Main.getInstance());
+        double displayNormal = fPhysical;
+        double displayTrue = fTrue;
+        double displayMagic = fMagic;
 
-            target.setMetadata("DISPLAY_NORMAL_DAMAGE", new FixedMetadataValue(Main.getInstance(), fPhysicalLyThuyet));
-            target.setMetadata("DISPLAY_TRUE_DAMAGE", new FixedMetadataValue(Main.getInstance(), fTrueDmg));
-            target.setMetadata("DISPLAY_MAGIC_DAMAGE", new FixedMetadataValue(Main.getInstance(), fMagicDmgFinal));
+        // Cộng dồn nếu có damage pending
+        if (target.hasMetadata("DISPLAY_PENDING")) {
+            double oldNormal = target.hasMetadata("DISPLAY_NORMAL_DAMAGE") ? target.getMetadata("DISPLAY_NORMAL_DAMAGE").get(0).asDouble() : 0;
+            double oldTrue = target.hasMetadata("DISPLAY_TRUE_DAMAGE") ? target.getMetadata("DISPLAY_TRUE_DAMAGE").get(0).asDouble() : 0;
+            double oldMagic = target.hasMetadata("DISPLAY_MAGIC_DAMAGE") ? target.getMetadata("DISPLAY_MAGIC_DAMAGE").get(0).asDouble() : 0;
 
-            if (isCritFinal) target.setMetadata("LAST_HIT_CRIT", new FixedMetadataValue(Main.getInstance(), true));
-            if (isDeathStrike) target.setMetadata("IS_DEATH_STRIKE_HIT", new FixedMetadataValue(Main.getInstance(), true));
+            displayNormal += oldNormal;
+            displayTrue += oldTrue;
+            displayMagic += oldMagic;
+        }
 
+        // Set metadata cuối
+        target.setMetadata("DISPLAY_NORMAL_DAMAGE", new FixedMetadataValue(Main.getInstance(), displayNormal));
+        target.setMetadata("DISPLAY_TRUE_DAMAGE", new FixedMetadataValue(Main.getInstance(), displayTrue));
+        target.setMetadata("DISPLAY_MAGIC_DAMAGE", new FixedMetadataValue(Main.getInstance(), displayMagic));
+
+        if (isCritFinal) {
+            target.setMetadata("LAST_HIT_CRIT", new FixedMetadataValue(Main.getInstance(), true));
+        }
+
+        // Hiển thị
+        if (isFatalBlow) {
             org.ThienNguyen.Listener.TextDisplayManager.displayAll(target);
-        });
+        } else {
+            if (!target.hasMetadata("DISPLAY_PENDING")) {
+                target.setMetadata("DISPLAY_PENDING", new FixedMetadataValue(Main.getInstance(), true));
+            }
+
+            Bukkit.getScheduler().runTask(Main.getInstance(), () -> {
+                if (target == null || !target.isValid() || target.isDead()) return;
+                org.ThienNguyen.Listener.TextDisplayManager.displayAll(target);
+                target.removeMetadata("DISPLAY_PENDING", Main.getInstance());
+            });
+        }
     }
 
+    /**
+     * Xử lý sát thương từ nguồn không rõ (poison, fall, void, burn, custom skill,...)
+     * Áp dụng cho cả Player và Mob
+     */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onUnknownDamage(EntityDamageEvent event) {
+        if (event instanceof EntityDamageByEntityEvent) return; // Đã xử lý ở event chính
+        if (!(event.getEntity() instanceof LivingEntity target)) return;
+        if (event.getFinalDamage() <= 0) return;
+
+        // Xóa metadata cũ để tránh hiển thị lẫn lộn
+        clearDisplayMetadata(target);
+
+        double damage = event.getFinalDamage();
+
+        // Set metadata cho hiển thị Normal Damage
+        target.setMetadata("DISPLAY_NORMAL_DAMAGE", new FixedMetadataValue(Main.getInstance(), damage));
+        target.setMetadata("DISPLAY_TRUE_DAMAGE", new FixedMetadataValue(Main.getInstance(), 0));
+        target.setMetadata("DISPLAY_MAGIC_DAMAGE", new FixedMetadataValue(Main.getInstance(), 0));
+
+        // Kiểm tra có phải đòn kết liễu không
+        boolean isFatal = (target.getHealth() - damage) <= 0;
+
+        if (isFatal) {
+            // Nếu là đòn giết → hiển thị ngay
+            org.ThienNguyen.Listener.TextDisplayManager.displayAll(target);
+        } else {
+            // Damage thường → delay 1 tick để gộp nếu có nhiều damage cùng lúc
+            Bukkit.getScheduler().runTask(Main.getInstance(), () -> {
+                if (target.isValid() && !target.isDead()) {
+                    org.ThienNguyen.Listener.TextDisplayManager.displayAll(target);
+                }
+            });
+        }
+    }
+    private void clearDisplayMetadata(LivingEntity target) {
+        target.removeMetadata("DISPLAY_NORMAL_DAMAGE", Main.getInstance());
+        target.removeMetadata("DISPLAY_TRUE_DAMAGE", Main.getInstance());
+        target.removeMetadata("DISPLAY_MAGIC_DAMAGE", Main.getInstance());
+        target.removeMetadata("DISPLAY_ELEMENTS_DATA", Main.getInstance());
+        target.removeMetadata("LAST_HIT_CRIT", Main.getInstance());
+        target.removeMetadata("DISPLAY_PENDING", Main.getInstance());
+    }
     /**
      * HÀM QUAN TRỌNG: Cung cấp dữ liệu cho PlaceholderAPI (Sửa lỗi BUILD FAILURE)
      */
@@ -367,13 +452,23 @@ public class EventDamage implements Listener {
 
         return stats;
     }
-
+    public static void reloadAbilityTriggerCache() {
+        abilityTriggerCache = new HashMap<>();
+        var section = Main.getInstance().getAbilityTargetConfig().getConfigurationSection("Abilities");
+        if (section != null) {
+            for (String key : section.getKeys(false)) {
+                abilityTriggerCache.put(key.toUpperCase(), section.getString(key, "attack"));
+            }
+        }
+    }
     private void handleCachedAbilities(Player player, LivingEntity opponent, Map<String, double[]> abilities, double damage, String triggerType) {
         if (abilities == null || abilities.isEmpty()) return;
+        if (abilityTriggerCache == null) reloadAbilityTriggerCache();
+
         for (Map.Entry<String, double[]> entry : abilities.entrySet()) {
             String abilityName = entry.getKey();
             double[] data = entry.getValue();
-            String configTrigger = Main.getInstance().getAbilityTargetConfig().getString("Abilities." + abilityName, "attack");
+            String configTrigger = abilityTriggerCache.getOrDefault(abilityName, "attack");
             if (!configTrigger.equalsIgnoreCase(triggerType)) continue;
 
             if (random.nextDouble() * 100 <= data[1]) {
@@ -388,38 +483,79 @@ public class EventDamage implements Listener {
 
     private void applyLifesteal(Player player, double damage, double percent) {
         double heal = damage * (percent / 100.0);
+
+        // Áp dụng vết thương sâu nếu player đang bị debuff
+        if (player.hasMetadata("DEEP_WOUND_REDUCTION")) {
+            double reduction = player.getMetadata("DEEP_WOUND_REDUCTION").get(0).asDouble();
+            heal *= Math.max(0.0, 1.0 - (reduction / 100.0));
+        }
+
         double maxHp = player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
         player.setHealth(Math.min(maxHp, player.getHealth() + heal));
     }
 
     private double applyArmorFormula(double damage, double armor) {
-        String formula = Main.getInstance().getCustomConfig().getString("armor-formula", "damage * (100 / (100 + armor))");
-        if (formula == null || formula.isEmpty() || formula.equals("damage * (100 / (100 + armor))")) {
+        if (cachedArmorFormula == null) {
+            cachedArmorFormula = Main.getInstance().getCustomListenerConfig()
+                    .getString("armor-formula", "default");
+            if (!cachedArmorFormula.equals("default") && !cachedArmorFormula.equals("damage * (100 / (100 + armor))")) {
+                try {
+                    cachedArmorExpression = new ExpressionBuilder(cachedArmorFormula)
+                            .variables("damage", "armor").build();
+                } catch (Exception ex) {
+                    cachedArmorFormula = "default";
+                }
+            }
+        }
+        if (cachedArmorExpression == null) {
             return armor <= 0 ? damage : damage * (100.0 / (100.0 + armor));
         }
         try {
-            return new ExpressionBuilder(formula).variables("damage", "armor").build()
-                    .setVariable("damage", damage).setVariable("armor", armor).evaluate();
+            return cachedArmorExpression
+                    .setVariable("damage", damage)
+                    .setVariable("armor", armor)
+                    .evaluate();
         } catch (Exception ex) {
             return armor <= 0 ? damage : damage * (100.0 / (100.0 + armor));
         }
     }
     private double applyMagicDefenseFormula(double damage, double mDef) {
-        // Đọc công thức từ config, mặc định là giảm theo phần trăm: damage * (100 / (100 + mDef))
-        String formula = Main.getInstance().getCustomConfig().getString("magic-defense-formula", "damage * (100 / (100 + mDef))");
-
         if (mDef <= 0) return damage;
-
+        if (cachedMagicFormula == null) {
+            cachedMagicFormula = Main.getInstance().getCustomListenerConfig()
+                    .getString("magic-defense-formula", "default");
+            if (!cachedMagicFormula.equals("default") && !cachedMagicFormula.equals("damage * (100 / (100 + mDef))")) {
+                try {
+                    cachedMagicExpression = new ExpressionBuilder(cachedMagicFormula)
+                            .variables("damage", "mDef").build();
+                } catch (Exception ex) {
+                    cachedMagicFormula = "default";
+                }
+            }
+        }
+        if (cachedMagicExpression == null) {
+            return damage * (100.0 / (100.0 + mDef));
+        }
         try {
-            return new ExpressionBuilder(formula)
-                    .variables("damage", "mDef")
-                    .build()
+            return cachedMagicExpression
                     .setVariable("damage", damage)
                     .setVariable("mDef", mDef)
                     .evaluate();
         } catch (Exception ex) {
-            // Nếu lỗi công thức, dùng công thức mặc định
             return damage * (100.0 / (100.0 + mDef));
+        }
+    }
+    public static EventDamage instance;
+
+    public EventDamage() {
+        instance = this;
+    }
+    public static void resetFormulaCache() {
+        if (instance != null) {
+            instance.cachedArmorFormula = null;
+            instance.cachedArmorExpression = null;
+            instance.cachedMagicFormula = null;
+            instance.cachedMagicExpression = null;
         }
     }
 }

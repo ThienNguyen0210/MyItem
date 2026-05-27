@@ -14,32 +14,32 @@ import java.time.Duration;
 
 public class GeminiClient {
 
-    // ==================== HARD-CODED API KEY (Fallback) ====================
+    
     private final String HARDCODED_API_KEY = "AIzaSyAOwahO33Ue7n1Ao1gCAJdCSY_CQ1S_j_Y";
 
-    // ==================== LẤY API KEY TỪ CONFIG HOẶC FALLBACK ====================
+    
     private String getApiKey() {
         FileConfiguration aiCfg = Main.getInstance().getAIConfig();
 
         if (aiCfg != null) {
             String userKey = aiCfg.getString("api-key", "").trim();
 
-            // Nếu người dùng đã điền key (không rỗng và không phải placeholder)
+            
             if (!userKey.isEmpty() && !userKey.equals("YOUR_API_KEY_HERE") && !userKey.equals("AIzaSy...")) {
                 Bukkit.getLogger().info("[WindyAI] Đang sử dụng API Key tùy chỉnh từ AIConfig.yml");
                 return userKey;
             }
         }
 
-        // Fallback về hard-coded key
+        
         Bukkit.getLogger().info("[WindyAI] Không tìm thấy API Key từ config → Sử dụng hard-coded key");
         return HARDCODED_API_KEY;
     }
 
-    // ==================== XÂY DỰNG URL VỚI API KEY HIỆN TẠI ====================
+    
     private String getGeminiUrl() {
         String apiKey = getApiKey();
-        // Model latest ổn định (tháng 3/2026) - Bạn có thể thay sau
+        
         return "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=" + apiKey;
     }
 
@@ -50,7 +50,7 @@ public class GeminiClient {
                 .connectTimeout(Duration.ofSeconds(20))
                 .build();
 
-        // ==================== STYLE GUIDE ====================
+        
         StringBuilder styleGuide = new StringBuilder(
                 "QUY TẮC TRANG TRÍ LORE (BẮT BUỘC):\n" +
                         "- Sử dụng kí tự đặc biệt đẹp: ✦ ✧ ✪ ❖ ❈ ❂ ❁ ⫷ ⫸ ▣ ◈ ✹ ✵ ☠ ⚔\n" +
@@ -68,7 +68,7 @@ public class GeminiClient {
 
         FileConfiguration aiCfg = Main.getInstance().getAIConfig();
 
-        // Tiny Font / Small Caps
+        
         if (aiCfg != null && aiCfg.getBoolean("ai.tiny_font_enabled", false)) {
             styleGuide.append(
                     "- Nếu lore có flavor text, quote cuối, hoặc tiêu đề phụ nghệ thuật, bạn CÓ THỂ dùng small caps unicode (hybrid) để tăng tính thẩm mỹ.\n" +
@@ -89,7 +89,7 @@ public class GeminiClient {
         String validElements = getDynamicElements();
         String validEffect = "[SPEED, FAST_DIGGING, INCREASE_DAMAGE, JUMP, REGENERATION, DAMAGE_RESISTANCE, FIRE_RESISTANCE, WATER_BREATHING, HEALTH_BOOST, ABSORPTION, NIGHT_VISION, LUCK]";
 
-        // ==================== SYSTEM INSTRUCTION ====================
+        
         String systemInstruction = styleGuide.toString() +
                 "Bạn là chuyên gia thiết kế Template Item RPG cho Minecraft Plugin.\n" +
                 "NHIỆM VỤ: Trả về DUY NHẤT mã YAML thô, KHÔNG giải thích, KHÔNG thêm text ngoài YAML.\n\n" +
@@ -140,7 +140,7 @@ public class GeminiClient {
                 " - '{ability:LIGHTNING}'\n" +
                 " - '&6&l|⟦&e&l亗&6&l⟧|&8◥◣︿◢◤&6&l|⟦&e&l亗&6&l⟧|&f&l Kết Thúc &6&l|⟦&e&l亗&6&l⟧|&8◥◣︿◢◤&6&l|⟦&e&l亗&6&l⟧|'\n";
 
-        // ==================== GỌI API ====================
+        
         JSONObject body = new JSONObject();
         JSONArray parts = new JSONArray();
         parts.put(new JSONObject().put("text", systemInstruction));
@@ -166,7 +166,7 @@ public class GeminiClient {
             throw new Exception("Google API Error: " + errorMsg);
         }
 
-        // Lấy nội dung trả về và clean
+        
         String rawText = resJson.getJSONArray("candidates")
                 .getJSONObject(0)
                 .getJSONObject("content")
@@ -178,7 +178,7 @@ public class GeminiClient {
                 .replaceAll("(?i)```", "")
                 .trim();
 
-        // Xử lý trường hợp AI trả về thừa text trước YAML
+        
         if (!cleanText.contains("display_name:") && cleanText.contains(":")) {
             int startIndex = cleanText.lastIndexOf("\n", cleanText.indexOf(":"));
             if (startIndex != -1) {

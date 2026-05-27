@@ -10,13 +10,13 @@ import java.util.Map;
 public class BuffData {
     private static final NamespacedKey EFFECTS_KEY = new NamespacedKey(Main.getInstance(), "item_effects_map");
 
-    // Lưu hiệu ứng vào PDC theo dạng Map (Tên hiệu ứng:Level)
+    
     public static void setEffect(ItemStack item, String effectName, int level) {
         if (item == null || item.getItemMeta() == null) return;
         var meta = item.getItemMeta();
         var pdc = meta.getPersistentDataContainer();
 
-        // Lấy data hiện tại hoặc tạo mới
+        
         String currentData = pdc.getOrDefault(EFFECTS_KEY, PersistentDataType.STRING, "");
         Map<String, Integer> effects = deserialize(currentData);
 

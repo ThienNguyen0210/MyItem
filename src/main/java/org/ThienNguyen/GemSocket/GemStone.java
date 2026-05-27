@@ -18,7 +18,7 @@ public class GemStone {
         this.applySection = config.getConfigurationSection("apply");
     }
 
-    // Getters...
+    
     public String getId() { return id; }
     public String getDisplayName() { return displayName; }
     public ConfigurationSection getApplySection() { return applySection; }

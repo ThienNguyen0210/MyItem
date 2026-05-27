@@ -25,7 +25,7 @@ public class AIExperienceGUI implements Listener {
     public static void openEulaGUI(Player player) {
         Inventory gui = Bukkit.createInventory(null, 27, GUI_TITLE);
 
-        // Item Thông tin chính sách
+        
         ItemStack paper = new ItemStack(Material.PAPER);
         ItemMeta paperMeta = paper.getItemMeta();
         paperMeta.setDisplayName("§e§lChính Sách & Điều Khoản AI");
@@ -43,7 +43,7 @@ public class AIExperienceGUI implements Listener {
         paperMeta.setLore(lore);
         paper.setItemMeta(paperMeta);
 
-        // Nút Chấp nhận
+        
         ItemStack accept = new ItemStack(Material.LIME_STAINED_GLASS_PANE);
         ItemMeta aMeta = accept.getItemMeta();
         aMeta.setDisplayName("§a§l[ CHẤP NHẬN ]");
@@ -52,7 +52,7 @@ public class AIExperienceGUI implements Listener {
         aMeta.setLore(aLore);
         accept.setItemMeta(aMeta);
 
-        // Nút Từ chối
+        
         ItemStack decline = new ItemStack(Material.RED_STAINED_GLASS_PANE);
         ItemMeta dMeta = decline.getItemMeta();
         dMeta.setDisplayName("§c§l[ TỪ CHỐI ]");
@@ -61,7 +61,7 @@ public class AIExperienceGUI implements Listener {
         dMeta.setLore(dLore);
         decline.setItemMeta(dMeta);
 
-        // Decor nền (Tùy chọn)
+        
         ItemStack gray = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
         ItemMeta gMeta = gray.getItemMeta();
         gMeta.setDisplayName(" ");
@@ -84,28 +84,28 @@ public class AIExperienceGUI implements Listener {
         if (!(event.getWhoClicked() instanceof Player player)) return;
         int slot = event.getRawSlot();
 
-        if (slot == 11) { // Slot Chấp nhận
+        if (slot == 11) { 
             setEulaStatus(player, true);
             player.closeInventory();
             player.sendMessage("§a§l✔ §7Cảm ơn bạn đã chấp nhận điều khoản. Bây giờ bạn có thể dùng lệnh AI!");
             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1f, 1f);
-        } else if (slot == 15) { // Slot Từ chối
+        } else if (slot == 15) { 
             player.closeInventory();
             player.sendMessage("§c§l✘ §7Bạn đã từ chối điều khoản. Không thể sử dụng tính năng AI.");
             player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 1f, 1f);
         }
     }
 
-    // Hàm tĩnh để kiểm tra trạng thái EULA
+    
     public static boolean hasAccepted(Player player) {
         File file = new File(Main.getInstance().getDataFolder() + "/AI", "eula.yml");
         if (!file.exists()) return false;
         FileConfiguration config = YamlConfiguration.loadConfiguration(file);
-        // Lưu theo UUID để chính xác cho từng người chơi
+        
         return config.getBoolean("accepted." + player.getUniqueId(), false);
     }
 
-    // Hàm tĩnh để lưu trạng thái
+    
     public static void setEulaStatus(Player player, boolean status) {
         File folder = new File(Main.getInstance().getDataFolder(), "AI");
         if (!folder.exists()) folder.mkdirs();

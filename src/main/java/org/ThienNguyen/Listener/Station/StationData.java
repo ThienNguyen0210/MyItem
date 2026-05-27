@@ -4,13 +4,13 @@ import java.util.Map;
 
 public class StationData {
     private Map<String, Double> stats;
-    private String rawAbilities; // Lưu chuỗi kỹ năng gốc
+    private String rawAbilities; 
     private Map<String, Integer> effects;
-    private Map<String, Integer> elements; // Thêm dòng này
+    private Map<String, Integer> elements; 
     public Map<String, Integer> getElements() {
         return elements;
     }
-    // Getter & Setter
+    
     public Map<String, Double> getStats() { return stats; }
     public void setStats(Map<String, Double> stats) { this.stats = stats; }
 

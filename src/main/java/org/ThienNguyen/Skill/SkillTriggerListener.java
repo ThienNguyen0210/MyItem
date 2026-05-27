@@ -22,14 +22,14 @@ import java.util.UUID;
 
 public class SkillTriggerListener implements Listener {
 
-    // Cooldown: playerUUID -> "SkillName_TRIGGER" -> timestamp kết thúc
+    
     private final Map<UUID, Map<String, Long>> playerCooldowns = new HashMap<>();
 
-    // Map theo dõi Double Sneak: PlayerUUID -> Thời gian nhấn lần trước
+    
     private final Map<UUID, Long> lastSneakTime = new HashMap<>();
-    private static final long DOUBLE_SNEAK_THRESHOLD_MS = 500; // 0.5 giây
+    private static final long DOUBLE_SNEAK_THRESHOLD_MS = 500; 
 
-    // Để debounce message (tránh spam chat)
+    
     private final Map<UUID, Long> lastMessageTime = new HashMap<>();
     private static final long MESSAGE_DEBOUNCE_MS = 1000;
 
@@ -61,7 +61,7 @@ public class SkillTriggerListener implements Listener {
 
     @EventHandler
     public void onSneak(PlayerToggleSneakEvent event) {
-        if (!event.isSneaking()) return; // Chỉ tính lúc nhấn Shift xuống
+        if (!event.isSneaking()) return; 
 
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
@@ -69,14 +69,14 @@ public class SkillTriggerListener implements Listener {
 
         long lastSneak = lastSneakTime.getOrDefault(uuid, 0L);
 
-        // Kiểm tra Double Sneak
+        
         if (now - lastSneak < DOUBLE_SNEAK_THRESHOLD_MS) {
-            // Kích hoạt Double Sneak
+            
             checkAndCast(player, null, "DOUBLE_SNEAK");
-            // Reset thời gian để không bị nhận diện liên tục nếu spam nhấn
+            
             lastSneakTime.put(uuid, 0L);
         } else {
-            // Kích hoạt Sneak đơn
+            
             checkAndCast(player, null, "SNEAK");
             lastSneakTime.put(uuid, now);
         }
@@ -94,10 +94,10 @@ public class SkillTriggerListener implements Listener {
         UUID uuid = player.getUniqueId();
         long now = System.currentTimeMillis();
 
-        // Kiểm tra xem MMOCore có khả dụng không
+        
         boolean hasMMOCore = org.bukkit.Bukkit.getPluginManager().isPluginEnabled("MMOCore");
 
-        // Khởi tạo null, chỉ lấy data nếu có plugin
+        
         PlayerData mmoPlayerData = hasMMOCore ? PlayerData.get(uuid) : null;
 
         Map<String, Long> playerCd = playerCooldowns.computeIfAbsent(uuid, k -> new HashMap<>());
@@ -114,7 +114,7 @@ public class SkillTriggerListener implements Listener {
 
                 if (!savedTrigger.equalsIgnoreCase(currentTrigger)) continue;
 
-                // --- 1. KIỂM TRA MANA (Chỉ thực hiện nếu có MMOCore) ---
+                
                 int manaCost = SkillManager.getManaCost(skillName);
 
                 if (hasMMOCore && mmoPlayerData != null && manaCost > 0) {
@@ -125,19 +125,19 @@ public class SkillTriggerListener implements Listener {
                                 "{cost}", String.valueOf(manaCost)
                         );
                         sendDebouncedMessage(player, msg);
-                        continue; // Không đủ mana thì bỏ qua skill này
+                        continue; 
                     }
                 }
 
-                // --- 2. KIỂM TRA COOLDOWN ---
+                
                 String cdKey = skillName + "_" + savedTrigger.toUpperCase();
                 Long endTime = playerCd.get(cdKey);
                 if (endTime != null && endTime > now) continue;
 
-                // --- 3. THỰC THI SKILL ---
+                
                 ISkill skill = SkillManager.getSkill(skillName);
                 if (skill != null) {
-                    // TRỪ MANA (Chỉ khi có plugin và đủ điều kiện)
+                    
                     if (hasMMOCore && mmoPlayerData != null && manaCost > 0) {
                         mmoPlayerData.setMana(mmoPlayerData.getMana() - manaCost);
                     }
@@ -154,7 +154,7 @@ public class SkillTriggerListener implements Listener {
                         player.removeMetadata("IS_ABILITY", Main.getInstance());
                     }
 
-                    // SET COOLDOWN
+                    
                     playerCd.put(cdKey, now + (cooldownTime * 1000L));
                 }
             } catch (Exception e) {

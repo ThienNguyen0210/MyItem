@@ -2,7 +2,7 @@ package org.ThienNguyen.Skill.TypeSkill.Weapon;
 
 import org.ThienNguyen.Skill.ISkill;
 import org.ThienNguyen.Main;
-import org.ThienNguyen.Listener.PlayerCombatCache; // Cầu nối lấy stats 100k
+import org.ThienNguyen.Listener.PlayerCombatCache; 
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
@@ -28,7 +28,7 @@ public class SoulReleaseSkill implements ISkill {
 
     @Override
     public void execute(Player player, LivingEntity targetIgnored, int level, double baseDamageFromEvent) {
-        // --- BƯỚC 1: LẤY SÁT THƯƠNG THỰC TỪ CACHE (Bỏ qua 1.2 của Event) ---
+        
         PlayerCombatCache.CombatStats stats = PlayerCombatCache.getStats(player.getUniqueId());
         double realPower = stats.totalBonusDmg;
 
@@ -36,16 +36,16 @@ public class SoulReleaseSkill implements ISkill {
             realPower = player.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE).getValue();
         }
 
-        // TÍNH TOÁN FINAL DAMAGE (60% + 10% mỗi cấp)
+        
         final double explosionDmg = realPower * (0.60 + (level * 0.10));
 
         Location oldLocation = player.getLocation().clone();
 
-        // 1. Dash lướt đi
+        
         Vector dir = player.getLocation().getDirection().setY(0.1).normalize();
         player.setVelocity(dir.multiply(1.5));
 
-        // 2. Tạo Thân xác (ArmorStand)
+        
         ArmorStand body = (ArmorStand) oldLocation.getWorld().spawnEntity(oldLocation, EntityType.ARMOR_STAND);
         body.setCustomName("§bLinh ảnh của §f" + player.getName());
         body.setCustomNameVisible(true);
@@ -64,7 +64,7 @@ public class SoulReleaseSkill implements ISkill {
         body.getEquipment().setBoots(new ItemStack(Material.IRON_BOOTS));
         body.getEquipment().setItemInMainHand(player.getInventory().getItemInMainHand().clone());
 
-        // 3. Tăng tốc chạy cho "Linh hồn"
+        
         AttributeInstance speedAttr = player.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED);
         AttributeModifier modifier = new AttributeModifier(UUID.randomUUID(), "SoulReleaseSpeed", 0.05, AttributeModifier.Operation.ADD_NUMBER);
         if (speedAttr != null) speedAttr.addModifier(modifier);
@@ -72,7 +72,7 @@ public class SoulReleaseSkill implements ISkill {
         player.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 100, 0));
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ZOMBIE_VILLAGER_CONVERTED, 1.0f, 1.5f);
 
-        // 4. Task đếm ngược
+        
         new BukkitRunnable() {
             int seconds = 5;
             @Override
@@ -81,25 +81,25 @@ public class SoulReleaseSkill implements ISkill {
 
                     Location currentLoc = player.getLocation();
 
-                    // Hiệu ứng nổ linh hồn cực mạnh
+                    
                     currentLoc.getWorld().spawnParticle(Particle.EXPLOSION_HUGE, currentLoc, 2);
                     currentLoc.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, currentLoc, 50, 1.5, 1.5, 1.5, 0.1);
                     currentLoc.getWorld().playSound(currentLoc, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 0.8f);
 
-                    // --- QUY TRÌNH GÂY SÁT THƯƠNG DIỆN RỘNG ---
+                    
                     for (org.bukkit.entity.Entity e : player.getNearbyEntities(4, 4, 4)) {
                         if (e instanceof LivingEntity victim && !e.equals(player) && !(e instanceof ArmorStand)) {
 
-                            // 1. Phá bất tử
+                            
                             victim.setNoDamageTicks(0);
 
-                            // 2. Set Metadata lên NẠN NHÂN
+                            
                             victim.setMetadata("IS_ABILITY", new FixedMetadataValue(Main.getInstance(), true));
 
-                            // 3. Gây damage thực thi
+                            
                             victim.damage(explosionDmg, player);
 
-                            // 4. Dọn dẹp metadata sau 2 ticks
+                            
                             new BukkitRunnable() {
                                 @Override
                                 public void run() {
@@ -109,7 +109,7 @@ public class SoulReleaseSkill implements ISkill {
                         }
                     }
 
-                    // Nhập xác: Biến về vị trí Armor Stand
+                    
                     player.teleport(oldLocation);
                     body.remove();
 
@@ -121,7 +121,7 @@ public class SoulReleaseSkill implements ISkill {
                     return;
                 }
 
-                // Hiệu ứng hạt linh hồn
+                
                 player.getWorld().spawnParticle(Particle.SOUL, player.getLocation().add(0, 1, 0), 5, 0.2, 0.2, 0.2, 0.05);
                 seconds--;
             }

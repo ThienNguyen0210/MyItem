@@ -20,21 +20,21 @@ public class FirstStrike implements IAbility {
     public void execute(Player attacker, LivingEntity target, int level, double baseDamage) {
         if (attacker == null || target == null || target.isDead()) return;
 
-        // 1. Tính toán sát thương: 40% + (level-1)*20%
+        
         double multiplier = 0.40 + (Math.max(0, level - 1) * 0.20);
         double extraDamage = baseDamage * multiplier;
 
-        // 2. Áp dụng hiệu ứng khống chế
-        // Say sóng (Nausea) 3 giây (60 ticks)
+        
+        
         target.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, 60, 0));
 
-        // Làm chậm (Slowness) level 100 trong 1 giây (20 ticks)
-        target.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 20, 99)); // Level 100 = amplifier 99
+        
+        target.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 20, 99)); 
 
-        // 3. Gây sát thương
+        
         applyAbilityDamage(attacker, target, extraDamage);
 
-        // 4. Hiệu ứng Visual: Particle choáng (Vòng tròn trên đầu)
+        
         target.getWorld().playSound(target.getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_IRON_DOOR, 0.8f, 1.5f);
         target.getWorld().playSound(target.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.5f, 2.0f);
 
@@ -47,13 +47,13 @@ public class FirstStrike implements IAbility {
                     return;
                 }
 
-                // Vẽ vòng tròn hạt "choáng" trên đầu mục tiêu
+                
                 Location headLoc = target.getLocation().add(0, target.getHeight() + 0.3, 0);
                 double angle = ticks * 0.8;
                 double x = Math.cos(angle) * 0.3;
                 double z = Math.sin(angle) * 0.3;
 
-                // Particle CRIT và VILLAGER_ANGRY tạo cảm giác bị choáng nặng
+                
                 target.getWorld().spawnParticle(Particle.CRIT, headLoc.clone().add(x, 0, z), 1, 0, 0, 0, 0);
                 if (ticks % 5 == 0) {
                     target.getWorld().spawnParticle(Particle.VILLAGER_ANGRY, headLoc, 1, 0.1, 0.1, 0.1, 0);

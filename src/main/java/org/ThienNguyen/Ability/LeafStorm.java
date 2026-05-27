@@ -25,7 +25,7 @@ public class LeafStorm implements IAbility {
         double damagePerSecond = baseDamage * multiplier;
         double radius = 4.0;
 
-        // Lấy vị trí cố định ngay khi kích hoạt
+        
         final Location staticCenter = attacker.getLocation();
 
         attacker.getWorld().playSound(staticCenter, Sound.BLOCK_AZALEA_LEAVES_STEP, 1.5f, 1.0f);
@@ -41,7 +41,7 @@ public class LeafStorm implements IAbility {
                     return;
                 }
 
-                // A. Hiệu ứng lá rơi tại vị trí CỐ ĐỊNH (Giảm mật độ xuống còn 5 hạt mỗi 2 ticks)
+                
                 for (int i = 0; i < 5; i++) {
                     double offsetX = (Math.random() * radius * 2) - radius;
                     double offsetZ = (Math.random() * radius * 2) - radius;
@@ -50,14 +50,14 @@ public class LeafStorm implements IAbility {
                     Location leafLoc = staticCenter.clone().add(offsetX, offsetY, offsetZ);
                     leafLoc.getWorld().spawnParticle(Particle.CHERRY_LEAVES, leafLoc, 1, 0.1, 0.1, 0.1, 0.01);
 
-                    if (i == 0) { // Cứ mỗi lần chạy chỉ hiện 1 hạt bụi xanh cho nhẹ
+                    if (i == 0) { 
                         leafLoc.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, leafLoc, 1, 0, 0, 0, 0);
                     }
                 }
 
-                // B. Gây sát thương mỗi 1 giây tại vị trí CỐ ĐỊNH
+                
                 if (ticks % 20 == 0) {
-                    // Dùng getNearbyEntities từ staticCenter thay vì từ attacker
+                    
                     Collection<Entity> nearby = staticCenter.getWorld().getNearbyEntities(staticCenter, radius, 3.0, radius);
                     for (Entity entity : nearby) {
                         if (entity instanceof LivingEntity victim && !entity.equals(attacker) && !(entity instanceof org.bukkit.entity.ArmorStand)) {

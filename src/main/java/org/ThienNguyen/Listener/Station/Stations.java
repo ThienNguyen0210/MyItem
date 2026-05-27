@@ -37,9 +37,9 @@ public class Stations implements Listener {
     private final StationDatabase stationDb;
     private final Gson gson = new Gson();
 
-    // Cooldown per player (ms)
+    
     private final Map<UUID, Long> playerCooldown = new HashMap<>();
-    private static final long COOLDOWN_MS = 5000; // 5 giây
+    private static final long COOLDOWN_MS = 5000; 
 
     public Stations(Main plugin, StationDatabase stationDb) {
         this.plugin = plugin;
@@ -50,7 +50,7 @@ public class Stations implements Listener {
         this.statsHandler = new Stats();
     }
 
-    // ====================== TRIGGER: ĐỔI SLOT HOTBAR ======================
+    
     @EventHandler
     public void onItemHeld(PlayerItemHeldEvent event) {
         Player player = event.getPlayer();
@@ -69,7 +69,7 @@ public class Stations implements Listener {
 
 
 
-    // ====================== QUÉT TOÀN BỘ INV + ARMOR + OFFHAND ======================
+    
     private void checkAllItems(Player player) {
         for (ItemStack item : player.getInventory().getContents()) {
             checkAndSyncItem(player, item);
@@ -82,7 +82,7 @@ public class Stations implements Listener {
         checkAndSyncItem(player, player.getInventory().getItemInOffHand());
     }
 
-    // ====================== CHECK & SYNC ITEM ======================
+    
     private void checkAndSyncItem(Player player, ItemStack item) {
         if (item == null || !item.hasItemMeta()) return;
 
@@ -96,7 +96,7 @@ public class Stations implements Listener {
         int masterVersion = stationDb.getMasterVersion(code);
         if (masterVersion <= 0 || masterVersion <= itemVersion) return;
 
-        // Check player_sync trước
+        
         int playerSyncVersion = stationDb.getPlayerSyncVersion(player.getUniqueId(), code);
         if (playerSyncVersion >= masterVersion) return;
 
@@ -120,20 +120,20 @@ public class Stations implements Listener {
                 finalItem.setItemMeta(updatedMeta);
             }
 
-            // Lưu player_sync để skip lần sau
+            
             stationDb.updatePlayerSync(finalPlayer.getUniqueId(), finalCode, finalMasterVersion);
 
 
         });
     }
 
-    // ====================== REBUILD ITEM (PDC GHI ĐÈ KEY TRÙNG) ======================
+    
     private void rebuildItem(ItemStack item, StationData data, StationFullData fullData) {
         if (item == null || !item.hasItemMeta()) return;
 
         ItemMeta meta = item.getItemMeta();
 
-        // 1. Xử lý Lore (Thay thế phần đầu, giữ lại phần custom phía dưới)
+        
         List<String> masterLore = new ArrayList<>();
         if (fullData.getLoreJson() != null) {
             masterLore = gson.fromJson(fullData.getLoreJson(), List.class);
@@ -150,28 +150,28 @@ public class Stations implements Listener {
         finalLore.addAll(customLore);
         meta.setLore(finalLore);
 
-        // 2. PDC Ghi đè từ JSON (MỚI - Đồng bộ toàn bộ dữ liệu metadata lưu trữ)
+        
         if (fullData.getPdcJson() != null && !fullData.getPdcJson().equals("{}")) {
             mergePDCFromJson(fullData.getPdcJson(), meta);
         }
 
-        // 3. Ghi đè các thuộc tính cụ thể từ StationData (Abilities, Effects, Elements)
+        
         if (data.getRawAbilities() != null) {
             meta.getPersistentDataContainer().set(abilityKey, PersistentDataType.STRING, data.getRawAbilities());
         }
 
         if (data.getEffects() != null) {
-            // Áp dụng effect (cần truyền meta vào nếu BuffData hỗ trợ, hoặc update meta sau)
+            
             data.getEffects().forEach((name, level) -> BuffData.setEffect(item, name, level));
-            // Lưu ý: Nếu BuffData.setEffect tự thực hiện item.setItemMeta,
-            // hãy đảm bảo nó đồng bộ với object 'meta' hiện tại.
+            
+            
         }
 
         if (data.getElements() != null) {
             data.getElements().forEach((elemId, level) -> ElementCore.setElement(item, elemId, level));
         }
 
-        // 4. Remake Display Name và Model ID từ DB (Ghi đè tuyệt đối)
+        
         if (fullData.getDisplayName() != null) {
             meta.setDisplayName(org.bukkit.ChatColor.translateAlternateColorCodes('&', fullData.getDisplayName()));
         }
