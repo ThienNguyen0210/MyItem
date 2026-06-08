@@ -854,6 +854,19 @@ public class JewelryManager implements InventoryHolder, org.bukkit.event.Listene
         ItemStack current = e.getCurrentItem();
         String requiredType = slotsSec.getString(slot + ".type");
 
+        // Fix: đọc trực tiếp từ config full path để tránh lỗi YAML key số bị parse sai
+        String fullPath = "jewelry.player-slots." + slot + ".name";
+        String rawName = plugin.getConfig().getString(fullPath);
+        String slotDisplayName = (rawName != null && !rawName.isEmpty())
+                ? rawName.replace("&", "§")
+                : requiredType;
+
+        // Đọc message từ config, hỗ trợ placeholder %slot_name%
+        String wrongTypeMsg = plugin.getConfig().getString(
+                "jewelry.messages.wrong-type",
+                "&cÔ này chỉ dành cho: &e%slot_name%"
+        ).replace("&", "§").replace("%slot_name%", slotDisplayName);
+
         // 1. Đặt đồ vào
         if (cursor != null && !cursor.getType().isAir()) {
             // Kiểm tra loại trang sức (NBT jewelry_type)
@@ -870,7 +883,7 @@ public class JewelryManager implements InventoryHolder, org.bukkit.event.Listene
                 // Cập nhật stats ngay
                 org.ThienNguyen.Listener.CacheListener.refreshCache(p);
             } else {
-                p.sendMessage("§cÔ này chỉ dành cho: §e" + requiredType);
+                p.sendMessage(wrongTypeMsg);
             }
             return;
         }

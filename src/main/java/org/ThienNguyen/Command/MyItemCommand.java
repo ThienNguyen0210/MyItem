@@ -5,6 +5,7 @@ import org.ThienNguyen.Listener.AIExperienceGUI;
 import org.ThienNguyen.Listener.Station.StationCMD;
 import org.ThienNguyen.Main;
 import org.ThienNguyen.Effect.BuffData;
+import org.ThienNguyen.Command.ItemStorageManager;
 import org.ThienNguyen.Listener.Station.StationDatabase;
 import org.bukkit.Sound;
 import org.bukkit.configuration.ConfigurationSection;
@@ -24,7 +25,7 @@ import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
-
+import org.bukkit.configuration.file.YamlConfiguration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -77,7 +78,7 @@ public class MyItemCommand implements CommandExecutor {
                     return true;
                 }
 
-                
+
                 if (!plugin.getLoreFormatConfig().contains(formatId)) {
                     player.sendMessage("§cFormat ID §f" + formatId + " §ckhông tồn tại!");
                     return true;
@@ -97,7 +98,7 @@ public class MyItemCommand implements CommandExecutor {
                 if (!(sender instanceof Player player)) return true;
                 if (!checkAdmin(player)) return true;
 
-                
+
                 if (args.length >= 2) {
                     String subAction = args[1].toLowerCase();
                     ItemStack item = player.getInventory().getItemInMainHand();
@@ -122,7 +123,7 @@ public class MyItemCommand implements CommandExecutor {
                             player.sendMessage("§a[MyItem] Đã gắn mã Combo §e" + id + " §avào vật phẩm!");
                         }
                         case "unadd" -> {
-                            
+
                             if (meta.getPersistentDataContainer().has(COMBO_KEY, PersistentDataType.STRING)) {
                                 meta.getPersistentDataContainer().remove(COMBO_KEY);
                                 item.setItemMeta(meta);
@@ -143,10 +144,10 @@ public class MyItemCommand implements CommandExecutor {
                     AIExperienceGUI.openEulaGUI(player);
                     return true;
                 }
-                
+
                 FileConfiguration config = Main.getInstance().getAIConfig();
 
-                
+
                 ConfigurationSection profilesSection = config.getConfigurationSection("ai.profiles");
 
                 if (profilesSection == null) {
@@ -162,7 +163,7 @@ public class MyItemCommand implements CommandExecutor {
 
                 String id = args[1].toLowerCase();
 
-                
+
                 ConfigurationSection profile = profilesSection.getConfigurationSection(id);
 
                 if (profile == null) {
@@ -178,7 +179,7 @@ public class MyItemCommand implements CommandExecutor {
 
                 player.setMetadata("ai_prompt_mode", new FixedMetadataValue(Main.getInstance(), id));
 
-                
+
                 Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
                     if (player.hasMetadata("ai_prompt_mode")) {
                         player.removeMetadata("ai_prompt_mode", Main.getInstance());
@@ -199,7 +200,7 @@ public class MyItemCommand implements CommandExecutor {
                 }
 
                 String id = args[1];
-                
+
                 ItemStack aiItem = org.ThienNguyen.AI.utils.YamlManager.getItemFromAiFolder(id);
 
                 if (aiItem != null) {
@@ -228,13 +229,13 @@ public class MyItemCommand implements CommandExecutor {
             }
 
             case "load" -> {
-                
+
                 if (!sender.hasPermission("myitem.admin")) {
                     sender.sendMessage("§c[MyItem] Bạn không có quyền!");
                     return true;
                 }
 
-                
+
                 if (args.length < 2) {
                     sender.sendMessage("§cSử dụng: /mi load <id> [player]");
                     return true;
@@ -242,17 +243,17 @@ public class MyItemCommand implements CommandExecutor {
 
                 String id = args[1];
 
-                
+
                 Player target;
                 if (args.length >= 3) {
-                    
+
                     target = Bukkit.getPlayer(args[2]);
                     if (target == null) {
                         sender.sendMessage("§cNgười chơi §f" + args[2] + " §ckhông online!");
                         return true;
                     }
                 } else {
-                    
+
                     if (sender instanceof Player p) {
                         target = p;
                     } else {
@@ -261,16 +262,16 @@ public class MyItemCommand implements CommandExecutor {
                     }
                 }
 
-                
+
                 ItemStack loadedItem = Main.getInstance().getItemDatabase().loadItem(id);
 
                 if (loadedItem != null) {
-                    
+
                     target.getInventory().addItem(loadedItem);
 
-                    
+
                     sender.sendMessage("§a[MyItem] Successfully sent item §f" + id + " §ato §e" + target.getName());
-                    
+
                     if (target != sender) {
                         target.sendMessage(lang.getMessage("item.receive-msg", "{id}", id));                    }
                 } else {
@@ -297,7 +298,7 @@ public class MyItemCommand implements CommandExecutor {
             case "element" -> {
                 if (!(sender instanceof Player player)) return true;
 
-                
+
                 if (args.length < 4) {
                     player.sendMessage("§6§l[MyItem] §7Sử dụng:");
                     player.sendMessage("§e/mi element attack <id> <level> §7- Tăng sát thương");
@@ -311,10 +312,10 @@ public class MyItemCommand implements CommandExecutor {
                     return true;
                 }
 
-                String type = args[1].toLowerCase(); 
+                String type = args[1].toLowerCase();
                 String elementId = args[2].toUpperCase();
 
-                
+
                 if (!Main.getInstance().getElementConfig().contains(elementId)) {
                     player.sendMessage("§cNguyên tố §f" + elementId + " §ckhông tồn tại!");
                     return true;
@@ -324,12 +325,12 @@ public class MyItemCommand implements CommandExecutor {
                     int level = Integer.parseInt(args[3]);
 
                     if (type.equals("attack")) {
-                        
+
                         org.ThienNguyen.Element.ElementCore.addElement(item, elementId, level);
                         player.sendMessage("§a[MyItem] Đã thêm §6Tấn công " + elementId + " §acấp §e" + level);
                     }
                     else if (type.equals("defense")) {
-                        
+
                         org.ThienNguyen.Element.ElementCore.addDefenseElement(item, elementId, level);
                         player.sendMessage("§b[MyItem] Đã thêm §3Phòng thủ " + elementId + " §bcấp §e" + level);
                     }
@@ -338,7 +339,7 @@ public class MyItemCommand implements CommandExecutor {
                         return true;
                     }
 
-                    
+
                     org.ThienNguyen.Lore.ElementLore.updateLore(item);
                     org.ThienNguyen.Listener.CacheListener.refreshCache(player);
 
@@ -347,28 +348,28 @@ public class MyItemCommand implements CommandExecutor {
                 }
             }
 
-             case "stats" -> {
-                    if (!(sender instanceof Player player)) return true;
+            case "stats" -> {
+                if (!(sender instanceof Player player)) return true;
 
-                    
-                    if (args.length < 3) {
+
+                if (args.length < 3) {
                     player.sendMessage("§cSử dụng: /mi stats <loại> <giá trị> [any/mainhand/offhand/head/chest/legs/feet]");
                     return true;
                 }
 
-                
-                String slot = (args.length >= 4) ? args[3].toLowerCase() : "any";
-                
-                statsHandler.handleCommand(player, args, slot);
-                 org.ThienNguyen.Listener.CacheListener.refreshCache(player);
 
-             }
+                String slot = (args.length >= 4) ? args[3].toLowerCase() : "any";
+
+                statsHandler.handleCommand(player, args, slot);
+                org.ThienNguyen.Listener.CacheListener.refreshCache(player);
+
+            }
             case "evo" -> {
                 if (!(sender instanceof Player player)) return true;
 
-                
-                
-                
+
+
+
                 if (args.length < 4) {
                     player.sendMessage("§6§l[Evolution] §cSử dụng: /mi evo <target|ALL> <số lượng> <ID_Item_Mới>");
                     player.sendMessage("§7- target: Tên mob (ZOMBIE, SKELETON...) hoặc ID MythicMobs.");
@@ -392,13 +393,13 @@ public class MyItemCommand implements CommandExecutor {
                 }
                 String nextId = args[3];
 
-                
+
                 if (Main.getInstance().getItemDatabase().loadItem(nextId) == null) {
                     player.sendMessage("§cID '" + nextId + "' không tồn tại trong Item Database!");
                     return true;
                 }
 
-                
+
                 org.bukkit.inventory.meta.ItemMeta meta = item.getItemMeta();
                 org.bukkit.persistence.PersistentDataContainer pdc = meta.getPersistentDataContainer();
 
@@ -409,7 +410,7 @@ public class MyItemCommand implements CommandExecutor {
 
                 item.setItemMeta(meta);
 
-                
+
                 org.ThienNguyen.Evolution.EvolutionManager.addProgress(player,item, "INITIALIZE_ONLY");
 
                 player.sendMessage("§a§l✔ §fĐã thiết lập tiến hóa cho vật phẩm!");
@@ -515,23 +516,23 @@ public class MyItemCommand implements CommandExecutor {
                     return true;
                 }
 
-                
-                
+
+
                 new org.ThienNguyen.Utils.GUI().openUpgrade(player);
 
                 return true;
             }
             case "givegem" -> {
-                
+
                 if (!sender.hasPermission("myitem.admin")) {
                     sender.sendMessage("§cBạn không có quyền thực hiện lệnh này!");
                     return true;
                 }
 
-                
-                
 
-                
+
+
+
                 if (args.length < 4) {
                     sender.sendMessage("§6§l[!] §7Sử dụng: §e/myitem givegem <id> <player> <amount>");
                     return true;
@@ -542,13 +543,13 @@ public class MyItemCommand implements CommandExecutor {
                     Player targetPlayer = Bukkit.getPlayer(args[2]);
                     int amount = Integer.parseInt(args[3]);
 
-                    
+
                     if (targetPlayer == null || !targetPlayer.isOnline()) {
                         sender.sendMessage("§c§l✘ §7Người chơi §e" + args[2] + " §7không trực tuyến!");
                         return true;
                     }
 
-                    
+
                     ItemStack gem = org.ThienNguyen.Utils.Upgrade.createGemFromConfig(id);
 
                     if (gem == null) {
@@ -556,10 +557,10 @@ public class MyItemCommand implements CommandExecutor {
                         return true;
                     }
 
-                    
+
                     gem.setAmount(amount);
 
-                    
+
                     Map<Integer, ItemStack> overFlow = targetPlayer.getInventory().addItem(gem);
                     if (!overFlow.isEmpty()) {
                         for (ItemStack left : overFlow.values()) {
@@ -570,10 +571,10 @@ public class MyItemCommand implements CommandExecutor {
 
                     String gemName = gem.getItemMeta().hasDisplayName() ? gem.getItemMeta().getDisplayName() : gem.getType().name();
 
-                    
+
                     targetPlayer.sendMessage(lang.getMessage("upgrade.gem-received", "{gem}", gemName));
 
-                    
+
                     sender.sendMessage("§a§l✔ §7Đã gửi §e" + amount + "x " + gemName + " §7cho §f" + targetPlayer.getName());
 
                 } catch (NumberFormatException e) {
@@ -582,13 +583,13 @@ public class MyItemCommand implements CommandExecutor {
                 return true;
             }
             case "giveamulet" -> {
-                
+
                 if (!sender.hasPermission("myitem.admin")) {
                     sender.sendMessage("§cBạn không có quyền thực hiện lệnh này!");
                     return true;
                 }
 
-                
+
                 if (args.length < 3) {
                     sender.sendMessage("§6§l[!] §7Sử dụng: §e/myitem giveamulet <player> <amount>");
                     return true;
@@ -604,7 +605,7 @@ public class MyItemCommand implements CommandExecutor {
                     int amount = Integer.parseInt(args[2]);
                     if (amount <= 0) amount = 1;
 
-                    
+
                     ItemStack amulet = org.ThienNguyen.Utils.Upgrade.createProtectionScroll();
 
                     if (amulet == null) {
@@ -614,7 +615,7 @@ public class MyItemCommand implements CommandExecutor {
 
                     amulet.setAmount(amount);
 
-                    
+
                     if (target.getInventory().firstEmpty() == -1) {
                         target.getWorld().dropItemNaturally(target.getLocation(), amulet);
                     } else {
@@ -657,19 +658,19 @@ public class MyItemCommand implements CommandExecutor {
                 var meta = item.getItemMeta();
                 if (meta == null) return true;
 
-                
+
                 NamespacedKey skillKey = new NamespacedKey(Main.getInstance(), "item_skills");
                 NamespacedKey loreStartKey = new NamespacedKey(Main.getInstance(), "skill_lore_start");
                 NamespacedKey loreEndKey = new NamespacedKey(Main.getInstance(), "skill_lore_end");
 
-                
+
                 String oldData = meta.getPersistentDataContainer().get(skillKey, PersistentDataType.STRING);
                 if (oldData == null || oldData.trim().isEmpty()) {
                     player.sendMessage("§cVật phẩm này không có kỹ năng nào để gỡ!");
                     return true;
                 }
 
-                
+
                 List<String> skillList = new ArrayList<>();
                 boolean removed = false;
                 for (String entry : oldData.split(",")) {
@@ -688,13 +689,13 @@ public class MyItemCommand implements CommandExecutor {
                     return true;
                 }
 
-                
+
                 if (meta.hasLore()) {
                     List<String> lore = new ArrayList<>(meta.getLore());
                     Integer oldStart = meta.getPersistentDataContainer().get(loreStartKey, PersistentDataType.INTEGER);
                     Integer oldEnd = meta.getPersistentDataContainer().get(loreEndKey, PersistentDataType.INTEGER);
 
-                    
+
                     if (oldStart != null && oldEnd != null && oldStart >= 0 && oldEnd >= oldStart && oldEnd < lore.size()) {
                         for (int i = oldEnd; i >= oldStart; i--) {
                             lore.remove(i);
@@ -703,10 +704,10 @@ public class MyItemCommand implements CommandExecutor {
                     }
                 }
 
-                
+
                 if (skillList.isEmpty()) {
                     meta.getPersistentDataContainer().remove(skillKey);
-                    
+
                     meta.getPersistentDataContainer().remove(loreStartKey);
                     meta.getPersistentDataContainer().remove(loreEndKey);
                 } else {
@@ -716,13 +717,13 @@ public class MyItemCommand implements CommandExecutor {
 
                 item.setItemMeta(meta);
 
-                
-                
+
+
                 org.ThienNguyen.Lore.SkillLore.updateLore(item);
 
                 player.sendMessage("§a[Skill] Đã gỡ kỹ năng §f" + skillToRemove + " §athành công!");
             }
-            
+
             case "enchant" -> {
                 if (!(sender instanceof Player player)) return true;
                 if (args.length < 3) {
@@ -731,7 +732,7 @@ public class MyItemCommand implements CommandExecutor {
                 }
 
                 ItemStack item = player.getInventory().getItemInMainHand();
-                
+
                 org.bukkit.NamespacedKey key = org.bukkit.NamespacedKey.minecraft(args[1].toLowerCase());
                 org.bukkit.enchantments.Enchantment enchant = org.bukkit.enchantments.Enchantment.getByKey(key);
 
@@ -742,10 +743,10 @@ public class MyItemCommand implements CommandExecutor {
 
                 try {
                     int level = Integer.parseInt(args[2]);
-                    
+
                     item.addUnsafeEnchantment(enchant, level);
 
-                    
+
                     org.ThienNguyen.Enchant.EnchantVanila.updateEnchantLore(item);
 
                     player.sendMessage("§aĐã ép §e" + args[1] + " §acấp §f" + level);
@@ -760,7 +761,7 @@ public class MyItemCommand implements CommandExecutor {
                     return true;
                 }
 
-                
+
                 if (args.length < 5 || !args[1].equalsIgnoreCase("give")) {
                     sender.sendMessage("§c[!] Sử dụng: /mi gemstone give <gem|drill|remover> <id> <player> <amount>");
                     sender.sendMessage("§7Ví dụ:");
@@ -808,9 +809,9 @@ public class MyItemCommand implements CommandExecutor {
                         }
                     }
                     case "remover" -> {
-                        
-                        FileConfiguration removerConfig = Main.getInstance().getGemConfig(); 
-                        
+
+                        FileConfiguration removerConfig = Main.getInstance().getGemConfig();
+
 
                         if (removerConfig.contains(id)) {
                             itemResult = createGemItem(id, removerConfig, "REMOVER");
@@ -841,18 +842,18 @@ public class MyItemCommand implements CommandExecutor {
 
                 String link = "https://windycraft.com/editor";
 
-                
+
                 net.md_5.bungee.api.chat.TextComponent message = new net.md_5.bungee.api.chat.TextComponent("§a[MyItem] §fTruy cập trang thiết kế tại: ");
 
                 net.md_5.bungee.api.chat.TextComponent linkComponent = new net.md_5.bungee.api.chat.TextComponent("§b§n" + link);
 
-                
+
                 linkComponent.setHoverEvent(new net.md_5.bungee.api.chat.HoverEvent(
                         net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT,
                         new net.md_5.bungee.api.chat.ComponentBuilder("§eClick để sao chép link thiết kế!").create()
                 ));
 
-                
+
                 linkComponent.setClickEvent(new net.md_5.bungee.api.chat.ClickEvent(
                         net.md_5.bungee.api.chat.ClickEvent.Action.COPY_TO_CLIPBOARD,
                         link
@@ -860,7 +861,7 @@ public class MyItemCommand implements CommandExecutor {
 
                 message.addExtra(linkComponent);
 
-                
+
                 player.spigot().sendMessage(message);
             }
             case "expire" -> {
@@ -888,7 +889,7 @@ public class MyItemCommand implements CommandExecutor {
                     return true;
                 }
 
-                
+
                 long durationMs = org.ThienNguyen.Listener.Expire.parseDuration(args, 1);
 
                 if (durationMs <= 0) {
@@ -900,7 +901,7 @@ public class MyItemCommand implements CommandExecutor {
 
                 var meta = item.getItemMeta();
                 if (meta != null) {
-                    
+
                     meta.getPersistentDataContainer().set(
                             org.ThienNguyen.Listener.Expire.getInstance().getExpireKey(),
                             PersistentDataType.LONG,
@@ -908,31 +909,31 @@ public class MyItemCommand implements CommandExecutor {
                     );
                     item.setItemMeta(meta);
 
-                    
+
                     org.ThienNguyen.Lore.LoreGenerator.rebuild(item);
 
                     String successMsg = expConfig.getString("messages.success-applied", "§a[✓] Đã gắn hạn sử dụng thành công!");
 
-                    
+
                     StringBuilder timeVisual = new StringBuilder();
                     for (int i = 1; i < args.length; i++) {
                         timeVisual.append(args[i]).append(" ");
                     }
                     player.sendMessage(successMsg.replace("{time}", timeVisual.toString().trim()));
 
-                    
+
                     org.ThienNguyen.Listener.CacheListener.refreshCache(player);
                 }
                 return true;
             }
             case "consume" -> {
-                
+
                 if (!sender.hasPermission("myitem.admin")) {
                     sender.sendMessage("§cBạn không có quyền sử dụng lệnh này!");
                     return true;
                 }
 
-                
+
                 if (args.length < 5) {
                     sender.sendMessage("§cSử dụng: /myitem consume give <id> <amount> <player>");
                     return true;
@@ -941,7 +942,7 @@ public class MyItemCommand implements CommandExecutor {
                 if (args[1].equalsIgnoreCase("give")) {
                     String consumeId = args[2];
 
-                    
+
                     int amount;
                     try {
                         amount = Integer.parseInt(args[3]);
@@ -950,14 +951,14 @@ public class MyItemCommand implements CommandExecutor {
                         return true;
                     }
 
-                    
+
                     Player target = Bukkit.getPlayer(args[4]);
                     if (target == null) {
                         sender.sendMessage("§cNgười chơi §f" + args[4] + " §ckhông trực tuyến!");
                         return true;
                     }
 
-                    
+
                     ItemStack consumeItem = org.ThienNguyen.Consume.ConsumeManager.getConsumeItem(consumeId, amount);
 
                     if (consumeItem == null) {
@@ -965,31 +966,31 @@ public class MyItemCommand implements CommandExecutor {
                         return true;
                     }
 
-                    
+
                     target.getInventory().addItem(consumeItem);
                     sender.sendMessage("§aĐã gửi §f" + amount + "x " + consumeId + " §acho §e" + target.getName());
                 }
             }
             case "connect" -> {
-                
+
                 if (!sender.hasPermission("myitem.admin")) {
                     sender.sendMessage("§cBạn không có quyền thực hiện lệnh này!");
                     return true;
                 }
 
-                
+
                 if (!(sender instanceof Player player)) {
                     sender.sendMessage("§cLệnh này chỉ dành cho người chơi trong game!");
                     return true;
                 }
 
-                
+
                 if (args.length < 2) {
                     player.sendMessage("§8[§4§l?§8] §cSử dụng: /myitem connect <mã_web>");
                     return true;
                 }
 
-                
+
                 String code = args[1].toUpperCase();
                 org.ThienNguyen.Webapi.Web.connectItem(player, code);
             }
@@ -1001,7 +1002,7 @@ public class MyItemCommand implements CommandExecutor {
                 Main.getInstance().reloadPluginConfigs();
                 sender.sendMessage("§a[MyItem] Đã nạp lại toàn bộ cấu hình hệ thống!");
             }
-            
+
 
             case "particle" -> {
                 if (!(sender instanceof Player player)) {
@@ -1024,14 +1025,14 @@ public class MyItemCommand implements CommandExecutor {
                 }
 
                 String particleId = args[1];
-                
+
                 if (!Main.getInstance().getParticleConfig().contains("effects." + particleId)) {
                     player.sendMessage("§e[!] Cảnh báo: ID '" + particleId + "' chưa được định nghĩa trong Particle.yml");
                 }
 
                 var meta = item.getItemMeta();
                 if (meta != null) {
-                    
+
                     meta.getPersistentDataContainer().set(
                             new NamespacedKey(Main.getInstance(), "item_particle"),
                             PersistentDataType.STRING,
@@ -1040,7 +1041,7 @@ public class MyItemCommand implements CommandExecutor {
                     item.setItemMeta(meta);
                     player.sendMessage("§a[✓] Đã thêm hiệu ứng '" + particleId + "' vào vật phẩm!");
 
-                    
+
                     new org.ThienNguyen.Listener.StatsListener().updatePlayerStats(player);
                 }
                 return true;
@@ -1060,19 +1061,19 @@ public class MyItemCommand implements CommandExecutor {
                 if (meta != null) {
                     NamespacedKey key = new NamespacedKey(Main.getInstance(), "item_particle");
 
-                    
+
                     if (!meta.getPersistentDataContainer().has(key, PersistentDataType.STRING)) {
                         player.sendMessage("§c[!] Vật phẩm này không có hiệu ứng particle nào để xóa.");
                         return true;
                     }
 
-                    
+
                     meta.getPersistentDataContainer().remove(key);
                     item.setItemMeta(meta);
 
                     player.sendMessage("§e[✓] Đã gỡ bỏ hiệu ứng particle khỏi vật phẩm trên tay!");
 
-                    
+
                     new org.ThienNguyen.Listener.StatsListener().updatePlayerStats(player);
                 }
                 return true;
@@ -1099,7 +1100,7 @@ public class MyItemCommand implements CommandExecutor {
                     return true;
                 }
 
-                
+
                 if (args.length < 2) {
                     player.sendMessage("§8§m-------§r §6§lTOOLTIP SYSTEM §8§m-------");
                     player.sendMessage("§7» §e/mi tooltip add <loại> §f: Thêm khung tooltip");
@@ -1117,24 +1118,24 @@ public class MyItemCommand implements CommandExecutor {
                             return true;
                         }
                         String type = args[2].toLowerCase();
-                        
+
                         org.ThienNguyen.Utils.Tooltips.applyTooltip(player, type);
                     }
                     case "undo" -> {
-                        
+
                         org.ThienNguyen.Utils.Tooltips.handleUndo(player);
                     }
                     default -> player.sendMessage("§c[!] Hành động không hợp lệ. Sử dụng 'add' hoặc 'undo'.");
                 }
             }
             case "update" -> {
-                
+
                 if (!sender.hasPermission("myitem.admin")) {
                     sender.sendMessage("§c[MyItem] Bạn không có quyền!");
                     return true;
                 }
 
-                
+
                 if (args.length < 2) {
                     if (sender instanceof Player player) {
                         org.ThienNguyen.Webapi.Update.openUpdateListGUI(player, plugin);
@@ -1144,25 +1145,25 @@ public class MyItemCommand implements CommandExecutor {
                     return true;
                 }
 
-                
+
                 String updateVersion = args[1];
 
                 if (sender instanceof Player player) {
-                    
+
                     org.ThienNguyen.Webapi.Update.downloadAndUpdate(plugin, updateVersion, player);
                 } else {
-                    
-                    
+
+
                     sender.sendMessage("§e[MyItem] Console đang tải bản " + updateVersion + " (Xem log tại Console)...");
-                    
+
                 }
                 return true;
             }
             case "sync" -> {
-                
+
                 return new StationCMD(plugin, stationDb).onCommand(sender, command, label, args);
             }
-            case "tiers" -> { 
+            case "tiers" -> {
                 if (args.length < 2) {
                     sender.sendMessage("§cSử dụng: /mi tiers <id>");
                     return true;
@@ -1179,10 +1180,95 @@ public class MyItemCommand implements CommandExecutor {
                     return true;
                 }
 
-                
+
                 org.ThienNguyen.Lore.TiersLore.applyTier(itemTier, args[1].toLowerCase());
                 pTiers.sendMessage("§a§l✔ §7Đã cập nhật phẩm chất vật phẩm!");
-                break; 
+                break;
+            }
+            case "mi" -> {
+                if (args.length < 2) {
+                    sender.sendMessage("§e/myitem mi create <type> §7- Tạo file yml mới");
+                    sender.sendMessage("§e/myitem mi save <type> <id> §7- Lưu item vào file");
+                    sender.sendMessage("§e/myitem mi load <type> <id> §7- Lấy item từ bộ nhớ tạm");
+                    sender.sendMessage("§e/myitem mi reload §7- Nạp lại toàn bộ item từ folder");
+                    sender.sendMessage("§e/myitem mi browse §7- Mở GUI duyệt item");
+                    return true;
+                }
+
+                ItemStorageManager ism = plugin.getItemStorageManager();
+                String action = args[1].toLowerCase();
+
+                switch (action) {
+                    case "browse" -> {
+                        if (!(sender instanceof Player p)) {
+                            sender.sendMessage("§cChỉ player mới dùng được lệnh này!");
+                            return true;
+                        }
+                        plugin.getMiBrowseGUI().openTypePage(p, 0);
+                    }
+                    case "create" -> {
+                        if (args.length < 3) {
+                            sender.sendMessage("§cVD: /myitem mi create Sword");
+                            return true;
+                        }
+                        String type = args[2];
+                        if (ism.createTypeFile(type)) {
+                            sender.sendMessage("§a[MyItem] Đã tạo file: ManagerItem/" + type + ".yml");
+                        } else {
+                            sender.sendMessage("§cFile đã tồn tại hoặc không thể tạo.");
+                        }
+                    }
+
+                    case "save" -> {
+                        if (!(sender instanceof Player p)) return true;
+                        if (args.length < 4) {
+                            p.sendMessage("§cVD: /myitem mi save <type> <id>");
+                            return true;
+                        }
+
+                        String type = args[2];
+                        String id = args[3];
+                        ItemStack item = p.getInventory().getItemInMainHand();
+
+                        if (item.getType().isAir()) {
+                            p.sendMessage("§cHãy cầm item trên tay để lưu!");
+                            return true;
+                        }
+
+                        if (ism.saveItemToType(type, id, item)) {
+                            p.sendMessage("§a[MyItem] Đã lưu item §f" + id + " §avào §e" + type + ".yml §a(Đã cập nhật bộ nhớ)");
+                        } else {
+                            p.sendMessage("§cFile " + type + ".yml không tồn tại. Hãy dùng 'create' trước!");
+                        }
+                    }
+
+                    case "load" -> {
+                        if (!(sender instanceof Player p)) return true;
+                        if (args.length < 4) {
+                            p.sendMessage("§cVD: /myitem mi load <type> <id>");
+                            return true;
+                        }
+
+                        // args[2] = type (dùng để hiển thị thông báo rõ hơn, cache không phân biệt type)
+                        String type = args[2];
+                        String id = args[3];
+                        ItemStack item = ism.getItem(id);
+
+                        if (item != null) {
+                            p.getInventory().addItem(item);
+                            p.sendMessage("§a[MyItem] Đã lấy vật phẩm §f" + id + " §atừ §e" + type + ".yml §a(bộ nhớ tạm).");
+                        } else {
+                            p.sendMessage("§cKhông tìm thấy vật phẩm §f" + id + " §ctrong §e" + type + ".yml§c! Thử /myitem mi reload.");
+                        }
+                    }
+
+                    case "reload" -> {
+                        ism.loadAllItems();
+                        sender.sendMessage("§a[MyItem] Đã nạp lại toàn bộ vật phẩm từ folder ManagerItem!");
+                    }
+
+                    default -> sender.sendMessage("§cKhông rõ hành động: " + action);
+                }
             }
             default -> sendHelp(sender, 1);
         }
@@ -1204,7 +1290,7 @@ public class MyItemCommand implements CommandExecutor {
             org.bukkit.inventory.meta.ItemMeta meta = item.getItemMeta();
 
             if (meta != null) {
-                
+
                 meta.setDisplayName(org.bukkit.ChatColor.translateAlternateColorCodes('&',
                         config.getString(id + ".display-name", id)));
 
@@ -1214,12 +1300,12 @@ public class MyItemCommand implements CommandExecutor {
                 }
                 meta.setLore(lore);
 
-                
+
                 if (config.contains(id + ".model-id")) {
                     meta.setCustomModelData(config.getInt(id + ".model-id"));
                 }
 
-                
+
                 NamespacedKey typeKey = new NamespacedKey(Main.getInstance(), "gem_item_type");
                 NamespacedKey idKey = new NamespacedKey(Main.getInstance(), "gem_item_id");
 
@@ -1240,35 +1326,35 @@ public class MyItemCommand implements CommandExecutor {
         String basicPrefix = "§8[§4§l?§8]§3 /";
         String rpgPrefix = "§8[§4§l?§8]§3 /rpginv ";
 
-        
+
         helpLines.add(miPrefix + "save <id> §7- Lưu item vào database");
         helpLines.add(miPrefix + "load <id> §7- Lấy item từ database");
         helpLines.add(miPrefix + "delete <id> §7- Xóa item database");
         helpLines.add(miPrefix + "stats <loại> <giá trị> §7- Chỉnh chỉ số");
         helpLines.add(miPrefix + "element <id> <lv> §7- Cường hóa nguyên tố");
 
-        
+
         helpLines.add(miPrefix + "ability <tên> <lv> <%> §7- Gán nội tại");
         helpLines.add(miPrefix + "buff <tên> <lv> §7- Gán hiệu ứng tốt");
         helpLines.add(miPrefix + "debuff <tên> <lv> §7- Gán hiệu ứng xấu");
         helpLines.add(miPrefix + "skill <type> <tên> <trig> <cd> <lv>");
         helpLines.add(miPrefix + "unskill <tên> §7- Gỡ kỹ năng khỏi item");
 
-        
+
         helpLines.add(basicPrefix + "setname <tên> §7- Đổi tên vật phẩm");
         helpLines.add(basicPrefix + "setlore <line> <text> §7- Sửa lore");
         helpLines.add(basicPrefix + "material <loại> §7- Đổi vật liệu");
         helpLines.add(basicPrefix + "setmodel <id> §7- Đặt CustomModelData");
         helpLines.add(basicPrefix + "unbreaking §7- Làm item không hỏng");
 
-        
+
         helpLines.add(basicPrefix + "attribute <attr> <val> §7- Thuộc tính gốc");
         helpLines.add(basicPrefix + "itemflag <flag> §7- Ẩn flags vật phẩm");
         helpLines.add(miPrefix + "enchant <enchant> <level> §7- Enchant item");
         helpLines.add(miPrefix + "gemstone give <typegem> <id> <p> <amt> §7- Gem cũ");
         helpLines.add(miPrefix + "reload §7- Nạp lại toàn bộ config");
 
-        
+
         helpLines.add(miPrefix + "upgrade §7- Mở giao diện Cường Hóa");
         helpLines.add(miPrefix + "trans §7- Mở giao diện Chuyển Hóa Cấp Độ");
         helpLines.add(miPrefix + "givegem <id> §7- lấy đá cường hoá");
@@ -1292,9 +1378,11 @@ public class MyItemCommand implements CommandExecutor {
         helpLines.add(miPrefix + "tooltip §7- Thêm tooltip cho item cầm tay (cần resourcepack)");
         helpLines.add(miPrefix + "ic §7- Thêm item đi theo combo chỉnh trong ItemCombo.yml");
         helpLines.add(miPrefix + "evo <entity> <amount> <evoDatabase> §7- Tiến hoá cho item");
-        helpLines.add(miPrefix + "getai <id>  §7- Nhận Item từ AI trong Item.yml §c§lNEW");
-        helpLines.add(miPrefix + "ai <profile> §7- Tạo item từ AI §c§lNEW");
-        helpLines.add(miPrefix + "expire <time> §7- Thiết lập hạn sử dụng cho vật phẩm");
+        helpLines.add(miPrefix + "getai <id>  §7- Nhận Item từ AI trong Item.yml ");
+        helpLines.add(miPrefix + "ai <profile> §7- Tạo item từ AI ");
+        helpLines.add(miPrefix + "expire <time> §7- Thiết lập hạn sử dụng cho vật phẩm §c§lNEW");
+        helpLines.add(miPrefix + "mi <create/save/load/browse> §7- Quản lí item (ManagerItem) §c§lNEW");
+
         int itemsPerPage = 5;
         int maxPages = (int) Math.ceil((double) helpLines.size() / itemsPerPage);
 
@@ -1309,7 +1397,7 @@ public class MyItemCommand implements CommandExecutor {
             sender.sendMessage(helpLines.get(i));
         }
 
-        
+
         sender.sendMessage("§7[§b◀§7]§8§m ----------------------------§7 [§b▶§7]");
         sender.sendMessage("§bDiscord:§f cache1236799");
 

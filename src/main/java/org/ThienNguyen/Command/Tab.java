@@ -27,10 +27,12 @@ public class Tab implements TabCompleter {
             "gemstone", "enchant", "unskill", "upgrade", "givegem", "giveamulet", "trans",
             "connect", "editor", "stats", "update", "version", "particle", "unparticle",
             "tiers", "consume", "tooltip", "loreformat",
-            "ic", "evo", "ai", "getai", "expire"
+            "ic", "evo", "ai", "getai", "expire", "mi"
     );
 
     private static final List<String> IC_SUBCOMMANDS = Arrays.asList("add", "unadd");
+
+    private static final List<String> MI_SUBCOMMANDS = Arrays.asList("create", "save", "load", "reload", "browse");
 
     private static final List<String> SKILL_TYPES = Arrays.asList("Weapon", "Command", "Mythicmob");
 
@@ -53,9 +55,9 @@ public class Tab implements TabCompleter {
             suggestions.addAll(MAIN_SUBCOMMANDS);
         }
 
-        
-        
-        
+
+
+
         else if (args.length == 2 && args[0].equalsIgnoreCase("ic")) {
             suggestions.addAll(IC_SUBCOMMANDS);
         }
@@ -66,23 +68,46 @@ public class Tab implements TabCompleter {
             if (icSub.equals("add") || icSub.equals("unadd")) {
                 FileConfiguration comboConfig = Main.getInstance().getComboConfig();
                 if (comboConfig != null) {
-                    
+
                     suggestions.addAll(comboConfig.getKeys(false));
                 }
             }
         }
 
-        
-        
-        
+        // ── mi: args[1] = subcommand ──────────────────────────────────────────
+        else if (args.length == 2 && args[0].equalsIgnoreCase("mi")) {
+            suggestions.addAll(MI_SUBCOMMANDS);
+        }
+
+        // ── mi: args[2] = type (tên file .yml trong ManagerItem) ──────────────
+        else if (args.length == 3 && args[0].equalsIgnoreCase("mi")) {
+            String miSub = args[1].toLowerCase();
+            if (miSub.equals("create") || miSub.equals("save") || miSub.equals("load")) {
+                ItemStorageManager ism = Main.getInstance().getItemStorageManager();
+                if (ism != null) suggestions.addAll(ism.getTypeNames());
+            }
+        }
+
+        // ── mi: args[3] = id (lọc theo type đã chọn ở args[2]) ───────────────
+        else if (args.length == 4 && args[0].equalsIgnoreCase("mi")) {
+            String miSub = args[1].toLowerCase();
+            if (miSub.equals("save") || miSub.equals("load")) {
+                ItemStorageManager ism = Main.getInstance().getItemStorageManager();
+                if (ism != null) suggestions.addAll(ism.getIdsByType(args[2]));
+            }
+        }
+
+
+
+
         else if (args.length == 2) {
             String sub = args[0].toLowerCase();
             switch (sub) {
                 case "evo" -> {
                     suggestions.add("ALL");
-                    suggestions.add("mm_"); 
-                    suggestions.add("mm_<id Mythicmob>"); 
-                    
+                    suggestions.add("mm_");
+                    suggestions.add("mm_<id Mythicmob>");
+
                     suggestions.addAll(Arrays.asList("ZOMBIE", "SKELETON", "CREEPER", "SPIDER", "ENDERMAN"));
                 }
                 case "consume" -> suggestions.add("give");
@@ -163,7 +188,7 @@ public class Tab implements TabCompleter {
                 }
                 case "gemstone" -> suggestions.addAll(Arrays.asList("Gem", "Drill", "Remover"));
                 case "element" -> {
-                    
+
                     FileConfiguration eConfig = Main.getInstance().getElementConfig();
                     if (eConfig != null) suggestions.addAll(eConfig.getKeys(false));
                 }
@@ -192,13 +217,13 @@ public class Tab implements TabCompleter {
                         FileConfiguration config = Main.getInstance().getDucLoConfig();
                         if (config != null) suggestions.addAll(config.getKeys(false));
                     }
-                    else if (type.equals("remover")) {                    
-                        FileConfiguration config = Main.getInstance().getGemConfig(); 
-                        
+                    else if (type.equals("remover")) {
+                        FileConfiguration config = Main.getInstance().getGemConfig();
+
                         if (config != null) suggestions.addAll(config.getKeys(false));
                     }
                 }
-                case "element" -> suggestions.addAll(COMMON_LEVEL); 
+                case "element" -> suggestions.addAll(COMMON_LEVEL);
                 case "skill" -> suggestions.addAll(TRIGGERS);
                 case "ability" -> suggestions.addAll(COMMON_CENT);
                 case "buff", "debuff" -> suggestions.addAll(COMMON_DURATION_TICKS);

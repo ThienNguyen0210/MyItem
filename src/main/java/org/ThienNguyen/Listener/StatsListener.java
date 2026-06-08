@@ -89,7 +89,6 @@ public class StatsListener implements Listener {
         Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
             if (!player.isOnline()) return;
 
-            updatePlayerStats(player);
 
             AttributeInstance hpAttr = player.getAttribute(Attribute.GENERIC_MAX_HEALTH);
             if (hpAttr != null) {
@@ -104,8 +103,6 @@ public class StatsListener implements Listener {
         Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
             if (!player.isOnline()) return;
 
-            updatePlayerStats(player);
-
             AttributeInstance hpAttr = player.getAttribute(Attribute.GENERIC_MAX_HEALTH);
             if (hpAttr != null) {
                 player.setHealth(hpAttr.getValue());
@@ -113,17 +110,7 @@ public class StatsListener implements Listener {
         }, 2L);
     }
 
-    @EventHandler
-    public void onInventoryClose(InventoryCloseEvent event) {
-        if (event.getPlayer() instanceof Player player) {
-            updatePlayerStats(player);
-        }
-    }
 
-    @EventHandler
-    public void onSlotChange(PlayerItemHeldEvent event) {
-        Bukkit.getScheduler().runTask(Main.getInstance(), () -> updatePlayerStats(event.getPlayer()));
-    }
 
     public void updatePlayerStats(Player player) {
         if (player == null || !player.isOnline()) return;
@@ -288,21 +275,41 @@ public class StatsListener implements Listener {
         }
 
         if (org.bukkit.Bukkit.getPluginManager().isPluginEnabled("MyAttribute")) {
-            totalHealth += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "health");
-            totalAttackSpeed += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "attack_speed");
+            totalHealth        += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "health");
+            totalAttackSpeed   += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "attack_speed");
             totalMovementSpeed += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "movement_speed");
-            totalMaxMana += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "max_mana");
-            totalManaRegen += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "mana_regen");
-            totalHealthRegen += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "health_regen");
+            totalMaxMana       += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "max_mana");
+            totalManaRegen     += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "mana_regen");
+            totalHealthRegen   += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "health_regen");
+
+            // --- PERCENT BONUS ---
+            double _p;
+            _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "health");
+            if (_p != 0.0) pctHealth += _p;
+
+            _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "attack_speed");
+            if (_p != 0.0) pctAttackSpeed += _p;
+
+            _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "movement_speed");
+            if (_p != 0.0) pctMovementSpeed += _p;
+
+            _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "max_mana");
+            if (_p != 0.0) pctMaxMana += _p;
+
+            _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "mana_regen");
+            if (_p != 0.0) pctManaRegen += _p;
+
+            _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "health_regen");
+            if (_p != 0.0) pctHealthRegen += _p;
         }
 
-        // --- PHẦN 4: APPLY ---
-        if (pctHealth != 0.0) totalHealth *= (1.0 + (pctHealth / 100.0));
-        if (pctMaxMana != 0.0) totalMaxMana *= (1.0 + (pctMaxMana / 100.0));
-        if (pctManaRegen != 0.0) totalManaRegen *= (1.0 + (pctManaRegen / 100.0));
-        if (pctAttackSpeed != 0.0) totalAttackSpeed *= (1.0 + (pctAttackSpeed / 100.0));
+// --- PHẦN 4: APPLY ---
+        if (pctHealth != 0.0)        totalHealth        *= (1.0 + (pctHealth / 100.0));
+        if (pctMaxMana != 0.0)       totalMaxMana       *= (1.0 + (pctMaxMana / 100.0));
+        if (pctManaRegen != 0.0)     totalManaRegen     *= (1.0 + (pctManaRegen / 100.0));
+        if (pctAttackSpeed != 0.0)   totalAttackSpeed   *= (1.0 + (pctAttackSpeed / 100.0));
         if (pctMovementSpeed != 0.0) totalMovementSpeed *= (1.0 + (pctMovementSpeed / 100.0));
-        if (pctHealthRegen != 0.0) totalHealthRegen *= (1.0 + (pctHealthRegen / 100.0));
+        if (pctHealthRegen != 0.0)   totalHealthRegen   *= (1.0 + (pctHealthRegen / 100.0));
 
         if (foundParticleId != null) org.ThienNguyen.Listener.Particle.ParticleManager.setEffect(player, foundParticleId);
         else org.ThienNguyen.Listener.Particle.ParticleManager.removeEffect(player);

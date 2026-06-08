@@ -97,7 +97,26 @@ text-display:
 # =============================================================
 jewelry:
   enabled: true
+  enable-player-inventory: true
 
+  # Định nghĩa các slot trên người (9-12 là hàng đầu túi đồ)
+  player-slots:
+    9:
+      type: "nhan"
+      name: "&a&lNhẫn"
+      model-data: 10030
+    10:
+      type: "nhan"
+      name: "&a&lNhẫn"
+      model-data: 10030
+    11:
+      type: "vong"
+      name: "&b&lVòng Tay"
+      model-data: 10030
+    12:
+      type: "day"
+      name: "&e&lDây Chuyền"
+      model-data: 10030
   # Cấu hình GUI khi mở lệnh /rpginv
   gui:
     title: "&6&l✦ Trang Sức Của Bạn ✦"
@@ -155,12 +174,11 @@ jewelry:
 
   # Danh sách các slot trang sức (Sử dụng lệnh /rpginv type <key> để gán)
   slots:
-    nhan-trai:
-      name: "&eNhẫn Tay Trái"
-      slot: 10
-    nhan-phai:
-      name: "&eNhẫn Tay Phải"
-      slot: 28
+    nhan:
+      - name: "&eNhẫn 1"
+        slot: 28
+      - name: "&eNhẫn 2"
+        slot: 10
     day-chuyen:
       name: "&bDây Chuyền"
       slot: 19
@@ -174,26 +192,7 @@ jewelry:
       - { name: "&dBùa 3", slot: 49 }
       - { name: "&dBùa 4", slot: 50 }
       - { name: "&dBùa 5", slot: 51 }
-  enable-player-inventory: true
-   #material luôn là paper
-  # Định nghĩa các slot trên người (9-12 là hàng đầu túi đồ)
-  player-slots:
-    9:
-      type: "nhan"
-      name: "&a&lNhẫn"
-      model-data: 10115
-    10:
-      type: "nhan"
-      name: "&a&lNhẫn"
-      model-data: 10115
-    11:
-      type: "vong"
-      name: "&b&lVòng Tay"
-      model-data: 10116
-    12:
-      type: "day"
-      name: "&e&lDây Chuyền"
-      model-data: 10117
+
   # Thông báo hệ thống
   messages:
     equipped: "&aĐã trang bị &f%item_name% &avào &e%slot_name%"
@@ -203,6 +202,7 @@ jewelry:
     no-item-held: "&cBạn cần cầm vật phẩm trên tay để gán type!"
     invalid-id: "&cID slot không tồn tại: &e%id%"
     type-set-success: "&aĐã gán type '&e%id%&a' cho vật phẩm đang cầm!"
+    wrong-type: "&cÔ này chỉ dành cho: &e%slot_name%"
 
   restrict-materials:
     enabled: false

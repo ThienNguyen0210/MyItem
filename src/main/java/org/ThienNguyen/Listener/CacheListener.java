@@ -424,26 +424,82 @@ public class CacheListener implements Listener {
         try {
             if (Bukkit.getPluginManager().isPluginEnabled("MyAttribute")) {
                 UUID uuid = player.getUniqueId();
-                stats.totalDeepWound += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "deep_wound");
-                stats.totalDamageReduction += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "damage_reduction");
+
+                // --- FLAT BONUS ---
+                stats.totalDeepWound           += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "deep_wound");
+                stats.totalDamageReduction     += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "damage_reduction");
                 stats.totalCritDamageReduction += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "critical_damage_reduction");
-                stats.totalExpBonus     += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "exp_bonus");
-                stats.totalArmorPen     += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "armor_pen");
-                stats.totalBonusDmg     += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "damage");
-                stats.totalTrueDamage   += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "true_damage");
-                stats.totalAccuracy     += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "accuracy");
-                stats.totalCritChance   += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "critical_chance");
-                stats.totalCritDamage   += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "critical_damage");
-                stats.totalPenetration  += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "penetration");
-                stats.totalLifesteal    += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "lifesteal");
-                stats.totalPveBonus     += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "pve_damage");
-                stats.totalPvpBonus     += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "pvp_damage");
-                stats.totalMagicDamage  += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "magic_damage");
-                stats.totalDodge        += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "dodge_rate");
-                stats.totalArmor        += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "armor");
-                stats.totalMagicDefense += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "magic_defense");
-                stats.totalPveDef       += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "pve_defense");
-                stats.totalPvpDef       += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "pvp_defense");
+                stats.totalExpBonus            += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "exp_bonus");
+                stats.totalArmorPen            += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "armor_pen");
+                stats.totalBonusDmg            += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "damage");
+                stats.totalTrueDamage          += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "true_damage");
+                stats.totalAccuracy            += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "accuracy");
+                stats.totalCritChance          += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "critical_chance");
+                stats.totalCritDamage          += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "critical_damage");
+                stats.totalPenetration         += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "penetration");
+                stats.totalLifesteal           += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "lifesteal");
+                stats.totalPveBonus            += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "pve_damage");
+                stats.totalPvpBonus            += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "pvp_damage");
+                stats.totalMagicDamage         += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "magic_damage");
+                stats.totalDodge               += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "dodge_rate");
+                stats.totalArmor               += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "armor");
+                stats.totalMagicDefense        += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "magic_defense");
+                stats.totalPveDef              += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "pve_defense");
+                stats.totalPvpDef              += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "pvp_defense");
+                stats.totalAllDefense          += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "all_defense");
+
+                // --- PERCENT BONUS ---
+                double _p;
+                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "damage");
+                if (_p != 0.0) stats.totalBonusDmg            *= (1 + _p / 100.0);
+
+                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "true_damage");
+                if (_p != 0.0) stats.totalTrueDamage          *= (1 + _p / 100.0);
+
+                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "magic_damage");
+                if (_p != 0.0) stats.totalMagicDamage         *= (1 + _p / 100.0);
+
+                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "magic_defense");
+                if (_p != 0.0) stats.totalMagicDefense        *= (1 + _p / 100.0);
+
+                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "pve_damage");
+                if (_p != 0.0) stats.totalPveBonus            *= (1 + _p / 100.0);
+
+                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "pvp_damage");
+                if (_p != 0.0) stats.totalPvpBonus            *= (1 + _p / 100.0);
+
+                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "all_damage");
+                if (_p != 0.0) stats.totalAllDamage           *= (1 + _p / 100.0);
+
+                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "bow_damage");
+                if (_p != 0.0) stats.totalBowDamage           *= (1 + _p / 100.0);
+
+                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "death_damage");
+                if (_p != 0.0) stats.totalDeathDamage         *= (1 + _p / 100.0);
+
+                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "armor");
+                if (_p != 0.0) stats.totalArmor               *= (1 + _p / 100.0);
+
+                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "critical_damage");
+                if (_p != 0.0) stats.totalCritDamage          *= (1 + _p / 100.0);
+
+                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "critical_damage_reduction");
+                if (_p != 0.0) stats.totalCritDamageReduction *= (1 + _p / 100.0);
+
+                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "armor_pen");
+                if (_p != 0.0) stats.totalArmorPen            *= (1 + _p / 100.0);
+
+                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "penetration");
+                if (_p != 0.0) stats.totalPenetration         *= (1 + _p / 100.0);
+
+                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "lifesteal");
+                if (_p != 0.0) stats.totalLifesteal           *= (1 + _p / 100.0);
+
+                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "dodge_rate");
+                if (_p != 0.0) stats.totalDodge               *= (1 + _p / 100.0);
+
+                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "damage_reduction");
+                if (_p != 0.0) stats.totalDamageReduction     *= (1 + _p / 100.0);
             }
         } catch (Throwable ignored) {}
 
@@ -457,7 +513,7 @@ public class CacheListener implements Listener {
 
         PlayerRefreshStatsEvent apiEvent = new PlayerRefreshStatsEvent(player, stats);
         org.bukkit.Bukkit.getPluginManager().callEvent(apiEvent);
-
+        StatsListener.getInstance().updatePlayerStats(player);
         PlayerCombatCache.updateCache(player.getUniqueId(), stats);
     }
 
@@ -502,7 +558,14 @@ public class CacheListener implements Listener {
             
         }
     }
-
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onRespawn(org.bukkit.event.player.PlayerRespawnEvent e) {
+        Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
+            if (e.getPlayer().isOnline()) {
+                refreshCache(e.getPlayer());
+            }
+        }, 2L);
+    }
     private static void processAbilityLine(String line, Map<String, double[]> best) {
         String[] p = line.split(":");
         if (p.length < 2) return;
@@ -645,6 +708,10 @@ public class CacheListener implements Listener {
         }
         return false;
     }
+    private static double getP(UUID uuid, String stat) {
+        return org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, stat);
+    }
+
 
     private static boolean isMMOCoreAvailable() {
         return Bukkit.getPluginManager().isPluginEnabled("MMOCore");

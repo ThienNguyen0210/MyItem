@@ -1,6 +1,7 @@
 package org.ThienNguyen;
 
 import org.ThienNguyen.AI.utils.AIListener;
+import org.ThienNguyen.Command.ItemStorageManager;
 import org.ThienNguyen.Command.MyItemCommand;
 import org.ThienNguyen.Command.Tab;
 import net.milkbowl.vault.economy.Economy;
@@ -70,6 +71,8 @@ public class Main extends JavaPlugin {
     private ItemDatabase itemDatabase;
     private FileConfiguration scriptSkillConfig;
     private FileConfiguration expireConfig; // <-- THÊM DÒNG NÀY ĐỂ QUẢN LÝ EXPIRE.YML
+    private ItemStorageManager itemStorageManager;
+    private org.ThienNguyen.Command.MiBrowseGUI miBrowseGUI;
     @Override
     public void onEnable() {
         instance = this;
@@ -84,6 +87,9 @@ public class Main extends JavaPlugin {
         } else {
             getLogger().warning("Không tìm thấy PlaceholderAPI! Placeholder của WindyCore sẽ không hoạt động.");
         }
+        this.itemStorageManager = new ItemStorageManager(this);
+        this.miBrowseGUI = new org.ThienNguyen.Command.MiBrowseGUI(this);
+        getServer().getPluginManager().registerEvents(this.miBrowseGUI, this);
         Bukkit.getPluginManager().registerEvents(new AIExperienceGUI(), this);
         getServer().getPluginManager().registerEvents(new JewelryManager(null), this);
         getServer().getPluginManager().registerEvents(new AIListener(), this);
@@ -219,7 +225,7 @@ public class Main extends JavaPlugin {
         // 5. Đăng ký các Listener cần Cache
         org.ThienNguyen.Listener.CacheListener cacheListener = new org.ThienNguyen.Listener.CacheListener();
         getServer().getPluginManager().registerEvents(cacheListener, this);
-
+        getServer().getPluginManager().registerEvents(new StatsListener(), this);
         // Refresh cache cho người chơi đang online
         for (Player p : Bukkit.getOnlinePlayers()) {
             cacheListener.refreshCache(p);
@@ -244,7 +250,6 @@ public class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new org.ThienNguyen.Skill.SkillTriggerListener(), this);
         ExpLogic expLogic = new ExpLogic();
         getServer().getPluginManager().registerEvents(expLogic, this);
-        getServer().getPluginManager().registerEvents(new StatsListener(), this);
         getServer().getPluginManager().registerEvents(new EventDamage(), this);
 //
 //        // 7. Hooks
@@ -348,7 +353,6 @@ public class Main extends JavaPlugin {
             try {
                 // Nạp nội dung file cấu hình .yml vào bộ nhớ RAM
                 FileConfiguration config = YamlConfiguration.loadConfiguration(file);
-
                 // TODO: Bạn có thể lưu trữ các đối tượng 'config' này vào một Map<String, FileConfiguration>
                 // nếu cần truy xuất dữ liệu từ các file Skript này ở các class xử lý tính năng khác.
 
@@ -366,7 +370,13 @@ public class Main extends JavaPlugin {
 
         // ==================== NẠP AIConfig.yml (TỪ RESOURCE + THƯ MỤC AI) ====================
         this.aiConfig = loadAIConfig();
-
+        if (this.itemStorageManager != null) {
+            // Gọi hàm này để quét sạch cache cũ và đọc lại TOÀN BỘ file .yml trong thư mục ManagerItem
+            this.itemStorageManager.loadAllItems();
+        } else {
+            // Trường hợp chưa khởi tạo thì khởi tạo mới (đề phòng)
+            this.itemStorageManager = new org.ThienNguyen.Command.ItemStorageManager(this);
+        }
         // Log thông tin AI Config
         if (aiConfig != null) {
             String apiKeyStatus = aiConfig.getString("api-key", "").trim().isEmpty()
@@ -487,8 +497,10 @@ public class Main extends JavaPlugin {
     }
     private void startRegenTask() {
         Bukkit.getScheduler().runTaskTimer(this, () -> {
-            // Kiểm tra config có bật tính năng này không
             if (!getConfig().getBoolean("regeneration.enabled", false)) return;
+
+            // Đọc % hồi máu từ config (áp dụng cho tất cả player)
+            double globalRegenPercent = getConfig().getDouble("regeneration.percent-per-second", 0.0);
 
             for (Player p : Bukkit.getOnlinePlayers()) {
                 if (!p.isOnline() || p.isDead()) continue;
@@ -499,12 +511,12 @@ public class Main extends JavaPlugin {
 
                 double finalRegen = 0;
 
-                // 1. Hồi máu theo chỉ số cụ thể (Flat) - Logic cũ của bạn
+                // 1. Flat regen từ trang bị
                 if (p.hasMetadata("windy_health_regen")) {
                     finalRegen += p.getMetadata("windy_health_regen").get(0).asDouble();
                 }
 
-                // 2. Hồi máu theo phần trăm (%) - Logic mới
+                // 2. % regen từ trang bị
                 if (p.hasMetadata("windy_health_regen_percent")) {
                     double percent = p.getMetadata("windy_health_regen_percent").get(0).asDouble();
                     if (percent > 0) {
@@ -512,15 +524,18 @@ public class Main extends JavaPlugin {
                     }
                 }
 
-                // Thực hiện hồi máu
+                // 3. % regen từ config.yml (global cho tất cả player)
+                if (globalRegenPercent > 0) {
+                    finalRegen += (maxHp * (globalRegenPercent / 100.0));
+                }
+
                 if (finalRegen > 0) {
                     p.setHealth(Math.min(maxHp, currentHp + finalRegen));
                 }
 
-                // Cập nhật ngọc buff
                 StatsListener.getInstance().updateGemBuffsOnly(p);
             }
-        }, 0L, 20L); // 20L = 1 giây
+        }, 0L, 20L);
     }
 
     @Override
@@ -612,7 +627,7 @@ public class Main extends JavaPlugin {
             }
         }, 20L, 40L);
     }
-// --- Các Getters bổ sung để sửa lỗi Build ---
+    // --- Các Getters bổ sung để sửa lỗi Build ---
     public FileConfiguration getExpireConfig() {
         if (this.expireConfig == null) {
             this.expireConfig = setupConfig("Listener/Expire.yml");
@@ -821,7 +836,12 @@ public class Main extends JavaPlugin {
         econ = rsp.getProvider();
         return econ != null;
     }
-
+    public ItemStorageManager getItemStorageManager() {
+        return itemStorageManager;
+    }
+    public org.ThienNguyen.Command.MiBrowseGUI getMiBrowseGUI() {
+        return miBrowseGUI;
+    }
     public static Economy getEconomy() {
         return econ;
     }
