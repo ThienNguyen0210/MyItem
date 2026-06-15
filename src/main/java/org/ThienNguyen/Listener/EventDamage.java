@@ -33,6 +33,7 @@ public class EventDamage implements Listener {
     private static final String METADATA_EXTRA_DAMAGE = "ABILITY_EXTRA_DAMAGE";
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onDamage(EntityDamageByEntityEvent event) {
+
         if (!(event.getEntity() instanceof LivingEntity target)) return;
         if (event.getDamager().hasMetadata("THORNS_REFLECT")) {
             return;
@@ -89,12 +90,14 @@ public class EventDamage implements Listener {
         }
 
         if (!isFromScript && attacker != null && !isSkillDamage && !isFromAbility) {
-            ItemStack weapon = attacker.getInventory().getItemInMainHand();
-            if (weapon != null && !weapon.getType().isAir()) {
-                if (!MMOCORE.canUse(attacker, weapon)) {
-                    event.setCancelled(true);
-                    attacker.sendMessage("§cNo Level !:)");
-                    return;
+            if (Bukkit.getPluginManager().isPluginEnabled("MMOCore")) {
+                ItemStack weapon = attacker.getInventory().getItemInMainHand();
+                if (weapon != null && !weapon.getType().isAir()) {
+                    if (!MMOCORE.canUse(attacker, weapon)) {
+                        event.setCancelled(true);
+                        attacker.sendMessage("§cNo Level !:)");
+                        return;
+                    }
                 }
             }
         }
@@ -125,7 +128,6 @@ public class EventDamage implements Listener {
 
         if (attacker != null && !isSkillDamage) {
             attackerStats = PlayerCombatCache.getStats(attacker.getUniqueId());
-
             if (event.getDamager() instanceof Projectile) {
                 currentDamage += attackerStats.totalBowDamage;
             }
@@ -422,6 +424,7 @@ public class EventDamage implements Listener {
                 }
             });
         }
+
     }
     private void clearDisplayMetadata(LivingEntity target) {
         target.removeMetadata("DISPLAY_NORMAL_DAMAGE", Main.getInstance());

@@ -708,11 +708,6 @@ public class CacheListener implements Listener {
         }
         return false;
     }
-    private static double getP(UUID uuid, String stat) {
-        return org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, stat);
-    }
-
-
     private static boolean isMMOCoreAvailable() {
         return Bukkit.getPluginManager().isPluginEnabled("MMOCore");
     }

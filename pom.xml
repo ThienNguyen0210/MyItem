@@ -158,22 +158,25 @@
                     <proguardVersion>7.4.2</proguardVersion>
                     <obfuscate>true</obfuscate>
                     <injar>${project.build.finalName}.jar</injar>
-                    <outjar>${project.build.finalName}-Legacy.jar</outjar>
+                    <outjar>${project.build.finalName}-Obfuscated.jar</outjar>
                     <outputDirectory>${project.build.directory}</outputDirectory>
                     <proguardInclude>${basedir}/proguard.pro</proguardInclude>
 
                     <options>
-                        <option>-target 21</option>
-                        <option>-allowaccessmodification</option>
                         <option>-dontwarn</option>
-                        <option>-keep public class org.ThienNguyen.Main { *; }</option>
-                        <option>-keep public class * extends org.bukkit.plugin.java.JavaPlugin</option>
-                        <option>
-                            -keepclassmembers class * implements org.bukkit.event.Listener {
-                            @org.bukkit.event.EventHandler *;
-                            }
-                        </option>
+                        <option>-dontnote</option>
+                        <option>-ignorewarnings</option>
+                        <option>-allowaccessmodification</option>
                         <option>-keepparameternames</option>
+
+                        <option>-keepnames class * implements org.bukkit.event.Listener { *; }</option>
+                        <option>-keepnames class * extends org.bukkit.plugin.java.JavaPlugin { *; }</option>
+
+                        <option>-keep public class org.ThienNguyen.** { public protected &lt;fields&gt;; public protected &lt;methods&gt;; }</option>
+
+                        <option>-keepclassmembers class * { public static final java.lang.String *; }</option>
+                        <option>-keep class org.ThienNguyen.Hook.** { *; }</option>
+                        <option>-keep class org.ThienNguyen.Listener.** { *; }</option>
                     </options>
                     <libs>
                         <lib>${java.home}/jmods/java.base.jmod</lib>

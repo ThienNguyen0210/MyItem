@@ -23,6 +23,11 @@ public class MMOCORE {
             return true;
         }
 
+        // Không có plugin level/class nào → bỏ qua mọi check
+        if (!isPluginEnabled("MMOCore") && !isPluginEnabled("Fabled")) {
+            return true;
+        }
+
         // --- 1. KIỂM TRA LEVEL REQUIRE ---
         int requiredLevel = LevelRequire.get(item);
         int currentPlayerLevel = 0;
@@ -53,7 +58,7 @@ public class MMOCORE {
         }
 
         if (playerClassId == null) {
-            return !isPluginEnabled("MMOCore") && !isPluginEnabled("Fabled");
+            return true;
         }
 
         return playerClassId.equalsIgnoreCase(requiredClass);

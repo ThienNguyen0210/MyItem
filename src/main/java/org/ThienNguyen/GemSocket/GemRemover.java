@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Random;
 
 public class GemRemover implements Listener {
-
+// class này đang thử nghiệm...
     private final Random random = new Random();
 
     @EventHandler
