@@ -1,5 +1,3 @@
-Chào ThienNguyen, đây là bản README.md chuyên nghiệp, được tối ưu hóa để giới thiệu dự án của bạn tới cộng đồng phát triển plugin Minecraft. Nó tập trung vào kiến trúc hiệu năng cao và khả năng tùy biến mạnh mẽ.
-
 💎 MyItem Core - Advanced RPG Stats & Combat System
 MyItem là hệ thống RPG Combat cao cấp, được tối ưu hóa cho các máy chủ Minecraft hiệu năng cao (Paper/Folia). Với cơ chế RAM Cache tiên tiến, dự án loại bỏ hoàn toàn tình trạng tụt TPS khi xử lý tính toán sát thương phức tạp, cho phép mở rộng hệ thống stats không giới hạn.
 
