@@ -17,6 +17,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
@@ -60,6 +61,14 @@ public class CacheListener implements Listener {
         Player p = e.getPlayer();
         JewelryManager.loadDataToCache(p);
         refreshCache(e.getPlayer());
+    }
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerDeath(PlayerDeathEvent e) {
+        Player p = e.getEntity();
+        p.removeMetadata("DEEP_WOUND_REDUCTION", Main.getInstance());
+        p.removeMetadata("DEEP_WOUND_TASK", Main.getInstance());
+        p.removeMetadata("CURSED_REDUCTION", Main.getInstance());
+        delayRefresh(e.getPlayer());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -564,7 +573,7 @@ public class CacheListener implements Listener {
             if (e.getPlayer().isOnline()) {
                 refreshCache(e.getPlayer());
             }
-        }, 2L);
+        }, 5L);
     }
     private static void processAbilityLine(String line, Map<String, double[]> best) {
         String[] p = line.split(":");
