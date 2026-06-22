@@ -1,42 +1,72 @@
-💎 MyItem Core - Advanced RPG Stats & Combat System
-MyItem là hệ thống RPG Combat cao cấp, được tối ưu hóa cho các máy chủ Minecraft hiệu năng cao (Paper/Folia). Với cơ chế RAM Cache tiên tiến, dự án loại bỏ hoàn toàn tình trạng tụt TPS khi xử lý tính toán sát thương phức tạp, cho phép mở rộng hệ thống stats không giới hạn.
+# 💎 MyItem Core — Advanced RPG Stats & Combat System
 
-🚀 Đặc điểm kỹ thuật
-Hiệu năng vượt trội: Sử dụng kiến trúc Cache-Driven, toàn bộ dữ liệu người chơi được lưu trong cache, loại bỏ việc lặp (loop) qua các item mỗi khi gây sát thương.
+**MyItem** là hệ thống RPG Combat cao cấp cho Minecraft, được tối ưu hóa riêng cho các máy chủ hiệu năng cao chạy **Paper/Folia**. Nhờ cơ chế **RAM Cache** tiên tiến, plugin loại bỏ hoàn toàn tình trạng tụt TPS khi xử lý các công thức sát thương phức tạp, cho phép mở rộng hệ thống stats gần như không giới hạn.
 
-Hỗ trợ đa phiên bản: Tương thích hoàn hảo từ 1.14 đến 1.21.x.
+---
 
-Khả năng mở rộng: Hệ thống stats theo modular, dễ dàng thêm mới các chỉ số RPG chỉ với 3 bước đơn giản.
+## 🚀 Đặc điểm kỹ thuật
 
-Tích hợp: Hỗ trợ sâu với MyAttribute để xây dựng lối chơi RPG/PVP chuyên sâu.
+| Tính năng | Mô tả |
+|---|---|
+| **Hiệu năng vượt trội** | Kiến trúc **Cache-Driven** — toàn bộ dữ liệu người chơi được lưu trong cache, loại bỏ hoàn toàn việc lặp (loop) qua từng item mỗi khi tính sát thương. |
+| **Hỗ trợ đa phiên bản** | Tương thích từ **Minecraft 1.14 → 1.21.x**. |
+| **Khả năng mở rộng** | Hệ thống stats thiết kế theo hướng **modular** — thêm chỉ số RPG mới chỉ với 3 bước đơn giản. |
+| **Tích hợp sâu** | Hỗ trợ tích hợp với **MyAttribute** để xây dựng lối chơi RPG/PVP chuyên sâu. |
 
-⚙️ Luồng hoạt động (Architecture)
-Hệ thống vận hành dựa trên cơ chế đồng bộ dữ liệu thông minh:
+---
 
-CacheListener.java: Lắng nghe các sự kiện (Join, Swap Hand, Equip), tự động gán và cập nhật stats vào bộ nhớ đệm của người chơi.
+## ⚙️ Luồng hoạt động (Architecture)
 
-EventDamage.java: Trái tim của hệ thống PVP. Thay vì truy vấn item, nó đọc trực tiếp từ cache đã được nạp sẵn, đảm bảo tốc độ phản hồi tức thì.
+Hệ thống vận hành dựa trên cơ chế đồng bộ dữ liệu thông minh, gồm 3 thành phần chính:
 
-WEBAPI (Coming Soon): Cung cấp endpoint kết nối với Dashboard Web, cho phép quản lý Item Editor và update phiên bản từ xa.
+- **`CacheListener.java`**
+  Lắng nghe các sự kiện gameplay (Join, Swap Hand, Equip...), tự động gán và cập nhật stats của người chơi vào bộ nhớ đệm (cache).
 
-🛠️ Hướng dẫn phát triển (Developer Guide)
-Để thêm một chỉ số (stats) mới, bạn thực hiện quy trình sau:
+- **`EventDamage.java`**
+  Trái tim của hệ thống PVP. Thay vì truy vấn lại item mỗi lần đánh, module này đọc trực tiếp từ cache đã được nạp sẵn — đảm bảo tốc độ phản hồi tức thì, không gây lag dù số lượng người chơi lớn.
 
-Create: Tạo Class Java mới trong thư mục stats/.
+- **WEBAPI** *(Coming Soon)*
+  Cung cấp endpoint kết nối với Dashboard Web, cho phép quản lý Item Editor và cập nhật phiên bản từ xa.
 
-Register: Khai báo biến stats mới trong PlayerCombatCache.
+```
+Player Action (Join/Swap/Equip)
+        │
+        ▼
+  CacheListener.java  ──►  PlayerCombatCache (RAM)
+                                  │
+                                  ▼
+                          EventDamage.java
+                          (đọc cache, tính damage)
+```
 
-Update: Cập nhật logic thu thập dữ liệu trong CacheListener.java.
+---
 
-Logic: Xử lý tính toán công thức tại EventDamage.java.
+## 🛠️ Hướng dẫn phát triển (Developer Guide)
 
-Lưu ý: Hệ thống hiện tại đang trong quá trình phát triển (WIP). Cộng đồng dev cần chú ý kiểm tra logic tại GemRemover.java và các module AI để tối ưu hóa hành vi thực tế. Hệ thống Gemstone hiện chưa hỗ trợ tính toán theo phần trăm (%), đây là cơ hội để bạn đóng góp code cải tiến.
+Để thêm một chỉ số (stat) RPG mới vào hệ thống, thực hiện theo quy trình 4 bước:
 
-📜 Thông tin bản quyền
-Tác giả: Thiện Dev (ThienNguyen)
+1. **Create** — Tạo class Java mới trong thư mục `stats/`.
+2. **Register** — Khai báo biến stat mới trong `PlayerCombatCache`.
+3. **Update** — Cập nhật logic thu thập dữ liệu trong `CacheListener.java`.
+4. **Logic** — Xử lý công thức tính toán tại `EventDamage.java`.
 
-Giấy phép: Dự án này là mã nguồn mở, phi độc quyền. Bạn được phép thoải mái tùy chỉnh, cải tiến và sử dụng cho mục đích cá nhân hoặc server.
+---
 
-Yêu cầu: Vui lòng giữ nguyên credit nguồn gốc khi chia sẻ hoặc phát triển tiếp.
+## ⚠️ Lưu ý cho contributor (WIP)
 
-MyItem - Xây dựng trải nghiệm PVP hoàn hảo cho máy chủ của bạn.
+Hệ thống hiện đang trong giai đoạn phát triển (**Work In Progress**). Một số điểm cần lưu ý khi đóng góp code:
+
+- Cần kiểm tra kỹ logic tại **`GemRemover.java`** và các module AI liên quan để tối ưu hành vi thực tế trong game.
+- Hệ thống **Gemstone** hiện **chưa hỗ trợ tính toán theo phần trăm (%)** — đây là một hạng mục đang mở, rất hoan nghênh PR cải tiến.
+
+---
+
+## 📜 Thông tin bản quyền
+
+- **Tác giả:** Thiện Dev (ThienNguyen)
+- **Giấy phép:** Mã nguồn mở, phi độc quyền — được phép tự do tùy chỉnh, cải tiến và sử dụng cho mục đích cá nhân hoặc server.
+- **Yêu cầu duy nhất:** Giữ nguyên credit nguồn gốc khi chia sẻ hoặc phát triển tiếp dự án.
+
+---
+
+<p align="center"><i>MyItem — Xây dựng trải nghiệm PVP hoàn hảo cho máy chủ của bạn.</i></p>
