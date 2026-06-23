@@ -261,8 +261,11 @@ public class EventDamage implements Listener {
             }
         }
 
-        double extraFromAbilities = target.hasMetadata(METADATA_EXTRA_DAMAGE)
-                ? target.getMetadata(METADATA_EXTRA_DAMAGE).get(0).asDouble() : 0.0;
+        double extraFromAbilities = 0.0;
+        if (target.hasMetadata(METADATA_EXTRA_DAMAGE)) {
+            extraFromAbilities = target.getMetadata(METADATA_EXTRA_DAMAGE).get(0).asDouble();
+            target.removeMetadata(METADATA_EXTRA_DAMAGE, Main.getInstance());
+        }
 
         double trueDmg = (attackerStats != null) ? attackerStats.totalTrueDamage : 0.0;
 

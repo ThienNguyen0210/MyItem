@@ -184,7 +184,11 @@ public class CacheListener implements Listener {
         }
 
         if (pctCritDmgReduction != 0.0) stats.totalCritDamageReduction *= (1.0 + (pctCritDmgReduction / 100.0));
-        if (pctBonusDmg != 0.0)    stats.totalBonusDmg     *= (1.0 + (pctBonusDmg / 100.0));
+        if (pctBonusDmg != 0.0) {
+            stats.totalBonusDmg += 1.0;
+            stats.totalBonusDmg *= (1.0 + (pctBonusDmg / 100.0)); // thiết kế đặc biệt hơn
+            stats.totalBonusDmg -= 1.0;
+        }
         if (pctArmor != 0.0)       stats.totalArmor        *= (1.0 + (pctArmor / 100.0));
         if (pctTrueDmg != 0.0)     stats.totalTrueDamage   *= (1.0 + (pctTrueDmg / 100.0));
         if (pctMagicDmg != 0.0)    stats.totalMagicDamage  *= (1.0 + (pctMagicDmg / 100.0));

@@ -304,13 +304,22 @@ public class StatsListener implements Listener {
         }
 
 // --- PHẦN 4: APPLY ---
+        // Lấy lượng giá trị máu gốc/máu hiện tại cơ bản của bản thân (Mặc định Minecraft là 20.0 hoặc giá trị nền đã nâng cấp)
+        double baseMinecraftHealth = 20.0;
+        org.bukkit.attribute.AttributeInstance hpInstance = player.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH);
+        if (hpInstance != null) {
+            baseMinecraftHealth = hpInstance.getBaseValue();
+        }
+
+        // Cộng giá trị máu bản thân vào tổng điểm cộng thẳng từ trang bị trước khi nhân phần trăm
+        totalHealth += baseMinecraftHealth;
         if (pctHealth != 0.0)        totalHealth        *= (1.0 + (pctHealth / 100.0));
         if (pctMaxMana != 0.0)       totalMaxMana       *= (1.0 + (pctMaxMana / 100.0));
         if (pctManaRegen != 0.0)     totalManaRegen     *= (1.0 + (pctManaRegen / 100.0));
         if (pctAttackSpeed != 0.0)   totalAttackSpeed   *= (1.0 + (pctAttackSpeed / 100.0));
         if (pctMovementSpeed != 0.0) totalMovementSpeed *= (1.0 + (pctMovementSpeed / 100.0));
         if (pctHealthRegen != 0.0)   totalHealthRegen   *= (1.0 + (pctHealthRegen / 100.0));
-
+        totalHealth -= baseMinecraftHealth;
         if (foundParticleId != null) org.ThienNguyen.Listener.Particle.ParticleManager.setEffect(player, foundParticleId);
         else org.ThienNguyen.Listener.Particle.ParticleManager.removeEffect(player);
 
