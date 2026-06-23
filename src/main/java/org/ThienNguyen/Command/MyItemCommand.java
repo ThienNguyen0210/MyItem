@@ -1185,7 +1185,61 @@ public class MyItemCommand implements CommandExecutor {
                 pTiers.sendMessage("§a§l✔ §7Đã cập nhật phẩm chất vật phẩm!");
                 break;
             }
-            case "mi" -> {
+            case "checkitem" -> {
+                if (!(sender instanceof Player player)) return true;
+
+                ItemStack item = player.getInventory().getItemInMainHand();
+                if (item == null || item.getType().isAir()) {
+                    player.sendMessage("§c[MyItem] Hãy cầm một vật phẩm trên tay để kiểm tra!");
+                    return true;
+                }
+
+                player.sendMessage("§8§m----------------§7[ §bCHECK ITEM §7]§8§m----------------");
+                player.sendMessage("§2➤ Type/Material: §f" + item.getType().name());
+
+                ItemMeta meta = item.getItemMeta();
+                if (meta != null) {
+                    if (meta.hasCustomModelData()) {
+                        player.sendMessage("§2➤ Custom Model ID: §e" + meta.getCustomModelData());
+                    } else {
+                        player.sendMessage("§2➤ Custom Model ID: §7Không có");
+                    }
+
+                    player.sendMessage("§2➤ Persistent Data (PDC):");
+                    var pdc = meta.getPersistentDataContainer();
+                    var keys = pdc.getKeys();
+
+                    if (keys.isEmpty()) {
+                        player.sendMessage("  §7§o(Không có dữ liệu PDC ẩn trên vật phẩm này)");
+                    } else {
+                        for (NamespacedKey key : keys) {
+                            String valueStr = "§7[Unknown Type]";
+
+                            if (pdc.has(key, PersistentDataType.STRING)) {
+                                valueStr = "§6(String) §f\"" + pdc.get(key, PersistentDataType.STRING) + "\"";
+                            } else if (pdc.has(key, PersistentDataType.DOUBLE)) {
+                                valueStr = "§a(Double) §f" + pdc.get(key, PersistentDataType.DOUBLE);
+                            } else if (pdc.has(key, PersistentDataType.INTEGER)) {
+                                valueStr = "§b(Integer) §f" + pdc.get(key, PersistentDataType.INTEGER);
+                            } else if (pdc.has(key, PersistentDataType.FLOAT)) {
+                                valueStr = "§d(Float) §f" + pdc.get(key, PersistentDataType.FLOAT);
+                            } else if (pdc.has(key, PersistentDataType.LONG)) {
+                                valueStr = "§e(Long) §f" + pdc.get(key, PersistentDataType.LONG);
+                            } else if (pdc.has(key, PersistentDataType.BYTE)) {
+                                valueStr = "§5(Byte) §f" + pdc.get(key, PersistentDataType.BYTE);
+                            } else if (pdc.has(key, PersistentDataType.SHORT)) {
+                                valueStr = "§3(Short) §f" + pdc.get(key, PersistentDataType.SHORT);
+                            }
+
+                            player.sendMessage("  §b• §7" + key.toString() + " §7➔ " + valueStr);
+                        }
+                    }
+                } else {
+                    player.sendMessage("§c➤ ItemMeta: Không hợp lệ!");
+                }
+                player.sendMessage("§8§m------------------------------------------------");
+            }
+            case "storage" -> {
                 if (args.length < 2) {
                     sender.sendMessage("§e/myitem mi create <type> §7- Tạo file yml mới");
                     sender.sendMessage("§e/myitem mi save <type> <id> §7- Lưu item vào file");
@@ -1218,7 +1272,6 @@ public class MyItemCommand implements CommandExecutor {
                             sender.sendMessage("§cFile đã tồn tại hoặc không thể tạo.");
                         }
                     }
-
                     case "save" -> {
                         if (!(sender instanceof Player p)) return true;
                         if (args.length < 4) {
@@ -1261,7 +1314,6 @@ public class MyItemCommand implements CommandExecutor {
                             p.sendMessage("§cKhông tìm thấy vật phẩm §f" + id + " §ctrong §e" + type + ".yml§c! Thử /myitem mi reload.");
                         }
                     }
-
                     case "reload" -> {
                         ism.loadAllItems();
                         sender.sendMessage("§a[MyItem] Đã nạp lại toàn bộ vật phẩm từ folder ManagerItem!");
@@ -1380,8 +1432,9 @@ public class MyItemCommand implements CommandExecutor {
         helpLines.add(miPrefix + "evo <entity> <amount> <evoDatabase> §7- Tiến hoá cho item");
         helpLines.add(miPrefix + "getai <id>  §7- Nhận Item từ AI trong Item.yml ");
         helpLines.add(miPrefix + "ai <profile> §7- Tạo item từ AI ");
-        helpLines.add(miPrefix + "expire <time> §7- Thiết lập hạn sử dụng cho vật phẩm §c§lNEW");
-        helpLines.add(miPrefix + "mi <create/save/load/browse> §7- Quản lí item (ManagerItem) §c§lNEW");
+        helpLines.add(miPrefix + "expire <time> §7- Thiết lập hạn sử dụng cho vật phẩm");
+        helpLines.add(miPrefix + "storage <create/save/load/browse> §7- Quản lí item (ManagerItem)");
+        helpLines.add(miPrefix + "checkitem §7- Kiểm tra data vật phẩm §c§lNEW");
 
         int itemsPerPage = 5;
         int maxPages = (int) Math.ceil((double) helpLines.size() / itemsPerPage);

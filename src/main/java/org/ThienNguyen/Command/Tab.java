@@ -27,7 +27,7 @@ public class Tab implements TabCompleter {
             "gemstone", "enchant", "unskill", "upgrade", "givegem", "giveamulet", "trans",
             "connect", "editor", "stats", "update", "version", "particle", "unparticle",
             "tiers", "consume", "tooltip", "loreformat",
-            "ic", "evo", "ai", "getai", "expire", "mi"
+            "ic", "evo", "ai", "getai", "expire", "storage", "checkitem"
     );
 
     private static final List<String> IC_SUBCOMMANDS = Arrays.asList("add", "unadd");
