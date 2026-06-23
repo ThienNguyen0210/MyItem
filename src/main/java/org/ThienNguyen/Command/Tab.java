@@ -75,12 +75,12 @@ public class Tab implements TabCompleter {
         }
 
         // ── mi: args[1] = subcommand ──────────────────────────────────────────
-        else if (args.length == 2 && args[0].equalsIgnoreCase("mi")) {
+        else if (args.length == 2 && args[0].equalsIgnoreCase("storage")) {
             suggestions.addAll(MI_SUBCOMMANDS);
         }
 
         // ── mi: args[2] = type (tên file .yml trong ManagerItem) ──────────────
-        else if (args.length == 3 && args[0].equalsIgnoreCase("mi")) {
+        else if (args.length == 3 && args[0].equalsIgnoreCase("storage")) {
             String miSub = args[1].toLowerCase();
             if (miSub.equals("create") || miSub.equals("save") || miSub.equals("load")) {
                 ItemStorageManager ism = Main.getInstance().getItemStorageManager();
@@ -89,7 +89,7 @@ public class Tab implements TabCompleter {
         }
 
         // ── mi: args[3] = id (lọc theo type đã chọn ở args[2]) ───────────────
-        else if (args.length == 4 && args[0].equalsIgnoreCase("mi")) {
+        else if (args.length == 4 && args[0].equalsIgnoreCase("storage")) {
             String miSub = args[1].toLowerCase();
             if (miSub.equals("save") || miSub.equals("load")) {
                 ItemStorageManager ism = Main.getInstance().getItemStorageManager();
