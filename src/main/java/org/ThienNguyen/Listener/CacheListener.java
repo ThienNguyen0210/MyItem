@@ -439,6 +439,12 @@ public class CacheListener implements Listener {
                 UUID uuid = player.getUniqueId();
 
                 // --- FLAT BONUS ---
+                stats.totalDeathDamage           += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "death_damage");
+                stats.totalKnockbackResist           += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "knockback_resistance");
+                stats.totalAllDamage           += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "all_damage");
+                stats.totalBlock           += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "block_rate");
+                stats.totalBowDamage           += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "bow_damage");
+                stats.totalThorns           += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "thorns");
                 stats.totalDeepWound           += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "deep_wound");
                 stats.totalDamageReduction     += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "damage_reduction");
                 stats.totalCritDamageReduction += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "critical_damage_reduction");
@@ -513,6 +519,34 @@ public class CacheListener implements Listener {
 
                 _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "damage_reduction");
                 if (_p != 0.0) stats.totalDamageReduction     *= (1 + _p / 100.0);
+
+                // --- BỔ SUNG CÁC STATS CÒN THIẾU ---
+                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "pve_defense");
+                if (_p != 0.0) stats.totalPveDef              *= (1 + _p / 100.0);
+
+                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "pvp_defense");
+                if (_p != 0.0) stats.totalPvpDef              *= (1 + _p / 100.0);
+
+                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "all_defense");
+                if (_p != 0.0) stats.totalAllDefense          *= (1 + _p / 100.0);
+
+                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "thorns");
+                if (_p != 0.0) stats.totalThorns              *= (1 + _p / 100.0);
+
+                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "knockback_resistance");
+                if (_p != 0.0) stats.totalKnockbackResist     *= (1 + _p / 100.0);
+
+                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "block_rate");
+                if (_p != 0.0) stats.totalBlock               *= (1 + _p / 100.0);
+
+                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "exp_bonus");
+                if (_p != 0.0) stats.totalExpBonus            *= (1 + _p / 100.0);
+
+                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "accuracy");
+                if (_p != 0.0) stats.totalAccuracy            *= (1 + _p / 100.0);
+
+                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "deep_wound");
+                if (_p != 0.0) stats.totalDeepWound           *= (1 + _p / 100.0);
             }
         } catch (Throwable ignored) {}
 
