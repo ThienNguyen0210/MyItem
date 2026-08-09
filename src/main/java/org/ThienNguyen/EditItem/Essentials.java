@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 
 public class Essentials implements CommandExecutor, TabCompleter {
 
-    
+
     private static List<String> copiedLore = null;
 
     @Override
@@ -42,13 +42,13 @@ public class Essentials implements CommandExecutor, TabCompleter {
 
     private void handleUnbreaking(Player player) {
         if (!player.hasPermission("windycraft.unbreaking")) {
-            player.sendMessage("§cBạn không có quyền dùng lệnh này.");
+            player.sendMessage("§8[§bMyItem§8] §cYou do not have permission to use this command.");
             return;
         }
 
         ItemStack item = player.getInventory().getItemInMainHand();
         if (item.getType() == Material.AIR) {
-            player.sendMessage("§cBạn phải cầm một vật phẩm trên tay!");
+            player.sendMessage("§8[§bMyItem§8] §cYou must hold an item in your hand!");
             return;
         }
 
@@ -59,10 +59,10 @@ public class Essentials implements CommandExecutor, TabCompleter {
 
             if (isUnbreakable) {
                 meta.addItemFlags(ItemFlag.HIDE_UNBREAKABLE);
-                player.sendMessage("§aVật phẩm hiện đã §lKHÔNG THỂ BỊ PHÁ HỦY§a.");
+                player.sendMessage("§8[§bMyItem§8] §aThe item is now §lUNBREAKABLE§a.");
             } else {
                 meta.removeItemFlags(ItemFlag.HIDE_UNBREAKABLE);
-                player.sendMessage("§eVật phẩm đã trở lại trạng thái §lBÌNH THƯỜNG§e.");
+                player.sendMessage("§8[§bMyItem§8] §eThe item has returned to §lNORMAL§e status.");
             }
 
             item.setItemMeta(meta);
@@ -78,19 +78,19 @@ public class Essentials implements CommandExecutor, TabCompleter {
         if (meta != null) {
             meta.setDisplayName(translateColor(String.join(" ", args)));
             item.setItemMeta(meta);
-            player.sendMessage("§aĐã đổi tên vật phẩm!");
+            player.sendMessage("§8[§bMyItem§8] §aSuccessfully renamed the item!");
         }
     }
 
     private void handleSetLore(Player player, String[] args) {
         if (args.length < 1) {
-            player.sendMessage("§cSử dụng: /setlore <add|set|remove|insert|copy|paste> [args...]");
+            player.sendMessage("§8[§bMyItem§8] §cUsage: /setlore <add|set|remove|insert|copy|paste> [args...]");
             return;
         }
 
         ItemStack item = player.getInventory().getItemInMainHand();
         if (item.getType() == Material.AIR) {
-            player.sendMessage("§cBạn phải cầm một vật phẩm trên tay!");
+            player.sendMessage("§8[§bMyItem§8] §cYou must hold an item in your hand!");
             return;
         }
 
@@ -104,7 +104,7 @@ public class Essentials implements CommandExecutor, TabCompleter {
             case "add" -> {
                 if (args.length < 2) return;
                 lore.add(translateColor(String.join(" ", Arrays.copyOfRange(args, 1, args.length))));
-                player.sendMessage("§aĐã thêm dòng lore vào cuối!");
+                player.sendMessage("§8[§bMyItem§8] §aAdded a lore line to the end!");
             }
             case "set" -> {
                 if (args.length < 3) return;
@@ -116,7 +116,7 @@ public class Essentials implements CommandExecutor, TabCompleter {
                     } else {
                         lore.add(content);
                     }
-                    player.sendMessage("§aĐã cập nhật dòng số " + (index + 1));
+                    player.sendMessage("§8[§bMyItem§8] §aUpdated line number " + (index + 1));
                 }
             }
             case "remove" -> {
@@ -124,47 +124,47 @@ public class Essentials implements CommandExecutor, TabCompleter {
                 int index = getIndex(args[1], lore.size());
                 if (index != -1 && index < lore.size()) {
                     lore.remove(index);
-                    player.sendMessage("§aĐã xóa dòng số " + (index + 1));
+                    player.sendMessage("§8[§bMyItem§8] §aRemoved line number " + (index + 1));
                 }
             }
             case "insert" -> {
                 if (args.length < 3) {
-                    player.sendMessage("§cSử dụng: /setlore insert <số dòng> <nội dung>");
+                    player.sendMessage("§8[§bMyItem§8] §cUsage: /setlore insert <line_number> <content>");
                     return;
                 }
-                int index = getIndex(args[1], lore.size() + 1); 
+                int index = getIndex(args[1], lore.size() + 1);
                 if (index == -1) {
-                    player.sendMessage("§cSố dòng không hợp lệ!");
+                    player.sendMessage("§8[§bMyItem§8] §cInvalid line number!");
                     return;
                 }
                 String content = translateColor(String.join(" ", Arrays.copyOfRange(args, 2, args.length)));
 
-                
+
                 if (index >= lore.size()) {
                     lore.add(content);
-                    player.sendMessage("§aĐã chèn dòng mới vào cuối!");
+                    player.sendMessage("§8[§bMyItem§8] §aInserted new line at the end!");
                 } else {
                     lore.add(index, content);
-                    player.sendMessage("§aĐã chèn dòng mới vào vị trí " + (index + 1));
+                    player.sendMessage("§8[§bMyItem§8] §aInserted new line at position " + (index + 1));
                 }
             }
             case "copy" -> {
                 copiedLore = new ArrayList<>(lore);
-                player.sendMessage("§aĐã sao chép " + copiedLore.size() + " dòng lore!");
+                player.sendMessage("§8[§bMyItem§8] §aSuccessfully copied " + copiedLore.size() + " lore lines!");
                 if (copiedLore.isEmpty()) {
-                    player.sendMessage("§7(Lưu ý: Item này không có lore nào)");
+                    player.sendMessage("§8[§bMyItem§8] §7(Note: This item has no lore)");
                 }
             }
             case "paste" -> {
                 if (copiedLore == null) {
-                    player.sendMessage("§cBạn chưa copy lore nào! Dùng /setlore copy trước.");
+                    player.sendMessage("§8[§bMyItem§8] §cYou have not copied any lore yet! Use /setlore copy first.");
                     return;
                 }
                 lore.clear();
                 lore.addAll(copiedLore);
-                player.sendMessage("§aĐã dán " + copiedLore.size() + " dòng lore vào vật phẩm!");
+                player.sendMessage("§8[§bMyItem§8] §aPasted " + copiedLore.size() + " lore lines into the item!");
             }
-            default -> player.sendMessage("§cHành động không hợp lệ! Dùng: add, set, remove, insert, copy, paste");
+            default -> player.sendMessage("§8[§bMyItem§8] §cInvalid action! Use: add, set, remove, insert, copy, paste");
         }
 
         meta.setLore(lore);

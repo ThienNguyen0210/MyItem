@@ -128,6 +128,12 @@ public class Tab implements TabCompleter {
                         suggestions.addAll(tConfig.getConfigurationSection("tiers").getKeys(false));
                     }
                 }
+                case "loreformat" -> {
+                    FileConfiguration lfConfig = Main.getInstance().getLoreFormatConfig();
+                    if (lfConfig != null) {
+                        suggestions.addAll(lfConfig.getKeys(false));
+                    }
+                }
                 case "element" -> suggestions.addAll(ELEMENT_TYPES);
                 case "material" -> {
                     String input = args[1].toLowerCase();
@@ -217,8 +223,10 @@ public class Tab implements TabCompleter {
                         FileConfiguration config = Main.getInstance().getGemConfig();
                         if (config != null) suggestions.addAll(config.getKeys(false));
                     } else if (type.equals("drill")) {
-                        FileConfiguration config = Main.getInstance().getDucLoConfig();
-                        if (config != null) suggestions.addAll(config.getKeys(false));
+                        // DucLo.yml đã bị xóa — mũi khoan giờ nằm lồng trong type.yml
+                        // dưới "<type>.drills.<id>", nên phải quét qua mọi loại thay vì
+                        // đọc trực tiếp getKeys(false) từ 1 file phẳng như trước.
+                        suggestions.addAll(org.ThienNguyen.GemSocket.GemType.getAllDrillIds());
                     }
                     else if (type.equals("remover")) {
                         FileConfiguration config = Main.getInstance().getGemConfig();

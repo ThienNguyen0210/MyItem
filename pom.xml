@@ -163,20 +163,26 @@
                     <proguardInclude>${basedir}/proguard.pro</proguardInclude>
 
                     <options>
+                        <!-- Các cài đặt cơ bản -->
                         <option>-dontwarn</option>
                         <option>-dontnote</option>
                         <option>-ignorewarnings</option>
                         <option>-allowaccessmodification</option>
                         <option>-keepparameternames</option>
 
-                        <option>-keepnames class * implements org.bukkit.event.Listener { *; }</option>
+                        <!-- Bắt buộc: Giữ nguyên Main class (kế thừa JavaPlugin) để server load được -->
                         <option>-keepnames class * extends org.bukkit.plugin.java.JavaPlugin { *; }</option>
 
-                        <option>-keep public class org.ThienNguyen.** { public protected &lt;fields&gt;; public protected &lt;methods&gt;; }</option>
-
-                        <option>-keepclassmembers class * { public static final java.lang.String *; }</option>
-                        <option>-keep class org.ThienNguyen.Hook.** { *; }</option>
+                        <!-- Bắt buộc: Giữ nguyên các hàm sự kiện (Listener) để Bukkit nhận diện -->
+                        <option>-keepnames class * implements org.bukkit.event.Listener { *; }</option>
                         <option>-keep class org.ThienNguyen.Listener.** { *; }</option>
+
+                        <!-- Giữ nguyên Hook để API bên ngoài có thể gọi -->
+                        <option>-keep class org.ThienNguyen.Hook.** { *; }</option>
+
+                        <!-- QUAN TRỌNG: Giữ nguyên toàn bộ mã nguồn NGOẠI TRỪ 7 package bạn muốn Obfuscate -->
+                        <!-- Những package có dấu "!" phía trước sẽ BỊ LÀM RỐI, còn lại giữ nguyên -->
+                        <option>-keep class !org.ThienNguyen.Command.**, !org.ThienNguyen.GemSocket.**, !org.ThienNguyen.Utils.**, !org.ThienNguyen.Evolution.**, org.ThienNguyen.** { *; }</option>
                     </options>
                     <libs>
                         <lib>${java.home}/jmods/java.base.jmod</lib>

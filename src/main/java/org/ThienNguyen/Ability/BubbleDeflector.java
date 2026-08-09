@@ -29,44 +29,49 @@ public class BubbleDeflector implements IAbility {
         Plugin plugin = JavaPlugin.getProvidingPlugin(getClass());
         Location startLoc = target.getLocation().add(0, 1.0, 0);
 
-        
-        Vector direction = target.getLocation().subtract(attacker.getLocation()).toVector().normalize();
+        // Sửa ở đây: Kiểm tra an toàn tránh vector bằng 0 gây ra NaN
+        Vector direction;
+        try {
+            direction = target.getLocation().subtract(attacker.getLocation()).toVector();
+            if (direction.lengthSquared() < 1.0E-7) {
+                direction = attacker.getLocation().getDirection();
+            }
+            direction.normalize();
+        } catch (Exception e) {
+            direction = attacker.getLocation().getDirection();
+        }
 
-        
         double damageMultiplier = 0.6 + ((level - 1) * 0.1);
         double finalDamage = baseDamage * damageMultiplier;
 
-        
         applySafeDamage(target, attacker, finalDamage, plugin);
         target.getWorld().playSound(target.getLocation(), Sound.ENTITY_BOAT_PADDLE_LAND, 1.0f, 1.2f);
 
-        
-        
+        final Vector finalDirection = direction; // Cần final để dùng trong BukkitRunnable
+
         new BukkitRunnable() {
             int ticks = 0;
-            final double piercingRange = 5.0; 
-            final Set<LivingEntity> damagedEntities = new HashSet<>(); 
+            final double piercingRange = 5.0;
+            final Set<LivingEntity> damagedEntities = new HashSet<>();
 
             @Override
             public void run() {
-                if (ticks >= 15) { 
+                if (ticks >= 15) {
                     this.cancel();
                     return;
                 }
 
-                
                 for (double d = 0; d <= piercingRange; d += 0.5) {
-                    Location pLoc = startLoc.clone().add(direction.clone().multiply(d));
+                    Location pLoc = startLoc.clone().add(finalDirection.clone().multiply(d));
                     pLoc.getWorld().spawnParticle(Particle.BUBBLE, pLoc, 2, 0.1, 0.1, 0.1, 0.02);
                     if (ticks % 4 == 0) {
                         pLoc.getWorld().spawnParticle(Particle.FISHING, pLoc, 1, 0, 0, 0, 0);
                     }
                 }
 
-                
                 if (ticks % 5 == 0) {
-                    damagedEntities.clear(); 
-                    damageEntitiesInBeam(attacker, startLoc, direction, piercingRange, finalDamage, target, plugin);
+                    damagedEntities.clear();
+                    damageEntitiesInBeam(attacker, startLoc, finalDirection, piercingRange, finalDamage, target, plugin);
                 }
 
                 ticks++;
@@ -109,6 +114,6 @@ public class BubbleDeflector implements IAbility {
         Vector closestPointOnLine = start.clone().add(direction.clone().multiply(dotProduct)).toVector();
         double distanceSquared = entityLoc.toVector().distanceSquared(closestPointOnLine);
 
-        return distanceSquared < 1.2; 
+        return distanceSquared < 1.2;
     }
 }

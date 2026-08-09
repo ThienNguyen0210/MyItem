@@ -9,25 +9,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.List;
 
-/**
- * Chờ N giây rồi mới chạy children.
- *
- * QUAN TRỌNG: KHÔNG extends AbstractMechanic. AbstractMechanic tự động chạy
- * children NGAY LẬP TỨC sau khi doExecute() trả true (xem AbstractMechanic.execute()).
- * Nếu DelayMechanic extends AbstractMechanic, children sẽ bị chạy 2 lần: 1 lần
- * ngay lập tức (do AbstractMechanic) + 1 lần đúng lịch delay (do BukkitRunnable ở đây).
- * Vì vậy DelayMechanic implements PassiveMechanic trực tiếp, tự quản lý children
- * hoàn toàn, không đi qua cơ chế children mặc định của AbstractMechanic.
- *
- * yml:
- * - type: DELAY
- *   seconds: "2"
- *   children:
- *     - type: EXPLODE
- *       ...
- *
- * "Thành công" = đã lên lịch delay thành công (trả true ngay, không chờ children).
- */
+
 public class DelayMechanic implements PassiveMechanic {
 
     private final String rawSeconds;

@@ -23,14 +23,10 @@ public class Bleed implements IAbility {
     public void execute(Player attacker, LivingEntity target, int level, double baseDamage) {
         if (target == null || target.isDead()) return;
 
-        
-        
-        if (target.hasMetadata("IS_ABILITY")) return;
-
         double tickPercent = 1.0 + (level * 0.5);
         double damagePerTick = baseDamage * (tickPercent / 100.0);
 
-        
+
         if (target.hasMetadata(METADATA_IS_BLEEDING)) {
             if (target.hasMetadata(METADATA_TASK)) {
                 Object old = target.getMetadata(METADATA_TASK).get(0).value();
@@ -42,7 +38,7 @@ public class Bleed implements IAbility {
             return;
         }
 
-        
+
         target.setMetadata(METADATA_IS_BLEEDING, new FixedMetadataValue(Main.getInstance(), true));
         target.getWorld().playSound(target.getLocation(), Sound.ENTITY_PLAYER_HURT_SWEET_BERRY_BUSH, 1.0f, 0.8f);
 
@@ -62,13 +58,13 @@ public class Bleed implements IAbility {
                     return;
                 }
 
-                
+
                 target.setMetadata("IS_ABILITY", new FixedMetadataValue(Main.getInstance(), true));
 
-                
+
                 target.damage(damagePerTick, attacker);
 
-                
+
                 new BukkitRunnable() {
                     @Override
                     public void run() {

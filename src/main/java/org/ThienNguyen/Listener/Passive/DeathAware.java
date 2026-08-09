@@ -1,4 +1,8 @@
 package org.ThienNguyen.Listener.Passive;
 
-public class DeathAware {
+import org.bukkit.entity.Player;
+
+
+public interface DeathAware {
+    void onPlayerDeath(Player player);
 }

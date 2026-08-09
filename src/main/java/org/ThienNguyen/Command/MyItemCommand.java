@@ -737,10 +737,16 @@ public class MyItemCommand implements CommandExecutor {
                         }
                     }
                     case "drill" -> {
-                        FileConfiguration ducLoConfig = Main.getInstance().getDucLoConfig();
-                        if (ducLoConfig.contains(id)) {
-                            itemResult = createGemItem(id, ducLoConfig, "DRILL");
+                        FileConfiguration typeConfig = Main.getInstance().getGemTypeConfig();
+                        String drillPath = org.ThienNguyen.GemSocket.GemType.resolveDrillPath(id);
+                        if (drillPath != null) {
+                            // drillPath (e.g. "legendary.drills.DRILL_LEGENDARY") is used to read
+                            // material/display-name/lore/model-id, but the item's stored gem_item_id
+                            // must stay as the short `id`, since GemDucLo looks drills up by that id.
+                            itemResult = createGemItem(id, drillPath, typeConfig, "DRILL");
                             itemTag = "DRILL";
+                        } else {
+                            sender.sendMessage(PFX_ERR + "Không tìm thấy mũi khoan '" + id + "' trong type.yml.");
                         }
                     }
                     case "remover" -> {
@@ -1286,33 +1292,43 @@ public class MyItemCommand implements CommandExecutor {
 
     // ── Gem item builder (unchanged logic) ───────────────────────────────────
     private ItemStack createGemItem(String id, FileConfiguration config, String itemTag) {
+        return createGemItem(id, id, config, itemTag);
+    }
+
+    /**
+     * @param storedId  id lưu vào PDC (gem_item_id) — dùng để đối chiếu về sau (vd: GemDucLo tra cứu drill).
+     * @param configPath đường dẫn dùng để ĐỌC material/display-name/lore/model-id trong config
+     *                   (thường trùng với storedId, trừ trường hợp drill: config nằm lồng dưới
+     *                   "<type>.drills.<storedId>" trong type.yml sau khi gộp DucLo.yml).
+     */
+    private ItemStack createGemItem(String storedId, String configPath, FileConfiguration config, String itemTag) {
         try {
-            String matStr = config.getString(id + ".material", "STONE");
+            String matStr = config.getString(configPath + ".material", "STONE");
             org.bukkit.Material mat = org.bukkit.Material.valueOf(matStr.toUpperCase());
             ItemStack item = new ItemStack(mat);
             org.bukkit.inventory.meta.ItemMeta meta = item.getItemMeta();
 
             if (meta != null) {
                 meta.setDisplayName(org.bukkit.ChatColor.translateAlternateColorCodes('&',
-                        config.getString(id + ".display-name", id)));
+                        config.getString(configPath + ".display-name", storedId)));
 
                 List<String> lore = new ArrayList<>();
-                for (String line : config.getStringList(id + ".lore"))
+                for (String line : config.getStringList(configPath + ".lore"))
                     lore.add(org.bukkit.ChatColor.translateAlternateColorCodes('&', line));
                 meta.setLore(lore);
 
-                if (config.contains(id + ".model-id"))
-                    meta.setCustomModelData(config.getInt(id + ".model-id"));
+                if (config.contains(configPath + ".model-id"))
+                    meta.setCustomModelData(config.getInt(configPath + ".model-id"));
 
                 NamespacedKey typeKey = new NamespacedKey(Main.getInstance(), "gem_item_type");
                 NamespacedKey idKey   = new NamespacedKey(Main.getInstance(), "gem_item_id");
                 meta.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, itemTag);
-                meta.getPersistentDataContainer().set(idKey,   PersistentDataType.STRING, id);
+                meta.getPersistentDataContainer().set(idKey,   PersistentDataType.STRING, storedId);
                 item.setItemMeta(meta);
             }
             return item;
         } catch (Exception e) {
-            Main.getInstance().getLogger().warning("Failed to create gem item: " + id);
+            Main.getInstance().getLogger().warning("Failed to create gem item: " + storedId);
             return null;
         }
     }

@@ -10,6 +10,7 @@ import org.ThienNguyen.Stat.*;
 import org.ThienNguyen.Hook.MMOCORE;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.attribute.AttributeModifier;
@@ -52,6 +53,51 @@ public class StatsListener implements Listener {
             org.bukkit.inventory.EquipmentSlot.OFF_HAND
     };
 
+    
+    
+    
+    
+    
+    
+    
+    private static final Map<String, Attribute> ATTRIBUTE_CACHE = new HashMap<>();
+
+    private static Attribute resolveAttribute(String modernKey, String... legacyFieldNames) {
+        return ATTRIBUTE_CACHE.computeIfAbsent(modernKey, k -> {
+            
+            try {
+                Attribute attr = Registry.ATTRIBUTE.get(NamespacedKey.minecraft(modernKey));
+                if (attr != null) return attr;
+            } catch (Throwable ignored) {}
+
+            
+            for (String fieldName : legacyFieldNames) {
+                try {
+                    java.lang.reflect.Field field = Attribute.class.getField(fieldName);
+                    Object value = field.get(null);
+                    if (value instanceof Attribute attr) return attr;
+                } catch (Throwable ignored) {}
+            }
+            return null;
+        });
+    }
+
+    private static Attribute maxHealthAttribute() {
+        return resolveAttribute("max_health", "GENERIC_MAX_HEALTH");
+    }
+
+    private static Attribute attackSpeedAttribute() {
+        return resolveAttribute("attack_speed", "GENERIC_ATTACK_SPEED");
+    }
+
+    private static Attribute movementSpeedAttribute() {
+        return resolveAttribute("movement_speed", "GENERIC_MOVEMENT_SPEED");
+    }
+
+    private static Attribute armorAttribute() {
+        return resolveAttribute("armor", "GENERIC_ARMOR");
+    }
+
     public void updateGemBuffsOnly(Player player) {
         FileConfiguration gemConfig = Main.getInstance().getGemConfig();
 
@@ -90,7 +136,8 @@ public class StatsListener implements Listener {
             if (!player.isOnline()) return;
 
 
-            AttributeInstance hpAttr = player.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+            Attribute maxHealth = maxHealthAttribute();
+            AttributeInstance hpAttr = maxHealth != null ? player.getAttribute(maxHealth) : null;
             if (hpAttr != null) {
                 player.setHealth(hpAttr.getValue());
             }
@@ -103,7 +150,8 @@ public class StatsListener implements Listener {
         Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
             if (!player.isOnline()) return;
 
-            AttributeInstance hpAttr = player.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+            Attribute maxHealth = maxHealthAttribute();
+            AttributeInstance hpAttr = maxHealth != null ? player.getAttribute(maxHealth) : null;
             if (hpAttr != null) {
                 player.setHealth(hpAttr.getValue());
             }
@@ -121,6 +169,7 @@ public class StatsListener implements Listener {
         double totalAttackSpeed = 0;
         double totalMovementSpeed = 0;
         double totalHealthRegen = 0;
+        double totalArmor = 0;
 
         double pctHealth = 0.0;
         double pctMaxMana = 0.0;
@@ -128,6 +177,7 @@ public class StatsListener implements Listener {
         double pctAttackSpeed = 0.0;
         double pctMovementSpeed = 0.0;
         double pctHealthRegen = 0.0;
+        double pctArmor = 0.0;
 
         String foundParticleId = null;
         FileConfiguration config = Main.getInstance().getStatsSettingsConfig();
@@ -135,7 +185,7 @@ public class StatsListener implements Listener {
         FileConfiguration mainConfig = Main.getInstance().getConfig();
         UUID uuid = player.getUniqueId();
 
-        // --- PHẦN 1: TRANG BỊ CHÍNH (ARMOR & HANDS) --- (Giữ nguyên)
+        
         for (org.bukkit.inventory.EquipmentSlot slot : VALID_PLAYER_SLOTS) {
             try {
                 ItemStack item = player.getInventory().getItem(slot);
@@ -153,6 +203,10 @@ public class StatsListener implements Listener {
                 if (isSlotAllowed(item, config, "attack_speed", slot)) totalAttackSpeed += AttackSpeed.get(item);
                 if (isSlotAllowed(item, config, "movement_speed", slot)) totalMovementSpeed += MovementSpeed.get(item);
                 if (isSlotAllowed(item, config, "health_regen", slot)) totalHealthRegen += HealthRegen.get(item);
+                if (item.hasItemMeta() && isSlotAllowed(item, config, "armor", slot)) {
+                    var pdc = item.getItemMeta().getPersistentDataContainer();
+                    totalArmor += pdc.getOrDefault(new NamespacedKey(Main.getInstance(), "armor"), PersistentDataType.DOUBLE, 0.0);
+                }
 
                 if (item.hasItemMeta()) {
                     var pdc = item.getItemMeta().getPersistentDataContainer();
@@ -162,6 +216,7 @@ public class StatsListener implements Listener {
                     if (isAllowedPercent(item, config, "attack_speed", slot)) pctAttackSpeed += pdc.getOrDefault(new NamespacedKey(Main.getInstance(), "pct_attack_speed"), PersistentDataType.DOUBLE, 0.0);
                     if (isAllowedPercent(item, config, "movement_speed", slot)) pctMovementSpeed += pdc.getOrDefault(new NamespacedKey(Main.getInstance(), "pct_movement_speed"), PersistentDataType.DOUBLE, 0.0);
                     if (isAllowedPercent(item, config, "health_regen", slot)) pctHealthRegen += pdc.getOrDefault(new NamespacedKey(Main.getInstance(), "pct_health_regen"), PersistentDataType.DOUBLE, 0.0);
+                    if (isAllowedPercent(item, config, "armor", slot)) pctArmor += pdc.getOrDefault(new NamespacedKey(Main.getInstance(), "pct_armor"), PersistentDataType.DOUBLE, 0.0);
                 }
 
                 for (String gemId : org.ThienNguyen.GemSocket.GemLogic.getGemsOnItem(item)) {
@@ -189,10 +244,9 @@ public class StatsListener implements Listener {
             } catch (Exception ignored) {}
         }
 
-        // --- PHẦN 2: TRANG SỨC (GUI + TÚI ĐỒ) - ĐÃ FIX CHO CONFIG LIST ---
+        
         Map<Integer, ItemStack> guiJewelryMap = org.ThienNguyen.JewelryManager.getCachedJewelry(uuid);
 
-        // Lấy tất cả slot trang sức từ config
         Set<Integer> jewelrySlotIndices = getJewelrySlots();
 
         for (int slotIdx : jewelrySlotIndices) {
@@ -200,11 +254,9 @@ public class StatsListener implements Listener {
                 ItemStack itemInSlot = player.getInventory().getItem(slotIdx);
                 ItemStack effectiveItem = null;
 
-                // Ưu tiên item thật trong inventory
                 if (itemInSlot != null && !itemInSlot.getType().isAir() && !isPlaceholder(itemInSlot)) {
                     effectiveItem = itemInSlot;
                 }
-                // Nếu không có thì lấy từ cache
                 else if (guiJewelryMap != null && guiJewelryMap.containsKey(slotIdx)) {
                     effectiveItem = guiJewelryMap.get(slotIdx);
                 }
@@ -212,7 +264,6 @@ public class StatsListener implements Listener {
                 if (effectiveItem != null && !effectiveItem.getType().isAir() && isJewelryMatch(effectiveItem, slotIdx)) {
                     if (!MMOCORE.canUse(player, effectiveItem)) continue;
 
-                    // === CỘNG STATS ===
                     totalHealth += Health.getHealth(effectiveItem);
                     totalMaxMana += MaxMana.get(effectiveItem);
                     totalManaRegen += ManaRegen.get(effectiveItem);
@@ -220,7 +271,6 @@ public class StatsListener implements Listener {
                     totalMovementSpeed += MovementSpeed.get(effectiveItem);
                     totalHealthRegen += HealthRegen.get(effectiveItem);
 
-                    // Percent stats
                     if (effectiveItem.hasItemMeta()) {
                         var pdc = effectiveItem.getItemMeta().getPersistentDataContainer();
                         pctHealth += pdc.getOrDefault(new NamespacedKey(Main.getInstance(), "pct_health"), PersistentDataType.DOUBLE, 0.0);
@@ -231,7 +281,6 @@ public class StatsListener implements Listener {
                         pctHealthRegen += pdc.getOrDefault(new NamespacedKey(Main.getInstance(), "pct_health_regen"), PersistentDataType.DOUBLE, 0.0);
                     }
 
-                    // Gems
                     for (String gemId : org.ThienNguyen.GemSocket.GemLogic.getGemsOnItem(effectiveItem)) {
                         if (gemConfig.contains(gemId + ".apply.stats")) {
                             for (String line : gemConfig.getStringList(gemId + ".apply.stats")) {
@@ -256,7 +305,7 @@ public class StatsListener implements Listener {
             } catch (Exception ignored) {}
         }
 
-        // --- PHẦN 3 & 4 giữ nguyên ---
+        
         String comboId = org.ThienNguyen.Listener.ItemCombo.ComboListener.getFullSetComboId(player);
         if (comboId != null) {
             ConfigurationSection comboStats = Main.getInstance().getComboConfig().getConfigurationSection(comboId + ".stats");
@@ -274,44 +323,47 @@ public class StatsListener implements Listener {
             }
         }
 
-        if (org.bukkit.Bukkit.getPluginManager().isPluginEnabled("MyAttribute")) {
-            totalHealth        += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "health");
-            totalAttackSpeed   += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "attack_speed");
-            totalMovementSpeed += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "movement_speed");
-            totalMaxMana       += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "max_mana");
-            totalManaRegen     += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "mana_regen");
-            totalHealthRegen   += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "health_regen");
+        
+        for (Map.Entry<String, org.ThienNguyen.API.StatBoostAPI.StatBoost> entry : org.ThienNguyen.API.StatBoostAPI.getBoosts(uuid).entrySet()) {
+            org.ThienNguyen.API.StatBoostAPI.StatBoost boost = entry.getValue();
+            String statKey = boost.statKey();
 
-            // --- PERCENT BONUS ---
-            double _p;
-            _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "health");
-            if (_p != 0.0) pctHealth += _p;
-
-            _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "attack_speed");
-            if (_p != 0.0) pctAttackSpeed += _p;
-
-            _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "movement_speed");
-            if (_p != 0.0) pctMovementSpeed += _p;
-
-            _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "max_mana");
-            if (_p != 0.0) pctMaxMana += _p;
-
-            _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "mana_regen");
-            if (_p != 0.0) pctManaRegen += _p;
-
-            _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "health_regen");
-            if (_p != 0.0) pctHealthRegen += _p;
+            switch (statKey) {
+                case "health" -> {
+                    if (boost.type() == org.ThienNguyen.API.StatBoostAPI.BoostType.FLAT) totalHealth += boost.value();
+                    else if (boost.type() == org.ThienNguyen.API.StatBoostAPI.BoostType.PERCENT) pctHealth += boost.value();
+                }
+                case "max_mana" -> {
+                    if (boost.type() == org.ThienNguyen.API.StatBoostAPI.BoostType.FLAT) totalMaxMana += boost.value();
+                    else if (boost.type() == org.ThienNguyen.API.StatBoostAPI.BoostType.PERCENT) pctMaxMana += boost.value();
+                }
+                case "mana_regen" -> {
+                    if (boost.type() == org.ThienNguyen.API.StatBoostAPI.BoostType.FLAT) totalManaRegen += boost.value();
+                    else if (boost.type() == org.ThienNguyen.API.StatBoostAPI.BoostType.PERCENT) pctManaRegen += boost.value();
+                }
+                case "attack_speed" -> {
+                    if (boost.type() == org.ThienNguyen.API.StatBoostAPI.BoostType.FLAT) totalAttackSpeed += boost.value();
+                    else if (boost.type() == org.ThienNguyen.API.StatBoostAPI.BoostType.PERCENT) pctAttackSpeed += boost.value();
+                }
+                case "movement_speed" -> {
+                    if (boost.type() == org.ThienNguyen.API.StatBoostAPI.BoostType.FLAT) totalMovementSpeed += boost.value();
+                    else if (boost.type() == org.ThienNguyen.API.StatBoostAPI.BoostType.PERCENT) pctMovementSpeed += boost.value();
+                }
+                case "health_regen" -> {
+                    if (boost.type() == org.ThienNguyen.API.StatBoostAPI.BoostType.FLAT) totalHealthRegen += boost.value();
+                    else if (boost.type() == org.ThienNguyen.API.StatBoostAPI.BoostType.PERCENT) pctHealthRegen += boost.value();
+                }
+            }
         }
 
-// --- PHẦN 4: APPLY ---
-        // Lấy lượng giá trị máu gốc/máu hiện tại cơ bản của bản thân (Mặc định Minecraft là 20.0 hoặc giá trị nền đã nâng cấp)
+        
         double baseMinecraftHealth = 20.0;
-        org.bukkit.attribute.AttributeInstance hpInstance = player.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH);
+        Attribute maxHealthAttr = maxHealthAttribute();
+        org.bukkit.attribute.AttributeInstance hpInstance = maxHealthAttr != null ? player.getAttribute(maxHealthAttr) : null;
         if (hpInstance != null) {
             baseMinecraftHealth = hpInstance.getBaseValue();
         }
 
-        // Cộng giá trị máu bản thân vào tổng điểm cộng thẳng từ trang bị trước khi nhân phần trăm
         totalHealth += baseMinecraftHealth;
         if (pctHealth != 0.0)        totalHealth        *= (1.0 + (pctHealth / 100.0));
         if (pctMaxMana != 0.0)       totalMaxMana       *= (1.0 + (pctMaxMana / 100.0));
@@ -320,12 +372,30 @@ public class StatsListener implements Listener {
         if (pctMovementSpeed != 0.0) totalMovementSpeed *= (1.0 + (pctMovementSpeed / 100.0));
         if (pctHealthRegen != 0.0)   totalHealthRegen   *= (1.0 + (pctHealthRegen / 100.0));
         totalHealth -= baseMinecraftHealth;
+
+        
+        
+        
+        PlayerCombatCache.getStats(uuid).totalAttackSpeed = totalAttackSpeed;
+
+        double effectiveHealthBonus = PlayerCombatCache.getEffective(uuid, "health", totalHealth);
+        totalHealth = effectiveHealthBonus;
+
         if (foundParticleId != null) org.ThienNguyen.Listener.Particle.ParticleManager.setEffect(player, foundParticleId);
         else org.ThienNguyen.Listener.Particle.ParticleManager.removeEffect(player);
 
-        applyVanillaAttribute(player, Attribute.GENERIC_MAX_HEALTH, WINDY_HEALTH_UUID, totalHealth);
-        applyVanillaAttribute(player, Attribute.GENERIC_ATTACK_SPEED, WINDY_ATTACK_SPEED_UUID, (4.0 * totalAttackSpeed) / 100.0);
-        applyVanillaAttribute(player, Attribute.GENERIC_MOVEMENT_SPEED, WINDY_MOVEMENT_SPEED_UUID, (0.1 * totalMovementSpeed) / 100.0);
+        if (maxHealthAttr != null) applyVanillaAttribute(player, maxHealthAttr, WINDY_HEALTH_UUID, totalHealth);
+        Attribute attackSpeedAttr = attackSpeedAttribute();
+        double effectiveAttackSpeed = PlayerCombatCache.getEffective(uuid, "attack_speed", totalAttackSpeed);
+        if (attackSpeedAttr != null) applyVanillaAttribute(player, attackSpeedAttr, WINDY_ATTACK_SPEED_UUID, (4.0 * effectiveAttackSpeed) / 100.0);
+        Attribute movementSpeedAttr = movementSpeedAttribute();
+        if (movementSpeedAttr != null) applyVanillaAttribute(player, movementSpeedAttr, WINDY_MOVEMENT_SPEED_UUID, (0.1 * totalMovementSpeed) / 100.0);
+
+        
+        
+        
+        if (pctArmor != 0.0) totalArmor *= (1.0 + (pctArmor / 100.0));
+        player.setMetadata("windy_armor", new FixedMetadataValue(Main.getInstance(), totalArmor));
 
         player.setMetadata("windy_health_regen", new FixedMetadataValue(Main.getInstance(), totalHealthRegen));
         player.setMetadata("windy_health_regen_percent", new FixedMetadataValue(Main.getInstance(), pctHealthRegen));
@@ -333,7 +403,6 @@ public class StatsListener implements Listener {
         ManaManager.applyMana(player, totalMaxMana, totalManaRegen);
     }
 
-    // NHỚ THÊM HÀM NÀY VÀO CUỐI CLASS STATSLISTENER
     private boolean isPlaceholder(ItemStack item) {
         if (item == null || !item.hasItemMeta()) return false;
         return item.getItemMeta().getPersistentDataContainer().has(new NamespacedKey(Main.getInstance(), "is_placeholder"), PersistentDataType.BOOLEAN);
@@ -366,7 +435,6 @@ public class StatsListener implements Listener {
         if (allowedSlots == null || allowedSlots.isEmpty()) return true;
         return allowedSlots.contains(currentSlot.name());
     }
-
 
     private boolean isAllowedPercent(ItemStack item, FileConfiguration config, String stat, org.bukkit.inventory.EquipmentSlot currentSlot) {
         if (item == null || !item.hasItemMeta()) return true;
@@ -404,13 +472,10 @@ public class StatsListener implements Listener {
             instance.addModifier(mod);
         }
 
-        if (attr == Attribute.GENERIC_MAX_HEALTH && player.getHealth() > instance.getValue()) {
+        if (attr.equals(maxHealthAttribute()) && player.getHealth() > instance.getValue()) {
             player.setHealth(instance.getValue());
         }
     }
-
-
-
 
     private boolean isJewelryMatch(ItemStack item, int slotIdx) {
         if (item == null || item.getType().isAir()) return false;
@@ -419,21 +484,16 @@ public class StatsListener implements Listener {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return false;
 
-        // Lấy type từ item (ví dụ: "nhan")
         String itemType = meta.getPersistentDataContainer().get(
                 new NamespacedKey(Main.getInstance(), "jewelry_type"), PersistentDataType.STRING);
         if (itemType == null) return false;
 
-        // 1. Kiểm tra trong player-slots (nếu dùng)
         String pSlotType = config.getString("jewelry.player-slots." + slotIdx + ".type");
         if (pSlotType != null && pSlotType.equalsIgnoreCase(itemType)) return true;
 
-        // 2. Kiểm tra trong jewelry.slots (hỗ trợ cả List và Object đơn)
         ConfigurationSection groups = config.getConfigurationSection("jewelry.slots");
         if (groups != null && groups.contains(itemType)) {
-
             if (groups.isList(itemType)) {
-                // === FIX CHÍNH Ở ĐÂY ===
                 List<?> slotList = groups.getList(itemType);
                 for (Object obj : slotList) {
                     if (obj instanceof Map<?, ?> map) {
@@ -444,7 +504,6 @@ public class StatsListener implements Listener {
                     }
                 }
             } else {
-                // Cấu hình cũ (object đơn)
                 if (groups.getInt(itemType + ".slot") == slotIdx) return true;
             }
         }
@@ -456,7 +515,6 @@ public class StatsListener implements Listener {
         java.util.Set<Integer> slots = new java.util.HashSet<>();
         FileConfiguration config = Main.getInstance().getConfig();
 
-        // Từ player-slots
         ConfigurationSection pSlots = config.getConfigurationSection("jewelry.player-slots");
         if (pSlots != null) {
             for (String key : pSlots.getKeys(false)) {
@@ -466,7 +524,6 @@ public class StatsListener implements Listener {
             }
         }
 
-        // Từ jewelry.slots (hỗ trợ List)
         ConfigurationSection groups = config.getConfigurationSection("jewelry.slots");
         if (groups != null) {
             for (String type : groups.getKeys(false)) {
@@ -483,7 +540,6 @@ public class StatsListener implements Listener {
                         }
                     }
                 } else {
-                    // Cấu hình cũ
                     int s = groups.getInt(type + ".slot");
                     if (s > 0) slots.add(s);
                 }

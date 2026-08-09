@@ -1,19 +1,33 @@
-# Cấu hình rơi đồ cho quái thường (Sử dụng tên Entity)
+settings:
+  auto-inventory: true
+  auto-all-drops: true
+  apply-global-mythic-drops: true   # NEW - also rolls MythicMobs.ALL for every MythicMob kill
+
 Vanilla:
   ZOMBIE:
-    - id: "KiemKhoiDau"
-      chance: 10.5
-    - id: "GiapDa"
-      chance: 5.0
-  SKELETON:
-    - id: "CungGo"
-      chance: 15.0
+    - id: rotten_flesh_special
+      chance: 5
+      amount:               # NEW - random stack size between min/max (inclusive)
+        min: 1
+        max: 3
 
-# Cấu hình rơi đồ cho MythicMobs (Sử dụng tên Internal Name của Mob)
 MythicMobs:
-  SkeletalKnight:
-    - id: "KiemThanh"
-      chance: 1.0
-  KingSkeleton:
-    - id: "VuongMien"
-      chance: 100.0
+  ALL:                       # NEW - only rolled when settings.apply-global-mythic-drops is true
+    - id: mythic_essence
+      chance: 2
+      health-scaling:        # NEW - +bonus-chance per full per-health interval of the mob's max HP
+        per-health: 50
+        bonus-chance: 1.0
+      amount:
+        min: 1
+        max: 1
+
+  FireDragon:
+    - id: dragon_scale
+      chance: 10
+      health-scaling:
+        per-health: 50
+        bonus-chance: 1.5    # a 300 HP FireDragon: 10 + floor(300/50)*1.5 = 19% chance
+      amount:
+        min: 1
+        max: 5

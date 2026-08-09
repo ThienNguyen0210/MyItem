@@ -78,8 +78,8 @@ public class EvolutionManager {
                         .replace("&", "§"));
             }
         } else {
-            
-            player.sendMessage("§a§l✔ §fVật phẩm đã tiến hóa thành §e" + newName);
+
+            player.sendMessage("§8[§bMyItem§8] §a§l✔ §fItem has evolved to §e" + newName);
         }
 
         

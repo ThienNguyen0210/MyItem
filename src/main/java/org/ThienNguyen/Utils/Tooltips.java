@@ -28,13 +28,13 @@ public class Tooltips {
 
         ConfigurationSection section = config.getConfigurationSection("types." + type.toLowerCase());
         if (section == null) {
-            player.sendMessage("§cLoại Tooltip '" + type + "' không tồn tại!");
+            player.sendMessage("§8[§bMyItem§8] §cTooltip type '" + type + "' does not exist!");
             return;
         }
 
         ItemStack item = player.getInventory().getItemInMainHand();
         if (item == null || item.getType().isAir()) {
-            player.sendMessage("§cBạn phải cầm vật phẩm trên tay!");
+            player.sendMessage("§8[§bMyItem§8] §cYou must hold an item in your hand!");
             return;
         }
 
@@ -132,7 +132,7 @@ public class Tooltips {
         } catch (Exception ignored) {}
 
         item.setItemMeta(meta);
-        player.sendMessage("§a§l✔ §7Đã áp dụng Tooltip thành công.");
+        player.sendMessage("§8[§bMyItem§8] §a§l✔ §7Tooltip applied successfully.");
     }
     public static void reapplyTooltipSilent(ItemStack item, String type) {
         if (item == null || !item.hasItemMeta()) return;
@@ -231,7 +231,7 @@ public class Tooltips {
         meta.getPersistentDataContainer().remove(ORIGINAL_LORE_KEY);
 
         item.setItemMeta(meta);
-        player.sendMessage("§a§l✔ §7Đã khôi phục trạng thái gốc.");
+        player.sendMessage("§8[§bMyItem§8] §a§l✔ §7Original state restored successfully.");
     }
 
     private static String buildLine(String fill, int left, int right, String icon, String content) {

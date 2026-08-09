@@ -1,4 +1,8 @@
 package org.ThienNguyen.Listener.Passive;
 
-public class PlayerAware {
+import java.util.UUID;
+
+
+public interface PlayerAware {
+    void onPlayerQuit(UUID playerId);
 }

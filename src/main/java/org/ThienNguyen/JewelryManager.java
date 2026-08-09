@@ -69,8 +69,8 @@ public class JewelryManager implements InventoryHolder, org.bukkit.event.Listene
         // 3. Kiểm tra tính năng có bật không (Dành cho người chơi)
         if (!isJewelryEnabled()) {
             // Chỉ gửi tin nhắn nếu player thực sự đang mở GUI
-            player.sendMessage("§cTính năng trang sức đang bị tắt!");
-            this.gui = Bukkit.createInventory(null, 9, "§cTắt");
+            player.sendMessage("§8[§bMyItem§8] §cThe jewelry feature is currently disabled!");
+            this.gui = Bukkit.createInventory(null, 9, "§cOff");
             return;
         }
 
@@ -343,7 +343,7 @@ public class JewelryManager implements InventoryHolder, org.bukkit.event.Listene
      */
     private boolean isValidJewelry(ItemStack item, JewelrySlot slot) {
         if (!MMOCORE.canUse(player, item)) {
-            player.sendMessage("§cBạn không đủ cấp độ hoặc class để trang bị!");
+            player.sendMessage("§8[§bMyItem§8] §cYou do not have the required level or class to equip this!");
             return false;
         }
 
@@ -351,7 +351,7 @@ public class JewelryManager implements InventoryHolder, org.bukkit.event.Listene
                 item.getItemMeta().getPersistentDataContainer().get(JEWELRY_TYPE_KEY, PersistentDataType.STRING) : null;
 
         if (itemType == null || !itemType.equals(slot.key)) {
-            player.sendMessage("§cVật phẩm này không phù hợp với slot " + slot.name + "!");
+            player.sendMessage("§8[§bMyItem§8] §cThis item is not suitable for the " + slot.name + " slot!");
             return false;
         }
         return true;

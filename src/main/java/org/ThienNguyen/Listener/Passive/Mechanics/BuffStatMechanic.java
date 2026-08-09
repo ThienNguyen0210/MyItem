@@ -4,26 +4,25 @@ import org.ThienNguyen.Listener.Passive.AbstractMechanic;
 import org.ThienNguyen.Listener.Passive.ExpressionResolver;
 import org.ThienNguyen.Listener.Passive.PassiveContext;
 import org.ThienNguyen.Listener.PlayerCombatCache;
+import org.ThienNguyen.Listener.Passive.TempBuff;
+import org.ThienNguyen.Listener.StatsListener;
 import org.ThienNguyen.Main;
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 
-/**
- * Buff tạm thời 1 stat — cộng thẳng vào CombatStats, trừ ngược lại sau duration.
- *
- * yml:
- * - type: BUFF_STAT
- *   target: SELF
- *   stat: critical_damage
- *   amount: "%player_level% * 0.5"   # số, biểu thức, hoặc placeholder PAPI
- *   duration-seconds: "5"              # tương tự
- *
- * Cả "amount" và "duration-seconds" resolve lúc execute() — buff lượng và thời gian
- * phản ánh đúng stat actor tại thời điểm trigger.
- */
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
+
 public class BuffStatMechanic extends AbstractMechanic {
+
+    
+    private static final ConcurrentHashMap<String, Double>  activeAmounts = new ConcurrentHashMap<>();
+
+    
+    private static final ConcurrentHashMap<String, Integer> activeTasks   = new ConcurrentHashMap<>();
 
     private final String stat;
     private final String rawAmount;
@@ -31,9 +30,21 @@ public class BuffStatMechanic extends AbstractMechanic {
 
     public BuffStatMechanic(ConfigurationSection cfg) {
         super(cfg);
-        this.stat        = cfg.getString("stat", "").toLowerCase().trim();
+        this.stat        = cfg.getString("stat",             "").toLowerCase().trim();
         this.rawAmount   = cfg.getString("amount",           "0");
         this.rawDuration = cfg.getString("duration-seconds", "5");
+
+        
+        
+        
+        
+        if (!stat.isEmpty() && !PlayerCombatCache.isKnownStat(stat)) {
+            Bukkit.getLogger().warning(
+                    "[BuffStatMechanic] stat '" + stat + "' không khớp tên nào PlayerCombatCache " +
+                            "nhận diện — buff này sẽ KHÔNG có tác dụng thật trong combat dù không báo lỗi khi chạy. " +
+                            "Các tên hợp lệ: " + PlayerCombatCache.getKnownStatKeys()
+            );
+        }
     }
 
     @Override
@@ -41,61 +52,70 @@ public class BuffStatMechanic extends AbstractMechanic {
         LivingEntity targetEntity = resolveTarget(ctx);
         if (!(targetEntity instanceof Player p) || stat.isEmpty()) return false;
 
-        double amount   = ExpressionResolver.resolve(rawAmount,   ctx.getActor(), 0);
-        int    duration = ExpressionResolver.resolveInt(rawDuration, ctx.getActor(), 5);
+        double newAmount = ExpressionResolver.resolve(rawAmount,   ctx.getActor(), 0);
+        int    duration  = ExpressionResolver.resolveInt(rawDuration, ctx.getActor(), 5);
+        if (newAmount == 0) return false;
 
-        if (amount == 0) return false;
-
+        String key = p.getUniqueId() + ":" + stat;
         PlayerCombatCache.CombatStats stats = PlayerCombatCache.getStats(p.getUniqueId());
-        if (!applyStatDelta(stats, stat, amount)) return false;
 
-        final double buffAmount = amount; // effectively final for lambda
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (!p.isOnline()) return;
-                PlayerCombatCache.CombatStats current = PlayerCombatCache.getStats(p.getUniqueId());
-                applyStatDelta(current, stat, -buffAmount);
+        
+        Integer oldTaskId = activeTasks.remove(key);
+        if (oldTaskId != null) {
+            Bukkit.getScheduler().cancelTask(oldTaskId);
+        }
+        activeAmounts.remove(key);
+        
+        
+        stats.tempBuffs.remove(key);
+
+        
+        stats.tempBuffs.put(key, new TempBuff(stat, newAmount, duration));
+        activeAmounts.put(key, newAmount);
+
+        
+        
+        
+        int taskId = Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
+            activeTasks.remove(key);
+            activeAmounts.remove(key);
+            if (!p.isOnline()) return;
+            PlayerCombatCache.CombatStats current = PlayerCombatCache.getStats(p.getUniqueId());
+            current.tempBuffs.remove(key);
+            if ("health".equals(stat)) {
+                StatsListener.getInstance().updatePlayerStats(p);
             }
-        }.runTaskLater(Main.getInstance(), duration * 20L);
+        }, duration * 20L).getTaskId();
+
+        activeTasks.put(key, taskId);
+        
+
+        if ("health".equals(stat)) {
+            StatsListener.getInstance().updatePlayerStats(p);
+        }
+        
 
         return true;
     }
 
-    private static boolean applyStatDelta(PlayerCombatCache.CombatStats s, String stat, double delta) {
-        switch (stat) {
-            case "damage"                    -> s.totalBonusDmg            += delta;
-            case "pve_damage"                -> s.totalPveBonus            += delta;
-            case "pvp_damage"                -> s.totalPvpBonus            += delta;
-            case "all_damage"                -> s.totalAllDamage           += delta;
-            case "bow_damage"                -> s.totalBowDamage           += delta;
-            case "magic_damage"              -> s.totalMagicDamage         += delta;
-            case "true_damage"               -> s.totalTrueDamage          += delta;
-            case "death_damage"              -> s.totalDeathDamage         += delta;
-            case "critical_chance"           -> s.totalCritChance          += delta;
-            case "critical_damage"           -> s.totalCritDamage          += delta;
-            case "critical_damage_reduction" -> s.totalCritDamageReduction += delta;
-            case "lifesteal"                 -> s.totalLifesteal           += delta;
-            case "penetration"               -> s.totalPenetration         += delta;
-            case "armor_pen"                 -> s.totalArmorPen            += delta;
-            case "accuracy"                  -> s.totalAccuracy            += delta;
-            case "damage_reduction"          -> s.totalDamageReduction     += delta;
-            case "armor"                     -> s.totalArmor               += delta;
-            case "pve_defense"               -> s.totalPveDef              += delta;
-            case "pvp_defense"               -> s.totalPvpDef              += delta;
-            case "all_defense"               -> s.totalAllDefense          += delta;
-            case "magic_defense"             -> s.totalMagicDefense        += delta;
-            case "dodge_rate"                -> s.totalDodge               += delta;
-            case "block_rate"                -> s.totalBlock               += delta;
-            case "thorns"                    -> s.totalThorns              += delta;
-            case "knockback_resistance"      -> s.totalKnockbackResist     += delta;
-            case "max_mana"                  -> s.totalMaxMana             += delta;
-            case "mana_regen"                -> s.totalManaRegen           += delta;
-            case "health_regen"              -> s.totalHealthRegen         += delta;
-            case "exp_bonus"                 -> s.totalExpBonus            += delta;
-            case "movement_speed"            -> s.totalMovementSpeed       += delta;
-            default -> { return false; }
-        }
-        return true;
+    
+
+    
+    public static void clearPlayer(UUID playerId) {
+        String prefix = playerId + ":";
+        activeAmounts.keySet().removeIf(k -> k.startsWith(prefix));
+        activeTasks.entrySet().removeIf(e -> {
+            if (e.getKey().startsWith(prefix)) {
+                Bukkit.getScheduler().cancelTask(e.getValue());
+                return true;
+            }
+            return false;
+        });
+
+        
+        
+        
+        PlayerCombatCache.CombatStats stats = PlayerCombatCache.getStats(playerId);
+        stats.tempBuffs.keySet().removeIf(k -> k.startsWith(prefix));
     }
 }

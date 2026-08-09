@@ -20,25 +20,25 @@ public class ModelAndMaterial implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("§cChỉ người chơi mới có thể dùng lệnh này!");
+            sender.sendMessage("§8[§bMyItem§8] §cOnly players can use this command!");
             return true;
         }
 
         if (!player.hasPermission("myitem.admin")) {
-            player.sendMessage("§cBạn không có quyền thực hiện lệnh này!");
+            player.sendMessage("§8[§bMyItem§8] §cYou do not have permission to use this command!");
             return true;
         }
 
         ItemStack item = player.getInventory().getItemInMainHand();
         if (item == null || item.getType().isAir()) {
-            player.sendMessage("§cBạn phải cầm một vật phẩm trên tay!");
+            player.sendMessage("§8[§bMyItem§8] §cYou must hold an item in your hand!");
             return true;
         }
 
-        
+
         if (command.getName().equalsIgnoreCase("setmodel")) {
             if (args.length < 1) {
-                player.sendMessage("§cSử dụng: /setmodel <id>");
+                player.sendMessage("§8[§bMyItem§8] §cUsage: /setmodel <id>");
                 return true;
             }
             try {
@@ -47,26 +47,26 @@ public class ModelAndMaterial implements CommandExecutor, TabCompleter {
                 if (meta != null) {
                     meta.setCustomModelData(modelId);
                     item.setItemMeta(meta);
-                    player.sendMessage("§a[MyItem] Đã đặt Custom Model Data thành: §f" + modelId);
+                    player.sendMessage("§8[§bMyItem§8] §aSet Custom Model Data to: §f" + modelId);
                 }
             } catch (NumberFormatException e) {
-                player.sendMessage("§cID Model phải là một số nguyên!");
+                player.sendMessage("§8[§bMyItem§8] §cModel ID must be an integer!");
             }
         }
 
-        
+
         else if (command.getName().equalsIgnoreCase("material")) {
             if (args.length < 1) {
-                player.sendMessage("§cSử dụng: /material <vật_liệu>");
+                player.sendMessage("§8[§bMyItem§8] §cUsage: /material <material>");
                 return true;
             }
             Material mat = Material.matchMaterial(args[0].toUpperCase());
             if (mat == null || !mat.isItem()) {
-                player.sendMessage("§cLoại vật liệu §f" + args[0] + " §ckhông hợp lệ!");
+                player.sendMessage("§8[§bMyItem§8] §cInvalid material §f" + args[0] + "§c!");
                 return true;
             }
             item.setType(mat);
-            player.sendMessage("§a[MyItem] Đã chuyển phôi vật phẩm sang: §f" + mat.name());
+            player.sendMessage("§8[§bMyItem§8] §aChanged item material to: §f" + mat.name());
         }
 
         return true;

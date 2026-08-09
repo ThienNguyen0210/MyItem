@@ -22,15 +22,15 @@ public class AttributeCommand implements CommandExecutor, TabCompleter {
         if (!(sender instanceof Player player)) return true;
 
         if (args.length < 2) {
-            player.sendMessage("§6§l[Attribute] §eCách dùng:");
-            player.sendMessage("§7- /attribute add <loại> <giá trị> <number/scalar> [slot]");
-            player.sendMessage("§7- /attribute remove <loại>");
+            player.sendMessage("§8[§bMyItem§8] §6§l[Attribute] §eUsage:");
+            player.sendMessage("§8[§bMyItem§8] §7- /attribute add <type> <value> <number/scalar> [slot]");
+            player.sendMessage("§8[§bMyItem§8] §7- /attribute remove <type>");
             return true;
         }
 
         ItemStack item = player.getInventory().getItemInMainHand();
         if (item.getType().isAir()) {
-            player.sendMessage("§cBạn phải cầm một vật phẩm trên tay!");
+            player.sendMessage("§8[§bMyItem§8] §cYou must hold an item in your hand!");
             return true;
         }
 
@@ -42,22 +42,22 @@ public class AttributeCommand implements CommandExecutor, TabCompleter {
         try {
             if (action.equals("remove")) {
                 Attribute attr = findAttribute(args[1]);
-                if (attr == null) throw new IllegalArgumentException("Không tìm thấy thuộc tính!");
+                if (attr == null) throw new IllegalArgumentException("Attribute not found!");
                 meta.removeAttributeModifier(attr);
                 item.setItemMeta(meta);
-                player.sendMessage("§aĐã xóa thuộc tính §e" + args[1].toUpperCase());
+                player.sendMessage("§8[§bMyItem§8] §aSuccessfully removed attribute §e" + args[1].toUpperCase());
                 return true;
             }
 
             if (action.equals("add") && args.length >= 4) {
                 Attribute attr = findAttribute(args[1]);
-                if (attr == null) throw new IllegalArgumentException("Loại thuộc tính không tồn tại!");
+                if (attr == null) throw new IllegalArgumentException("Attribute type does not exist!");
 
                 double value = Double.parseDouble(args[2]);
                 AttributeModifier.Operation operation = args[3].equalsIgnoreCase("scalar") ?
                         AttributeModifier.Operation.ADD_SCALAR : AttributeModifier.Operation.ADD_NUMBER;
 
-                
+
                 EquipmentSlot slot = null;
                 if (args.length >= 5) {
                     slot = parseSlot(args[4]);
@@ -74,12 +74,12 @@ public class AttributeCommand implements CommandExecutor, TabCompleter {
                 meta.addAttributeModifier(attr, modifier);
                 item.setItemMeta(meta);
 
-                String slotMsg = (slot == null) ? "Tất cả vị trí" : slot.name();
-                player.sendMessage("§aĐã thêm §e" + attr.name() + " §avới giá trị §e" + value + " §7(Slot: " + slotMsg + ")");
+                String slotMsg = (slot == null) ? "Any Slot" : slot.name();
+                player.sendMessage("§8[§bMyItem§8] §aSuccessfully added §e" + attr.name() + " §awith value §e" + value + " §7(Slot: " + slotMsg + ")");
                 return true;
             }
         } catch (Exception e) {
-            player.sendMessage("§cLỗi: " + e.getMessage());
+            player.sendMessage("§8[§bMyItem§8] §cError: " + e.getMessage());
         }
 
         return true;
@@ -97,7 +97,7 @@ public class AttributeCommand implements CommandExecutor, TabCompleter {
             case "chest", "chestplate" -> EquipmentSlot.CHEST;
             case "leggings" -> EquipmentSlot.LEGS;
             case "boots", "feet" -> EquipmentSlot.FEET;
-            default -> null; 
+            default -> null;
         };
     }
 

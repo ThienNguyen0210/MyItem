@@ -11,12 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PlayerCombatCache {
     private static final Map<UUID, CombatStats> cache = new ConcurrentHashMap<>();
 
-    /**
-     * Map tên stat dùng trong yml (passive BUFF_STAT, command /mi stats) -> tên field Java thật
-     * trong CombatStats. Khớp đúng theo Stats.java (switch case ghi PDC) + PlayerCombatCache hiện có.
-     *
-     * MỞ RỘNG: thêm 1 dòng khi có field mới — không cần sửa getEffective() hay BuffStatMechanic.
-     */
+    
     private static final Map<String, String> STAT_NAME_TO_FIELD = new HashMap<>();
     static {
         STAT_NAME_TO_FIELD.put("damage", "totalBonusDmg");
@@ -51,9 +46,22 @@ public class PlayerCombatCache {
         STAT_NAME_TO_FIELD.put("deep_wound", "totalDeepWound");
         STAT_NAME_TO_FIELD.put("damage_reduction", "totalDamageReduction");
         STAT_NAME_TO_FIELD.put("effect_resistance", "totalEffectResistance");
+        STAT_NAME_TO_FIELD.put("health", "totalHealth");
+        STAT_NAME_TO_FIELD.put("attack_speed", "totalAttackSpeed");
+
     }
 
-    /** Cache Field reflection theo tên field Java, tránh getDeclaredField() lặp lại mỗi lần đọc. */
+    
+    public static boolean isKnownStat(String statKey) {
+        return STAT_NAME_TO_FIELD.containsKey(statKey);
+    }
+
+    
+    public static java.util.Set<String> getKnownStatKeys() {
+        return STAT_NAME_TO_FIELD.keySet();
+    }
+
+    
     private static final Map<String, Field> FIELD_CACHE = new ConcurrentHashMap<>();
 
     private static Field resolveField(String javaFieldName) {
@@ -67,19 +75,30 @@ public class PlayerCombatCache {
             }
         });
     }
+    
+    public static boolean addToField(CombatStats stats, String statKey, double amount) {
+        String javaField = STAT_NAME_TO_FIELD.get(statKey);
+        if (javaField == null) return false;
+        Field f = resolveField(javaField);
+        if (f == null) return false;
+        try {
+            f.setDouble(stats, f.getDouble(stats) + amount);
+            return true;
+        } catch (IllegalAccessException e) { return false; }
+    }
 
-    /**
-     * Đọc giá trị HIỆU LỰC của 1 stat (field gốc từ equipment + tổng tempBuffs còn sống cùng tên).
-     * Dùng trong EventDamage thay cho việc đọc field trực tiếp (stats.totalBonusDmg...), để buff
-     * tạm từ passive (BuffStatMechanic) có tác dụng thật khi tính damage.
-     *
-     * KHÔNG sửa field gốc — chỉ tính toán tại thời điểm đọc, nên nhiều buff cùng stat hết hạn
-     * không cùng lúc vẫn an toàn (không cần refreshCache() can thiệp giữa lúc buff đang sống).
-     *
-     * @param statKey tên stat theo yml (vd "damage", "critical_chance" — xem STAT_NAME_TO_FIELD)
-     * @param baseValue giá trị field gốc đã đọc sẵn (stats.totalBonusDmg) — truyền vào để tránh
-     *                  đọc lại field 2 lần qua reflection (vừa lấy base vừa cộng buff)
-     */
+    
+    public static boolean multiplyField(CombatStats stats, String statKey, double percent) {
+        String javaField = STAT_NAME_TO_FIELD.get(statKey);
+        if (javaField == null) return false;
+        Field f = resolveField(javaField);
+        if (f == null) return false;
+        try {
+            f.setDouble(stats, f.getDouble(stats) * (1.0 + percent / 100.0));
+            return true;
+        } catch (IllegalAccessException e) { return false; }
+    }
+    
     public static double getEffective(UUID uuid, String statKey, double baseValue) {
         CombatStats stats = cache.get(uuid);
         if (stats == null || stats.tempBuffs.isEmpty()) return baseValue;
@@ -87,7 +106,7 @@ public class PlayerCombatCache {
         double bonus = 0.0;
         long now = System.currentTimeMillis();
         for (org.ThienNguyen.Listener.Passive.TempBuff buff : stats.tempBuffs.values()) {
-            if (buff.expireAtMillis <= now) continue; // hết hạn, bỏ qua (không xoá ở đây — xem dọn dẹp định kỳ)
+            if (buff.expireAtMillis <= now) continue; 
             if (buff.statKey.equals(statKey)) {
                 bonus += buff.amount;
             }
@@ -95,11 +114,7 @@ public class PlayerCombatCache {
         return baseValue + bonus;
     }
 
-    /**
-     * Biến thể không cần biết tên field Java — tự resolve qua STAT_NAME_TO_FIELD + reflection.
-     * Tiện cho nơi không có sẵn biến base (vd code mới viết), nhưng CHẬM HƠN getEffective(uuid, key, base)
-     * vì phải đọc field qua reflection mỗi lần gọi. Trong hot path combat, ưu tiên dùng overload có baseValue.
-     */
+    
     public static double getEffectiveByStatName(UUID uuid, String statKey) {
         CombatStats stats = cache.get(uuid);
         if (stats == null) return 0.0;
@@ -146,29 +161,24 @@ public class PlayerCombatCache {
         public double totalThorns = 0;
         public double totalAllDefense = 0;
         public double totalExpBonus = 0.0;
+        public double totalHealth = 0;
 
         public double totalHealthRegen = 0;
         public double totalKnockbackResist = 0;
         public double totalMovementSpeed = 0;
         public double totalDamageReduction = 0.0;
         public double totalEffectResistance = 0.0;
+        public double totalAttackSpeed = 0;
 
 
         public Map<String, double[]> bestAbilities = new HashMap<>();
         public Map<String, Double> weaponElementDamage = new HashMap<>();
         public Map<String, Integer> weaponElementLevels = new HashMap<>();
 
-        /**
-         * Buff tạm thời từ passive (BuffStatMechanic). KHÔNG bị clear() xoá theo refreshCache()
-         * (refreshCache chỉ tính lại stat gốc từ equipment) — buff tạm tồn tại độc lập, tự hết hạn
-         * theo TempBuff.expireAtMillis. Key tuỳ ý (BuffStatMechanic dùng "stat_timestamp" để
-         * tránh ghi đè buff cùng tên đang còn hiệu lực).
-         */
+        
         public Map<String, org.ThienNguyen.Listener.Passive.TempBuff> tempBuffs = new ConcurrentHashMap<>();
 
-        /**
-         * Reset toàn bộ chỉ số về 0 và xóa sạch các Map
-         */
+        
         public void clear() {
             totalAccuracy = 0;
             totalDeepWound = 0.0;
@@ -184,8 +194,7 @@ public class PlayerCombatCache {
             totalCritDamageReduction = 0.0;
             totalArmor = totalPveDef = totalPvpDef = 0;
             totalDodge = totalBlock = totalThorns = totalAllDefense = 0;
-
-
+            totalHealth = 0;
             totalHealthRegen = 0;
             totalKnockbackResist = 0;
             totalMovementSpeed = 0;
@@ -193,15 +202,14 @@ public class PlayerCombatCache {
             totalEffectResistance = 0.0;
             totalMagicDamage = 1.0;
             totalMagicDefense = 0.0;
+            totalAttackSpeed = 0;
 
             bestAbilities.clear();
             weaponElementDamage.clear();
             weaponElementLevels.clear();
         }
 
-        /**
-         * Clear riêng phần nguyên tố vũ khí (dùng khi đổi item trên tay)
-         */
+        
         public void clearWeaponElements() {
             weaponElementDamage.clear();
             weaponElementLevels.clear();

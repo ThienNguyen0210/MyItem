@@ -13,10 +13,9 @@ import org.bukkit.block.data.BlockData;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.Vector;
 
-/**
- * Hiệu ứng particle hình CIRCLE hoặc SPHERE xoay quanh target.
- */
+
 public class ParticleAnimationMechanic extends AbstractMechanic {
 
     private final Particle particle;
@@ -26,9 +25,12 @@ public class ParticleAnimationMechanic extends AbstractMechanic {
     private final String rawParticlePerPoint;
     private final String rawDurationSeconds;
     private final String rawUpdateIntervalTicks;
+    private final String rawHeight;
+    private final String rawForwardOffset;
+    private final String rawSideOffset;
     private final boolean rotate;
 
-    // Extra data cho particle đặc biệt
+    
     private final Color dustColor;
     private final Material blockMaterial;
 
@@ -49,9 +51,12 @@ public class ParticleAnimationMechanic extends AbstractMechanic {
         this.rawParticlePerPoint    = cfg.getString("particle-per-point",   "1");
         this.rawDurationSeconds     = cfg.getString("duration-seconds",     "3");
         this.rawUpdateIntervalTicks = cfg.getString("update-interval-ticks","4");
+        this.rawHeight              = cfg.getString("height",               "1.0");
+        this.rawForwardOffset       = cfg.getString("forward-offset",       "0.0");
+        this.rawSideOffset          = cfg.getString("side-offset",          "0.0");
         this.rotate                 = cfg.getBoolean("rotate", true);
 
-        // Extra data
+        
         this.dustColor = parseColor(cfg.getString("dust-color", "#FF5500"));
         this.blockMaterial = parseMaterial(cfg.getString("block-material", "OAK_LEAVES"));
     }
@@ -87,6 +92,9 @@ public class ParticleAnimationMechanic extends AbstractMechanic {
         int    particlePerPoint = Math.max(1, ExpressionResolver.resolveInt(rawParticlePerPoint, ctx.getActor(), 1));
         int    durationTicks    = Math.max(1, ExpressionResolver.resolveInt(rawDurationSeconds,  ctx.getActor(), 3) * 20);
         int    updateInterval   = Math.max(1, ExpressionResolver.resolveInt(rawUpdateIntervalTicks, ctx.getActor(), 4));
+        double height           = ExpressionResolver.resolve(rawHeight,        ctx.getActor(), 1.0);
+        double forwardOffset    = ExpressionResolver.resolve(rawForwardOffset, ctx.getActor(), 0.0);
+        double sideOffset       = ExpressionResolver.resolve(rawSideOffset,    ctx.getActor(), 0.0);
 
         new BukkitRunnable() {
             int elapsedTicks = 0;
@@ -98,7 +106,7 @@ public class ParticleAnimationMechanic extends AbstractMechanic {
                     cancel();
                     return;
                 }
-                Location origin = center.getLocation().add(0, 1.0, 0);
+                Location origin = computeOrigin(center, height, forwardOffset, sideOffset);
                 drawShape(world, origin, rotationOffset, radius, pointsPerTick, particlePerPoint);
                 if (rotate) rotationOffset += Math.PI / 8;
                 elapsedTicks += updateInterval;
@@ -106,6 +114,30 @@ public class ParticleAnimationMechanic extends AbstractMechanic {
         }.runTaskTimer(Main.getInstance(), 0L, updateInterval);
 
         return true;
+    }
+
+    
+    private Location computeOrigin(LivingEntity center, double height, double forwardOffset, double sideOffset) {
+        Location base = center.getLocation();
+        Location origin = base.clone().add(0, height, 0);
+
+        if (forwardOffset == 0.0 && sideOffset == 0.0) return origin;
+
+        Vector direction = base.getDirection().setY(0);
+        if (direction.lengthSquared() < 1.0E-6) {
+            
+            
+            direction = new Vector(0, 0, 1);
+        } else {
+            direction = direction.normalize();
+        }
+        
+        Vector right = new Vector(-direction.getZ(), 0, direction.getX());
+
+        if (forwardOffset != 0.0) origin.add(direction.clone().multiply(forwardOffset));
+        if (sideOffset != 0.0)    origin.add(right.clone().multiply(sideOffset));
+
+        return origin;
     }
 
     private void drawShape(World world, Location origin, double rotOff,

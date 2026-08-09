@@ -6,15 +6,15 @@ import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.Vector;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Freeze implements IAbility {
 
@@ -32,52 +32,51 @@ public class Freeze implements IAbility {
         final Location standLoc = center.clone().add(0.5, 0.0, 0.5);
         standLoc.setDirection(target.getLocation().getDirection());
 
-        
         target.setMetadata("IS_ABILITY_FREEZE", new FixedMetadataValue(Main.getInstance(), true));
 
-        
         if (target instanceof Mob mob) {
             mob.setAI(false);
         }
 
-        
         target.teleport(standLoc);
 
-        List<Block> iceBlocks = new ArrayList<>();
-        List<Material> oldMaterials = new ArrayList<>();
+        // Sử dụng Map để lưu trực tiếp Block và BlockData (hoặc Material) tương ứng, tránh lệch index
+        Map<Block, BlockData> originalBlocks = new HashMap<>();
 
         Block bottom = center.getBlock();
         Block top = center.clone().add(0, 1, 0).getBlock();
 
-        saveAndSetIce(bottom, iceBlocks, oldMaterials);
-        saveAndSetIce(top, iceBlocks, oldMaterials);
+        saveAndSetIce(bottom, originalBlocks);
+        saveAndSetIce(top, originalBlocks);
 
         center.getWorld().playSound(center, Sound.BLOCK_GLASS_BREAK, 1.0f, 0.5f);
         center.getWorld().spawnParticle(Particle.SNOWFLAKE, standLoc.clone().add(0, 1, 0), 50, 0.5, 1, 0.5, 0.05);
 
         new BukkitRunnable() {
             int ticks = 0;
+            boolean cleanedUp = false;
 
             @Override
             public void run() {
-                if (!target.isValid() || target.isDead() || ticks >= durationTicks) {
+                // Nếu entity chết, không hợp lệ, hoặc chunk chứa target không còn loaded thì bắt buộc cleanup
+                if (!target.isValid() || target.isDead() || !target.getLocation().isChunkLoaded() || ticks >= durationTicks) {
                     cleanup();
                     this.cancel();
                     return;
                 }
 
-                
-                
                 Location current = target.getLocation();
                 if (current.getX() != standLoc.getX() || current.getZ() != standLoc.getZ()) {
                     Location loc = standLoc.clone();
-                    loc.setY(current.getY()); 
+                    loc.setY(current.getY());
                     target.teleport(loc);
                 }
 
-                
-                for (Block b : iceBlocks) {
-                    if (b.getType() != Material.PACKED_ICE) b.setType(Material.PACKED_ICE);
+                // Duy trì block băng
+                for (Block b : originalBlocks.keySet()) {
+                    if (b.getType() != Material.PACKED_ICE) {
+                        b.setType(Material.PACKED_ICE, false);
+                    }
                 }
 
                 if (ticks % 10 == 0) {
@@ -88,8 +87,10 @@ public class Freeze implements IAbility {
             }
 
             private void cleanup() {
-                
-                if (target instanceof Mob mob) {
+                if (cleanedUp) return;
+                cleanedUp = true;
+
+                if (target instanceof Mob mob && mob.isValid()) {
                     mob.setAI(true);
                 }
 
@@ -97,19 +98,24 @@ public class Freeze implements IAbility {
                     target.removeMetadata("IS_ABILITY_FREEZE", Main.getInstance());
                 }
 
-                
-                for (int i = 0; i < iceBlocks.size(); i++) {
-                    iceBlocks.get(i).setType(oldMaterials.get(i));
+                // Khôi phục lại trạng thái block ban đầu
+                for (Map.Entry<Block, BlockData> entry : originalBlocks.entrySet()) {
+                    Block b = entry.getKey();
+                    if (b.getLocation().isChunkLoaded()) {
+                        b.setBlockData(entry.getValue(), false);
+                    }
                 }
 
-                center.getWorld().playSound(center, Sound.BLOCK_GLASS_BREAK, 0.8f, 1.5f);
+                if (center.getWorld() != null && center.isChunkLoaded()) {
+                    center.getWorld().playSound(center, Sound.BLOCK_GLASS_BREAK, 0.8f, 1.5f);
+                }
             }
         }.runTaskTimer(Main.getInstance(), 0L, 1L);
     }
 
-    private void saveAndSetIce(Block b, List<Block> blocks, List<Material> materials) {
-        materials.add(b.getType());
-        blocks.add(b);
-        b.setType(Material.PACKED_ICE);
+    private void saveAndSetIce(Block b, Map<Block, BlockData> originalBlocks) {
+        // Lưu trữ lại BlockData gốc thay vì chỉ Material để giữ nguyên trạng thái (ví dụ hướng nước, hoa, v.v.)
+        originalBlocks.put(b, b.getBlockData());
+        b.setType(Material.PACKED_ICE, false);
     }
 }

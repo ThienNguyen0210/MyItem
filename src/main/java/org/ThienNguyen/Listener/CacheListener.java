@@ -1,6 +1,5 @@
 package org.ThienNguyen.Listener;
 
-import org.ThienNguyen.API.PlayerRefreshStatsEvent;
 import org.ThienNguyen.Ability.AbilityData;
 import org.ThienNguyen.JewelryManager;
 import org.ThienNguyen.Main;
@@ -37,7 +36,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CacheListener implements Listener {
-    // THÊM vào đầu class CacheListener, sau các field hiện có:
+    
     private static final NamespacedKey KEY_PCT_DAMAGE          = new NamespacedKey(Main.getInstance(), "pct_damage");
     private static final NamespacedKey KEY_PCT_CRIT_DMG_RED    = new NamespacedKey(Main.getInstance(), "pct_critical_damage_reduction");
     private static final NamespacedKey KEY_PCT_ARMOR           = new NamespacedKey(Main.getInstance(), "pct_armor");
@@ -51,11 +50,53 @@ public class CacheListener implements Listener {
     private static final NamespacedKey KEY_PCT_DEATH_DMG       = new NamespacedKey(Main.getInstance(), "pct_death_damage");
     private static final NamespacedKey KEY_PCT_EFFECT_RES      = new NamespacedKey(Main.getInstance(), "pct_effect_resistance");
     private static final NamespacedKey KEY_IS_PLACEHOLDER      = new NamespacedKey(Main.getInstance(), "is_placeholder");
-    // Thiện nguyễn dev
+    
     private static final EquipmentSlot[] ALL_SLOTS = {
             EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET,
             EquipmentSlot.HAND, EquipmentSlot.OFF_HAND
     };
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    private static final org.bukkit.attribute.Attribute KNOCKBACK_RESISTANCE_ATTRIBUTE =
+            resolveAttribute("knockback_resistance", "KNOCKBACK_RESISTANCE", "GENERIC_KNOCKBACK_RESISTANCE");
+
+    private static org.bukkit.attribute.Attribute resolveAttribute(String registryKey, String... legacyFieldNames) {
+        try {
+            org.bukkit.attribute.Attribute attr =
+                    org.bukkit.Registry.ATTRIBUTE.get(org.bukkit.NamespacedKey.minecraft(registryKey));
+            if (attr != null) return attr;
+        } catch (Throwable ignored) {
+            
+            
+        }
+
+        for (String name : legacyFieldNames) {
+            try {
+                java.lang.reflect.Field field = org.bukkit.attribute.Attribute.class.getField(name);
+                Object value = field.get(null);
+                if (value instanceof org.bukkit.attribute.Attribute attribute) {
+                    return attribute;
+                }
+            } catch (Exception ignored) {
+                
+            }
+        }
+        Bukkit.getLogger().warning("[" + Main.getInstance().getName() +
+                "] Could not resolve knockback resistance Attribute (tried registry key '" + registryKey +
+                "' and legacy fields: " + String.join(", ", legacyFieldNames) +
+                "). Knockback resistance stat will not be applied.");
+        return null;
+    }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent e) {
@@ -128,71 +169,22 @@ public class CacheListener implements Listener {
 
     private static final ConcurrentHashMap<UUID, Long> LAST_COMBO_MESSAGE_TIME = new ConcurrentHashMap<>();
     private static final long MESSAGE_COOLDOWN_MS = 3000L;
-    /**
-     * Hàm tính toán và nhân các chỉ số dạng phần trăm (%) độc lập hoàn toàn với chỉ số cố định
-     */
-    private static void applyPercentStats(Player player, PlayerCombatCache.CombatStats stats, FileConfiguration slotConfig) {
-        double pctBonusDmg = 0.0;
-        double pctArmor = 0.0;
-        double pctTrueDmg = 0.0;
-        double pctCritDmgReduction = 0.0;
-        double pctMagicDmg = 0.0;
-        double pctMagicDef = 0.0;
-        double pctPveBonus = 0.0;
-        double pctPvpBonus = 0.0;
-        double pctAllDamage = 0.0;
-        double pctBowDamage = 0.0;
-        double pctDeathDamage = 0.0;
-        double pctEffectResistance = 0.0;
+    
 
-        for (EquipmentSlot slot : ALL_SLOTS) {
-            ItemStack item = player.getInventory().getItem(slot);
-            if (item == null || item.getType() == Material.AIR || !item.hasItemMeta()) continue;
-            if (isMMOCoreAvailable() && !MMOCORE.canUse(player, item)) continue;
 
-            var pdc = item.getItemMeta().getPersistentDataContainer();
 
-            if (pdc.has(KEY_PCT_DAMAGE, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "damage", slot))
-                pctBonusDmg += pdc.get(KEY_PCT_DAMAGE, PersistentDataType.DOUBLE);
 
-            if (pdc.has(KEY_PCT_CRIT_DMG_RED, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "critical_damage_reduction", slot))
-                pctCritDmgReduction += pdc.get(KEY_PCT_CRIT_DMG_RED, PersistentDataType.DOUBLE);
 
-            if (pdc.has(KEY_PCT_ARMOR, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "armor", slot))
-                pctArmor += pdc.get(KEY_PCT_ARMOR, PersistentDataType.DOUBLE);
 
-            if (pdc.has(KEY_PCT_TRUE_DMG, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "true_damage", slot))
-                pctTrueDmg += pdc.get(KEY_PCT_TRUE_DMG, PersistentDataType.DOUBLE);
-
-            if (pdc.has(KEY_PCT_MAGIC_DMG, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "magic_damage", slot))
-                pctMagicDmg += pdc.get(KEY_PCT_MAGIC_DMG, PersistentDataType.DOUBLE);
-
-            if (pdc.has(KEY_PCT_MAGIC_DEF, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "magic_defense", slot))
-                pctMagicDef += pdc.get(KEY_PCT_MAGIC_DEF, PersistentDataType.DOUBLE);
-
-            if (pdc.has(KEY_PCT_PVE, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "pve_damage", slot))
-                pctPveBonus += pdc.get(KEY_PCT_PVE, PersistentDataType.DOUBLE);
-
-            if (pdc.has(KEY_PCT_PVP, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "pvp_damage", slot))
-                pctPvpBonus += pdc.get(KEY_PCT_PVP, PersistentDataType.DOUBLE);
-
-            if (pdc.has(KEY_PCT_ALL_DMG, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "all_damage", slot))
-                pctAllDamage += pdc.get(KEY_PCT_ALL_DMG, PersistentDataType.DOUBLE);
-
-            if (pdc.has(KEY_PCT_BOW_DMG, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "bow_damage", slot))
-                pctBowDamage += pdc.get(KEY_PCT_BOW_DMG, PersistentDataType.DOUBLE);
-
-            if (pdc.has(KEY_PCT_DEATH_DMG, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "death_damage", slot))
-                pctDeathDamage += pdc.get(KEY_PCT_DEATH_DMG, PersistentDataType.DOUBLE);
-
-            if (pdc.has(KEY_PCT_EFFECT_RES, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "effect_resistance", slot))
-                pctEffectResistance += pdc.get(KEY_PCT_EFFECT_RES, PersistentDataType.DOUBLE);
-        }
-
+    private static void applyAccumulatedPercents(PlayerCombatCache.CombatStats stats,
+                                                 double pctBonusDmg, double pctArmor, double pctTrueDmg,
+                                                 double pctCritDmgReduction, double pctMagicDmg, double pctMagicDef,
+                                                 double pctPveBonus, double pctPvpBonus, double pctAllDamage,
+                                                 double pctBowDamage, double pctDeathDamage, double pctEffectResistance) {
         if (pctCritDmgReduction != 0.0) stats.totalCritDamageReduction *= (1.0 + (pctCritDmgReduction / 100.0));
         if (pctBonusDmg != 0.0) {
             stats.totalBonusDmg += 1.0;
-            stats.totalBonusDmg *= (1.0 + (pctBonusDmg / 100.0)); // thiết kế đặc biệt hơn
+            stats.totalBonusDmg *= (1.0 + (pctBonusDmg / 100.0)); 
             stats.totalBonusDmg -= 1.0;
         }
         if (pctArmor != 0.0)       stats.totalArmor        *= (1.0 + (pctArmor / 100.0));
@@ -207,9 +199,7 @@ public class CacheListener implements Listener {
         if (pctEffectResistance != 0.0) stats.totalEffectResistance *= (1.0 + (pctEffectResistance / 100.0));
     }
 
-    /**
-     * Hàm phụ kiểm tra slot quy định riêng cho chỉ số phần trăm độc lập
-     */
+    
     private static boolean isAllowedPercent(ItemStack item, FileConfiguration config, String stat, EquipmentSlot currentSlot) {
         if (item == null || !item.hasItemMeta()) return true;
 
@@ -245,7 +235,12 @@ public class CacheListener implements Listener {
     public static void refreshCache(Player player) {
         if (player == null || !player.isOnline()) return;
 
-        PlayerCombatCache.CombatStats stats = new PlayerCombatCache.CombatStats();
+        
+        
+        
+        
+        
+        PlayerCombatCache.CombatStats stats = PlayerCombatCache.getStats(player.getUniqueId());
         stats.clear();
         FileConfiguration slotConfig   = Main.getInstance().getStatsSettingsConfig();
         FileConfiguration gemConfig    = Main.getInstance().getGemConfig();
@@ -303,10 +298,21 @@ public class CacheListener implements Listener {
 
         stats.clearWeaponElements();
         stats.bestAbilities.clear();
-        stats.totalArmor = player.getAttribute(org.bukkit.attribute.Attribute.GENERIC_ARMOR).getValue();
 
-
-
+        
+        
+        double pctBonusDmg = 0.0;
+        double pctArmor = 0.0;
+        double pctTrueDmg = 0.0;
+        double pctCritDmgReduction = 0.0;
+        double pctMagicDmg = 0.0;
+        double pctMagicDef = 0.0;
+        double pctPveBonus = 0.0;
+        double pctPvpBonus = 0.0;
+        double pctAllDamage = 0.0;
+        double pctBowDamage = 0.0;
+        double pctDeathDamage = 0.0;
+        double pctEffectResistance = 0.0;
 
         for (EquipmentSlot slot : ALL_SLOTS) {
             ItemStack item = player.getInventory().getItem(slot);
@@ -316,6 +322,47 @@ public class CacheListener implements Listener {
                 stats.elementDefenses.merge(elem, lv, Integer::sum);
             });
             if (isMMOCoreAvailable() && !MMOCORE.canUse(player, item)) continue;
+
+            if (item.hasItemMeta()) {
+                var pdc = item.getItemMeta().getPersistentDataContainer();
+
+                if (pdc.has(KEY_PCT_DAMAGE, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "damage", slot))
+                    pctBonusDmg += pdc.get(KEY_PCT_DAMAGE, PersistentDataType.DOUBLE);
+
+                if (pdc.has(KEY_PCT_CRIT_DMG_RED, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "critical_damage_reduction", slot))
+                    pctCritDmgReduction += pdc.get(KEY_PCT_CRIT_DMG_RED, PersistentDataType.DOUBLE);
+
+                if (pdc.has(KEY_PCT_ARMOR, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "armor", slot))
+                    pctArmor += pdc.get(KEY_PCT_ARMOR, PersistentDataType.DOUBLE);
+
+                if (pdc.has(KEY_PCT_TRUE_DMG, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "true_damage", slot))
+                    pctTrueDmg += pdc.get(KEY_PCT_TRUE_DMG, PersistentDataType.DOUBLE);
+
+                if (pdc.has(KEY_PCT_MAGIC_DMG, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "magic_damage", slot))
+                    pctMagicDmg += pdc.get(KEY_PCT_MAGIC_DMG, PersistentDataType.DOUBLE);
+
+                if (pdc.has(KEY_PCT_MAGIC_DEF, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "magic_defense", slot))
+                    pctMagicDef += pdc.get(KEY_PCT_MAGIC_DEF, PersistentDataType.DOUBLE);
+
+                if (pdc.has(KEY_PCT_PVE, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "pve_damage", slot))
+                    pctPveBonus += pdc.get(KEY_PCT_PVE, PersistentDataType.DOUBLE);
+
+                if (pdc.has(KEY_PCT_PVP, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "pvp_damage", slot))
+                    pctPvpBonus += pdc.get(KEY_PCT_PVP, PersistentDataType.DOUBLE);
+
+                if (pdc.has(KEY_PCT_ALL_DMG, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "all_damage", slot))
+                    pctAllDamage += pdc.get(KEY_PCT_ALL_DMG, PersistentDataType.DOUBLE);
+
+                if (pdc.has(KEY_PCT_BOW_DMG, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "bow_damage", slot))
+                    pctBowDamage += pdc.get(KEY_PCT_BOW_DMG, PersistentDataType.DOUBLE);
+
+                if (pdc.has(KEY_PCT_DEATH_DMG, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "death_damage", slot))
+                    pctDeathDamage += pdc.get(KEY_PCT_DEATH_DMG, PersistentDataType.DOUBLE);
+
+                if (pdc.has(KEY_PCT_EFFECT_RES, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "effect_resistance", slot))
+                    pctEffectResistance += pdc.get(KEY_PCT_EFFECT_RES, PersistentDataType.DOUBLE);
+            }
+
             if (isAllowed(item, slotConfig, "accuracy", slot)) {
                 stats.totalAccuracy += Accuracy.get(item);
             }
@@ -434,137 +481,28 @@ public class CacheListener implements Listener {
 
 
         double finalKB = Math.max(0.0, Math.min(1.0, stats.totalKnockbackResist));
-        org.bukkit.attribute.AttributeInstance kbAttr = player.getAttribute(org.bukkit.attribute.Attribute.GENERIC_KNOCKBACK_RESISTANCE);
-        if (kbAttr != null) {
-            kbAttr.setBaseValue(finalKB);
+        if (KNOCKBACK_RESISTANCE_ATTRIBUTE != null) {
+            org.bukkit.attribute.AttributeInstance kbAttr = player.getAttribute(KNOCKBACK_RESISTANCE_ATTRIBUTE);
+            if (kbAttr != null) {
+                kbAttr.setBaseValue(finalKB);
+            }
         }
 
 
 
+        applyAccumulatedPercents(stats, pctBonusDmg, pctArmor, pctTrueDmg, pctCritDmgReduction,
+                pctMagicDmg, pctMagicDef, pctPveBonus, pctPvpBonus, pctAllDamage,
+                pctBowDamage, pctDeathDamage, pctEffectResistance);
 
-        try {
-            if (Bukkit.getPluginManager().isPluginEnabled("MyAttribute")) {
-                UUID uuid = player.getUniqueId();
-
-                // --- FLAT BONUS ---
-                stats.totalDeathDamage           += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "death_damage");
-                stats.totalKnockbackResist           += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "knockback_resistance");
-                stats.totalAllDamage           += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "all_damage");
-                stats.totalBlock           += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "block_rate");
-                stats.totalBowDamage           += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "bow_damage");
-                stats.totalThorns           += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "thorns");
-                stats.totalDeepWound           += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "deep_wound");
-                stats.totalDamageReduction     += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "damage_reduction");
-                stats.totalCritDamageReduction += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "critical_damage_reduction");
-                stats.totalExpBonus            += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "exp_bonus");
-                stats.totalArmorPen            += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "armor_pen");
-                stats.totalBonusDmg            += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "damage");
-                stats.totalTrueDamage          += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "true_damage");
-                stats.totalAccuracy            += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "accuracy");
-                stats.totalCritChance          += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "critical_chance");
-                stats.totalCritDamage          += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "critical_damage");
-                stats.totalPenetration         += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "penetration");
-                stats.totalLifesteal           += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "lifesteal");
-                stats.totalPveBonus            += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "pve_damage");
-                stats.totalPvpBonus            += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "pvp_damage");
-                stats.totalMagicDamage         += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "magic_damage");
-                stats.totalDodge               += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "dodge_rate");
-                stats.totalArmor               += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "armor");
-                stats.totalMagicDefense        += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "magic_defense");
-                stats.totalPveDef              += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "pve_defense");
-                stats.totalPvpDef              += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "pvp_defense");
-                stats.totalAllDefense          += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "all_defense");
-                stats.totalEffectResistance     += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "effect_resistance");
-
-                // --- PERCENT BONUS ---
-                double _p;
-                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "damage");
-                if (_p != 0.0) stats.totalBonusDmg            *= (1 + _p / 100.0);
-
-                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "true_damage");
-                if (_p != 0.0) stats.totalTrueDamage          *= (1 + _p / 100.0);
-
-                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "magic_damage");
-                if (_p != 0.0) stats.totalMagicDamage         *= (1 + _p / 100.0);
-
-                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "magic_defense");
-                if (_p != 0.0) stats.totalMagicDefense        *= (1 + _p / 100.0);
-
-                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "pve_damage");
-                if (_p != 0.0) stats.totalPveBonus            *= (1 + _p / 100.0);
-
-                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "pvp_damage");
-                if (_p != 0.0) stats.totalPvpBonus            *= (1 + _p / 100.0);
-
-                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "all_damage");
-                if (_p != 0.0) stats.totalAllDamage           *= (1 + _p / 100.0);
-
-                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "bow_damage");
-                if (_p != 0.0) stats.totalBowDamage           *= (1 + _p / 100.0);
-
-                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "death_damage");
-                if (_p != 0.0) stats.totalDeathDamage         *= (1 + _p / 100.0);
-
-                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "armor");
-                if (_p != 0.0) stats.totalArmor               *= (1 + _p / 100.0);
-
-                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "critical_damage");
-                if (_p != 0.0) stats.totalCritDamage          *= (1 + _p / 100.0);
-
-                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "critical_damage_reduction");
-                if (_p != 0.0) stats.totalCritDamageReduction *= (1 + _p / 100.0);
-
-                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "armor_pen");
-                if (_p != 0.0) stats.totalArmorPen            *= (1 + _p / 100.0);
-
-                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "effect_resistance");
-                if (_p != 0.0) stats.totalEffectResistance    *= (1 + _p / 100.0);
-
-                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "penetration");
-                if (_p != 0.0) stats.totalPenetration         *= (1 + _p / 100.0);
-
-                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "lifesteal");
-                if (_p != 0.0) stats.totalLifesteal           *= (1 + _p / 100.0);
-
-                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "dodge_rate");
-                if (_p != 0.0) stats.totalDodge               *= (1 + _p / 100.0);
-
-                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "damage_reduction");
-                if (_p != 0.0) stats.totalDamageReduction     *= (1 + _p / 100.0);
-
-                // --- BỔ SUNG CÁC STATS CÒN THIẾU ---
-                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "pve_defense");
-                if (_p != 0.0) stats.totalPveDef              *= (1 + _p / 100.0);
-
-                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "pvp_defense");
-                if (_p != 0.0) stats.totalPvpDef              *= (1 + _p / 100.0);
-
-                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "all_defense");
-                if (_p != 0.0) stats.totalAllDefense          *= (1 + _p / 100.0);
-
-                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "thorns");
-                if (_p != 0.0) stats.totalThorns              *= (1 + _p / 100.0);
-
-                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "knockback_resistance");
-                if (_p != 0.0) stats.totalKnockbackResist     *= (1 + _p / 100.0);
-
-                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "block_rate");
-                if (_p != 0.0) stats.totalBlock               *= (1 + _p / 100.0);
-
-                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "exp_bonus");
-                if (_p != 0.0) stats.totalExpBonus            *= (1 + _p / 100.0);
-
-                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "accuracy");
-                if (_p != 0.0) stats.totalAccuracy            *= (1 + _p / 100.0);
-
-                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "deep_wound");
-                if (_p != 0.0) stats.totalDeepWound           *= (1 + _p / 100.0);
-            }
-        } catch (Throwable ignored) {}
-        applyPercentStats(player, stats, slotConfig);
-        PlayerRefreshStatsEvent apiEvent = new PlayerRefreshStatsEvent(player, stats);
-        org.bukkit.Bukkit.getPluginManager().callEvent(apiEvent);
+        
+        
+        
+        
+        org.ThienNguyen.API.StatBoostAPI.apply(player.getUniqueId(), stats);
         StatsListener.getInstance().updatePlayerStats(player);
+        
+        
+        
         PlayerCombatCache.updateCache(player.getUniqueId(), stats);
     }
 
@@ -713,9 +651,7 @@ public class CacheListener implements Listener {
         } catch (Exception ignored) {}
     }
 
-    /**
-     * Normalize EquipmentSlot cho thống nhất
-     */
+    
     private static String normalizeSlot(EquipmentSlot slot) {
         if (slot == null) return "";
         String name = slot.name().toLowerCase().replace("_", "");
@@ -724,13 +660,11 @@ public class CacheListener implements Listener {
         return name;
     }
 
-    /**
-     * Hàm kiểm tra slot được phép (đã fix)
-     */
+    
     private static boolean isAllowed(ItemStack item, FileConfiguration config, String stat, EquipmentSlot currentSlot) {
         if (item == null || !item.hasItemMeta()) return true;
 
-        // Kiểm tra PDC custom slot
+        
         NamespacedKey key = new NamespacedKey(Main.getInstance(), "slot_" + stat.toLowerCase());
         String requiredSlot = item.getItemMeta().getPersistentDataContainer().get(key, PersistentDataType.STRING);
 
@@ -745,7 +679,7 @@ public class CacheListener implements Listener {
             return false;
         }
 
-        // Fallback config
+        
         if (config == null) return true;
         List<String> list = config.getStringList("stats-slots." + stat);
         if (list == null || list.isEmpty()) return true;

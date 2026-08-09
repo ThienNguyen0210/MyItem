@@ -18,10 +18,10 @@ public class LoreGenerator {
 
     private static final MiniMessage mm = MiniMessage.miniMessage();
 
-    
+
     private static final Pattern LEGACY_CLEANER = Pattern.compile("§[0-9a-fk-orx]|§x(§[0-9a-f]){6}", Pattern.CASE_INSENSITIVE);
 
-    
+
     private static final LegacyComponentSerializer paperHexSerializer = LegacyComponentSerializer.builder()
             .hexColors()
             .useUnusualXRepeatedCharacterHexFormat()
@@ -35,14 +35,14 @@ public class LoreGenerator {
     public static String colorize(String text) {
         if (text == null || text.isEmpty()) return "";
 
-        
+
         String processed = ChatColor.translateAlternateColorCodes('&', text);
 
-        
+
         Component component;
         if (processed.contains("<")) {
             try {
-                
+
                 String cleanText = LEGACY_CLEANER.matcher(processed).replaceAll("");
                 component = mm.deserialize(cleanText);
             } catch (Exception e) {
@@ -50,11 +50,11 @@ public class LoreGenerator {
                 component = sectionSerializer.deserialize(processed);
             }
         } else {
-            
+
             component = sectionSerializer.deserialize(processed);
         }
 
-        
+
         return paperHexSerializer.serialize(component);
     }
 
@@ -69,87 +69,79 @@ public class LoreGenerator {
         List<String> formatLines = Main.getInstance().getLoreFormatConfig().getStringList(formatId);
         if (formatLines.isEmpty()) return;
 
-        
+        // Manually-specified {stats:xxx} keys are excluded from the {stats} catch-all list
+        // so a stat doesn't get printed twice (once by name, once in the generic dump).
         List<String> excludedKeys = new ArrayList<>();
         Pattern manualStatPattern = Pattern.compile("\\{stats:([a-zA-Z0-9_]+)\\}");
-
         for (String line : formatLines) {
-            if (line.contains("{stats:")) {
-                Matcher m = manualStatPattern.matcher(line);
-                while (m.find()) {
-                    excludedKeys.add(m.group(1).toLowerCase());
-                }
+            Matcher m = manualStatPattern.matcher(line);
+            while (m.find()) {
+                excludedKeys.add(m.group(1).toLowerCase());
             }
         }
 
-        List<String> newLore = new ArrayList<>();
+        LoreRenderer.PlaceholderResolver resolver =
+                (token, argument, rawLine) -> resolvePlaceholder(item, token, argument, excludedKeys);
 
-        
-        for (String line : formatLines) {
+        // {bar}/{sbar} are just stripped for now - swap in a real divider string here if you have one,
+        // e.g. tok -> tok.equals("sbar") ? "&8&m--------------------------------" : "&8&m--------"
+        LoreRenderer renderer = new LoreRenderer(resolver, tok -> "");
 
-            
-            if (line.contains("{stats}")) {
-                newLore.addAll(processListLore(org.ThienNguyen.Lore.StatsLore.getStatsList(item, excludedKeys)));
-                continue;
-            }
-
-            
-            if (line.contains("{stats:")) {
-                Matcher matcher = manualStatPattern.matcher(line);
-                String processedLine = line;
-                boolean hasAtLeastOneValue = false;
-
-                while (matcher.find()) {
-                    String statKey = matcher.group(1);
-                    
-                    String value = org.ThienNguyen.Lore.StatsLore.getSingleStat(item, statKey);
-
-                    if (value != null && !value.isEmpty()) {
-                        processedLine = processedLine.replace(matcher.group(0), value);
-                        hasAtLeastOneValue = true;
-                    }
-                }
-
-                
-                if (hasAtLeastOneValue) {
-                    newLore.add(colorize(processedLine));
-                }
-                continue;
-            }
-
-            
-            if (line.contains("{ability}")) {
-                newLore.addAll(processListLore(org.ThienNguyen.Lore.AbilityLore.getAbilityList(item)));
-                continue;
-            }
-            if (line.contains("{effect}")) {
-                newLore.addAll(processListLore(org.ThienNguyen.Lore.EffectLore.getEffectList(item)));
-                continue;
-            }
-            if (line.contains("{skill}")) {
-                newLore.addAll(processListLore(org.ThienNguyen.Lore.SkillLore.getSkillList(item)));
-                continue;
-            }
-            if (line.contains("{element}")) {
-                newLore.addAll(processListLore(org.ThienNguyen.Lore.ElementLore.getElementList(item)));
-                continue;
-            }
-            if (line.contains("{sockets}")) {
-                newLore.addAll(processListLore(getSocketLore(item)));
-                continue;
-            }
-
-            
-            String finalLine = line;
-            if (finalLine.contains("{tier}")) {
-                finalLine = finalLine.replace("{tier}", org.ThienNguyen.Lore.TiersLore.getTierLine(item));
-            }
-
-            newLore.add(colorize(finalLine));
-        }
+        List<String> newLore = renderer.render(formatLines);
 
         meta.setLore(newLore);
         item.setItemMeta(meta);
+    }
+
+    /**
+     * Central dispatch for every placeholder LoreRenderer encounters.
+     * Returns RAW (un-colorized) text/lines - LoreRenderer calls colorize() itself.
+     * Return null or an empty list to signal "nothing to show" (drops the line / group).
+     */
+    private static List<String> resolvePlaceholder(ItemStack item, String token, String argument, List<String> excludedStatKeys) {
+        switch (token) {
+            case "stats":
+                if (argument == null) {
+                    return org.ThienNguyen.Lore.StatsLore.getStatsList(item, excludedStatKeys);
+                }
+                String statValue = org.ThienNguyen.Lore.StatsLore.getSingleStat(item, argument);
+                return (statValue == null || statValue.isEmpty()) ? null : List.of(statValue);
+
+            case "ability":
+                if (argument == null) {
+                    return org.ThienNguyen.Lore.AbilityLore.getAbilityList(item);
+                }
+                // TODO: needs a single-ability lookup (e.g. AbilityLore.getSingleAbility(item, argument))
+                // to support {ability:xxx} the same way {stats:xxx} works. Not wired yet.
+                return null;
+
+            case "effect":
+                if (argument == null) {
+                    return org.ThienNguyen.Lore.EffectLore.getEffectList(item);
+                }
+                // TODO: needs a single-effect lookup (e.g. EffectLore.getSingleEffect(item, argument)).
+                // Not wired yet.
+                return null;
+
+            case "skill":
+                return org.ThienNguyen.Lore.SkillLore.getSkillList(item);
+
+            case "element":
+                return org.ThienNguyen.Lore.ElementLore.getElementList(item);
+
+            case "sockets":
+                return getSocketLore(item);
+
+            case "tier":
+                String tierLine = org.ThienNguyen.Lore.TiersLore.getTierLine(item);
+                return (tierLine == null || tierLine.isEmpty()) ? null : List.of(tierLine);
+
+            default:
+                // #hash# style MMOItems placeholders: item-type, required-level, profession-*, etc.
+                // TODO: not implemented yet - plug in whatever already computes these values
+                // (item type name, level requirement, profession requirement, etc.) here.
+                return null;
+        }
     }
     /**
      * Lấy lore của phần Ngọc/Khảm (sockets)
@@ -172,14 +164,5 @@ public class LoreGenerator {
         }
 
         return socketLore;
-    }
-    private static List<String> processListLore(List<String> list) {
-        List<String> coloredList = new ArrayList<>();
-        if (list == null) return coloredList;
-
-        for (String s : list) {
-            coloredList.add(colorize(s));
-        }
-        return coloredList;
     }
 }

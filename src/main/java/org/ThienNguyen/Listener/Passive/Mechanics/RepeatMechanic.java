@@ -9,26 +9,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.List;
 
-/**
- * Lặp lại TOÀN BỘ children, cách nhau interval-seconds, tổng "times" lần.
- *
- * QUAN TRỌNG: KHÔNG extends AbstractMechanic — cùng lý do với DelayMechanic.
- * AbstractMechanic tự chạy children ngay lập tức sau khi doExecute() trả true,
- * sẽ làm children bị chạy thêm 1 lần ngoài ý muốn cộng dồn với vòng lặp ở đây
- * (vd times=4 sẽ thành 5 lần thực thi thay vì 4, hoặc gây hiện tượng "nổ kép"
- * như đã quan sát thấy trong thực tế). RepeatMechanic implements PassiveMechanic
- * trực tiếp, tự quản lý toàn bộ vòng lặp + children.
- *
- * yml:
- * - type: REPEAT
- *   times: "4"
- *   interval-seconds: "1"
- *   children:
- *     - type: EXPLODE
- *       ...
- *
- * "Thành công" = đã lên lịch lặp thành công (times >= 1 và children không rỗng).
- */
+
 public class RepeatMechanic implements PassiveMechanic {
 
     private final String rawTimes;

@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ItemFlagCommand implements CommandExecutor, TabCompleter {
 
@@ -25,19 +24,19 @@ public class ItemFlagCommand implements CommandExecutor, TabCompleter {
         if (!(sender instanceof Player player)) return true;
 
         if (!player.hasPermission("windycraft.itemflag")) {
-            player.sendMessage("§cBạn không có quyền dùng lệnh này.");
+            player.sendMessage("§8[§bMyItem§8] §cYou do not have permission to use this command.");
             return true;
         }
 
-        
+
         if (args.length < 3 || !args[0].equalsIgnoreCase("hide")) {
-            player.sendMessage("§cCách dùng: /itemflag hide <type> <true/false>");
+            player.sendMessage("§8[§bMyItem§8] §cUsage: /itemflag hide <type> <true/false>");
             return true;
         }
 
         ItemStack item = player.getInventory().getItemInMainHand();
         if (item.getType() == Material.AIR) {
-            player.sendMessage("§cBạn phải cầm một vật phẩm trên tay!");
+            player.sendMessage("§8[§bMyItem§8] §cYou must hold an item in your hand!");
             return true;
         }
 
@@ -47,20 +46,20 @@ public class ItemFlagCommand implements CommandExecutor, TabCompleter {
 
         if (meta != null) {
             try {
-                
+
                 ItemFlag flag = convertToFlag(typeStr);
 
                 if (enable) {
                     meta.addItemFlags(flag);
-                    player.sendMessage("§aĐã §lẨN §7thông tin §e" + typeStr + " §7trên vật phẩm.");
+                    player.sendMessage("§8[§bMyItem§8] §aSuccessfully §lHIDDEN §7information §e" + typeStr + " §7on the item.");
                 } else {
                     meta.removeItemFlags(flag);
-                    player.sendMessage("§eĐã §lHIỆN §7thông tin §e" + typeStr + " §7trên vật phẩm.");
+                    player.sendMessage("§8[§bMyItem§8] §eSuccessfully §lSHOWN §7information §e" + typeStr + " §7on the item.");
                 }
 
                 item.setItemMeta(meta);
             } catch (IllegalArgumentException e) {
-                player.sendMessage("§cLoại Flag không hợp lệ! Ví dụ: ENCHANTS, ATTRIBUTES, UNBREAKABLE...");
+                player.sendMessage("§8[§bMyItem§8] §cInvalid Flag type! Example: ENCHANTS, ATTRIBUTES, UNBREAKABLE...");
             }
         }
 
@@ -68,7 +67,7 @@ public class ItemFlagCommand implements CommandExecutor, TabCompleter {
     }
 
     private ItemFlag convertToFlag(String input) {
-        
+
         return switch (input) {
             case "ENCHANTS", "ENCHANT" -> ItemFlag.HIDE_ENCHANTS;
             case "ATTRIBUTES", "ATTRIBUTE" -> ItemFlag.HIDE_ATTRIBUTES;

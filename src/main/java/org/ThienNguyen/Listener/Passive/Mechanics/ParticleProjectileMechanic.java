@@ -39,7 +39,20 @@ public class ParticleProjectileMechanic extends AbstractMechanic {
 
     private final boolean immediateImpact;
 
-    // Extra data cho particle đặc biệt
+    
+    private final String flightShape;
+    private final String rawFlightRadius;
+    private final String rawFlightRotationSpeed;
+    private final int flightRings;
+    private final int flightPointsPerRing;
+    private final boolean flightGrow;
+    private final String rawFlightGrowSteps;
+
+    
+    private final boolean sweepAttack;
+    private final int sweepAttackInterval;
+
+    
     private final Color dustColor;
     private final Material blockMaterial;
 
@@ -68,7 +81,20 @@ public class ParticleProjectileMechanic extends AbstractMechanic {
 
         this.immediateImpact = cfg.getBoolean("immediate-impact", false);
 
-        // Extra data
+        
+        this.flightShape            = cfg.getString("flight-shape", "NONE").toUpperCase();
+        this.rawFlightRadius        = cfg.getString("flight-radius", "0.45");
+        this.rawFlightRotationSpeed = cfg.getString("flight-rotation-speed", "0.55");
+        this.flightRings            = Math.max(1, cfg.getInt("flight-rings", 2));
+        this.flightPointsPerRing    = Math.max(3, cfg.getInt("flight-points-per-ring", 6));
+        this.flightGrow             = cfg.getBoolean("flight-grow", true);
+        this.rawFlightGrowSteps     = cfg.getString("flight-grow-steps", "20");
+
+        
+        this.sweepAttack         = cfg.getBoolean("sweep-attack", false);
+        this.sweepAttackInterval = Math.max(1, cfg.getInt("sweep-attack-interval", 4));
+
+        
         this.dustColor = parseColor(cfg.getString("dust-color", "#FFAA00"));
         this.blockMaterial = parseMaterial(cfg.getString("block-material", "MAGMA_BLOCK"));
     }
@@ -93,10 +119,10 @@ public class ParticleProjectileMechanic extends AbstractMechanic {
 
     private void spawnParticleSafe(World world, Location loc, Particle p, int count, double ox, double oy, double oz, double extra) {
         try {
-            if (p == Particle.DUST || p == Particle.DUST) {
+            if (p == Particle.DUST) {
                 Particle.DustOptions options = new Particle.DustOptions(dustColor, 1.8f);
                 world.spawnParticle(p, loc, count, ox, oy, oz, extra, options);
-            } else if (p == Particle.BLOCK || p == Particle.BLOCK || p == Particle.FALLING_DUST) {
+            } else if (p == Particle.BLOCK || p == Particle.FALLING_DUST) {
                 BlockData data = blockMaterial.createBlockData();
                 world.spawnParticle(p, loc, count, ox, oy, oz, extra, data);
             } else {
@@ -126,6 +152,10 @@ public class ParticleProjectileMechanic extends AbstractMechanic {
         int    impactPPP       = Math.max(1, ExpressionResolver.resolveInt(rawImpactParticlePerPoint, actor, 2));
         double impactDamage    = ExpressionResolver.resolve(rawImpactDamage, actor, 0);
 
+        double flightRadius        = Math.max(0.05, ExpressionResolver.resolve(rawFlightRadius, actor, 0.45));
+        double flightRotationSpeed = ExpressionResolver.resolve(rawFlightRotationSpeed, actor, 0.55);
+        int    flightGrowSteps     = Math.max(1, ExpressionResolver.resolveInt(rawFlightGrowSteps, actor, 20));
+
         Location start = actor.getEyeLocation().clone().add(0, 0.8, 0);
 
         if (immediateImpact || speed <= 0.05) {
@@ -135,7 +165,7 @@ public class ParticleProjectileMechanic extends AbstractMechanic {
             return true;
         }
 
-        // Normal Projectile Mode
+        
         LivingEntity originalVictim = ctx.getVictim();
         Vector direction;
         if (originalVictim != null && originalVictim.isValid()) {
@@ -160,7 +190,15 @@ public class ParticleProjectileMechanic extends AbstractMechanic {
                 step++;
 
                 if (world.isChunkLoaded(pos.getBlockX() >> 4, pos.getBlockZ() >> 4)) {
-                    spawnParticleSafe(world, pos, particle, particlePerStep, 0, 0, 0, 0);
+                    if ("TORNADO".equals(flightShape)) {
+                        drawFlightTornado(world, pos, step, flightRadius, flightRotationSpeed, flightGrowSteps);
+                    } else {
+                        spawnParticleSafe(world, pos, particle, particlePerStep, 0, 0, 0, 0);
+                    }
+
+                    if (sweepAttack && step % sweepAttackInterval == 0) {
+                        world.spawnParticle(Particle.SWEEP_ATTACK, pos, 1, 0, 0, 0, 0);
+                    }
                 }
 
                 for (Entity nearby : world.getNearbyEntities(pos, hitRadius, hitRadius, hitRadius)) {
@@ -224,7 +262,31 @@ public class ParticleProjectileMechanic extends AbstractMechanic {
         }.runTaskTimer(Main.getInstance(), 0L, 1L);
     }
 
-    // ==================== IMPACT SHAPES ====================
+    
+
+    
+    private void drawFlightTornado(World world, Location pos, int step, double maxRadius,
+                                   double rotationSpeed, int growSteps) {
+        double growFactor = flightGrow ? Math.min(1.0, step / (double) growSteps) : 1.0;
+        double radius = maxRadius * (0.4 + 0.6 * growFactor);
+
+        for (int ring = 0; ring < flightRings; ring++) {
+            double ringRatio = flightRings <= 1 ? 0 : (double) ring / (flightRings - 1);
+            double yOffset = (ringRatio - 0.5) * 0.6;
+            double ringRadius = radius * (1.0 - ringRatio * 0.35);
+            double rotation = step * rotationSpeed + ring * 1.2;
+
+            for (int i = 0; i < flightPointsPerRing; i++) {
+                double angle = 2 * Math.PI * i / flightPointsPerRing + rotation;
+                double x = ringRadius * Math.cos(angle);
+                double z = ringRadius * Math.sin(angle);
+                Location point = pos.clone().add(x, yOffset, z);
+                spawnParticleSafe(world, point, particle, 1, 0.02, 0.02, 0.02, 0.01);
+            }
+        }
+    }
+
+    
 
     private void drawImpactCircle(World world, Location origin, double maxRadius, double progress, int points, int ppp) {
         double radius = maxRadius * Math.sin(progress * Math.PI / 2);

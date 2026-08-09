@@ -18,9 +18,10 @@ import org.bukkit.persistence.PersistentDataType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.regex.Pattern;
 
 public class GemRemover implements Listener {
-// class này đang thử nghiệm...
+
     private final Random random = new Random();
 
     @EventHandler
@@ -44,24 +45,61 @@ public class GemRemover implements Listener {
         Player player = (Player) event.getWhoClicked();
         var lang = Main.getInstance().getLangManager();
 
-        player.sendMessage("§e[DEBUG] Bắt đầu xử lý Remover...");
-
         if (targetItem.getAmount() >= 2) {
             player.sendMessage(lang.getMessage("item.no-stack-allowed"));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1.0f, 0.8f);
             return;
         }
 
-        List<String> gemsOnItem = GemLogic.getGemsOnItem(targetItem);
-        player.sendMessage("§e[DEBUG] Số ngọc: " + gemsOnItem.size());
+        NamespacedKey idKey = new NamespacedKey(Main.getInstance(), "gem_item_id");
+        String removerId = removerMeta.getPersistentDataContainer().get(idKey, PersistentDataType.STRING);
 
+        FileConfiguration gemConfig = Main.getInstance().getGemConfig();
+        if (removerId == null || !gemConfig.contains(removerId)) return;
+
+        // Mỗi loại remover chỉ gỡ được ĐÚNG 1 loại ngọc (đọc từ "type" của chính remover
+        // trong Gem.yml) — không còn gỡ ngẫu nhiên bất kỳ ngọc nào trên item nữa.
+        String targetType = gemConfig.contains(removerId + ".type")
+                ? gemConfig.getString(removerId + ".type")
+                : null;
+
+        if (targetType == null) {
+            Main.getInstance().getLogger().warning(
+                    "[GemRemover] Remover '" + removerId + "' thiếu 'type' trong Gem.yml — không rõ nó gỡ loại ngọc nào.");
+            player.sendMessage("§cDụng cụ gỡ ngọc này chưa được cấu hình đúng! Vui lòng báo Admin.");
+            return;
+        }
+
+        List<String> gemsOnItem = GemLogic.getGemsOnItem(targetItem);
         if (gemsOnItem.isEmpty()) {
             player.sendMessage("§cVật phẩm này không có ngọc nào để gỡ!");
             return;
         }
 
-        String removedGemId = gemsOnItem.get(random.nextInt(gemsOnItem.size()));
-        player.sendMessage("§e[DEBUG] Đang gỡ: " + removedGemId);
+        List<String> matchingGems = new ArrayList<>();
+        if (targetType.equalsIgnoreCase("ANY")) {
+            // Remover loại "ANY": gỡ được ngọc thuộc bất kỳ độ hiếm nào.
+            matchingGems.addAll(gemsOnItem);
+        } else {
+            for (String gemId : gemsOnItem) {
+                String gemType = gemConfig.getString(gemId + ".type", "");
+                if (gemType.equalsIgnoreCase(targetType)) {
+                    matchingGems.add(gemId);
+                }
+            }
+        }
+
+        if (matchingGems.isEmpty()) {
+            if (targetType.equalsIgnoreCase("ANY")) {
+                player.sendMessage("§cVật phẩm này không có ngọc nào để gỡ!");
+            } else {
+                player.sendMessage("§cVật phẩm này không có ngọc loại §f" + targetType + " §cđể gỡ!");
+            }
+            return;
+        }
+
+        String removedGemId = matchingGems.get(random.nextInt(matchingGems.size()));
+        String actualGemType = gemConfig.getString(removedGemId + ".type", targetType);
 
         ItemStack returnedGem = createGemItem(removedGemId);
         if (returnedGem != null) {
@@ -72,7 +110,7 @@ public class GemRemover implements Listener {
             }
         }
 
-        if (removeGemFromItem(targetItem, removedGemId, player)) {
+        if (removeGemFromItem(targetItem, removedGemId, actualGemType)) {
             player.sendMessage("§aĐã gỡ ngọc §f" + removedGemId + " §athành công! Ngọc đã được trả về.");
             player.playSound(player.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1f, 1f);
             new org.ThienNguyen.Listener.CacheListener().refreshCache(player);
@@ -83,91 +121,83 @@ public class GemRemover implements Listener {
         removerItem.setAmount(removerItem.getAmount() - 1);
     }
 
-    private boolean removeGemFromItem(ItemStack item, String gemIdToRemove, Player player) {
+    /**
+     * Gỡ ngọc khỏi item: cập nhật item_sockets (PDC) VÀ lore trên CÙNG MỘT
+     * ItemMeta, rồi commit 1 lần duy nhất ở cuối. (Bug cũ: restoreEmptySocketLore
+     * tự lấy 1 bản ItemMeta riêng qua item.getItemMeta(), sửa lore trên bản đó,
+     * rồi hàm này lại setItemMeta bằng bản ItemMeta cũ hơn — ghi đè mất phần lore
+     * vừa sửa. Ghép làm 1 object để tránh mất thay đổi.)
+     */
+    private boolean removeGemFromItem(ItemStack item, String gemIdToRemove, String socketType) {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return false;
 
-        
         NamespacedKey socketKey = new NamespacedKey(Main.getInstance(), "item_sockets");
         String currentData = meta.getPersistentDataContainer().get(socketKey, PersistentDataType.STRING);
         if (currentData == null || currentData.isEmpty()) return false;
 
-        FileConfiguration gemConfig = Main.getInstance().getGemConfig();
-        String gemType = gemConfig.getString(gemIdToRemove + ".type", "common");
-
-        String newData = currentData.replaceFirst(gemIdToRemove, "EMPTY_" + gemType);
+        String newData = currentData.replaceFirst(Pattern.quote(gemIdToRemove), "EMPTY_" + socketType);
         meta.getPersistentDataContainer().set(socketKey, PersistentDataType.STRING, newData);
 
-        player.sendMessage("§e[DEBUG] PDC cập nhật: " + newData);
-
-        
-        restoreEmptySocketLore(item, gemIdToRemove, gemType, player);
+        restoreEmptySocketLore(meta, gemIdToRemove, socketType);
 
         item.setItemMeta(meta);
         return true;
     }
 
     /**
-     * THAY LORE THEO FORMAT TRONG TYPE.YML - Tìm đúng dòng có ︵
+     * Thay dòng lore của ngọc bị gỡ bằng dòng lỗ trống, dựa trên format thật của
+     * ngọc đó (giống cách GemKham khớp dòng khi khảm ngọc, chỉ làm ngược lại) —
+     * thay vì tìm theo chuỗi cứng như "Sát Thương I" hay ký tự "︵" (chỉ đúng
+     * cho 1 ngọc cụ thể và sẽ sai với mọi ngọc khác).
      */
-    private void restoreEmptySocketLore(ItemStack item, String gemIdToRemove, String socketType, Player player) {
-        ItemMeta meta = item.getItemMeta();
-        if (meta == null || !meta.hasLore()) {
-            player.sendMessage("§c[DEBUG] Không có lore");
-            return;
-        }
+    private void restoreEmptySocketLore(ItemMeta meta, String gemIdToRemove, String socketType) {
+        if (!meta.hasLore()) return;
 
+        FileConfiguration gemConfig = Main.getInstance().getGemConfig();
         FileConfiguration typeConfig = Main.getInstance().getGemTypeConfig();
 
         String emptyFormat = typeConfig.getString(socketType + ".format", "&7[ ○ ] Lỗ trống");
         String coloredEmpty = ChatColor.translateAlternateColorCodes('&', emptyFormat);
 
-        player.sendMessage("§e[DEBUG] Type: " + socketType + " | Format từ type.yml: §f" + coloredEmpty);
+        String gemFormat = gemConfig.getString(gemIdToRemove + ".format");
+        if (gemFormat == null || gemFormat.isEmpty()) {
+            gemFormat = "&f[ ● ] " + gemConfig.getString(gemIdToRemove + ".display-name", gemIdToRemove);
+        }
+        String coloredGem = ChatColor.translateAlternateColorCodes('&', gemFormat);
 
         List<String> lore = new ArrayList<>(meta.getLore());
         boolean replaced = false;
 
-        player.sendMessage("§e[DEBUG] Bắt đầu quét lore... Tổng " + lore.size() + " dòng");
-
         for (int i = 0; i < lore.size(); i++) {
-            String line = lore.get(i);
-            String stripped = ChatColor.stripColor(line);
-
-            player.sendMessage("§7[DEBUG] Dòng " + (i+1) + ": §f" + line);
-
-            
-            if (line.contains("︵") || stripped.contains("Sát Thương I") && line.contains("︵")) {
+            if (lore.get(i).equals(coloredGem)) {
                 lore.set(i, coloredEmpty);
-                player.sendMessage("§a[DEBUG] ✓ ĐÃ THAY THÀNH CÔNG dòng " + (i+1) + " (dòng có ︵) → " + coloredEmpty);
-                replaced = true;
-                break;
-            }
-
-            
-            if (!replaced && stripped.contains("Sát Thương I")) {
-                lore.set(i, coloredEmpty);
-                player.sendMessage("§a[DEBUG] ✓ Thay dòng " + (i+1) + " theo Sát Thương I");
                 replaced = true;
                 break;
             }
         }
 
-        if (!replaced && !lore.isEmpty()) {
-            
-            lore.set(lore.size() - 1, coloredEmpty);
-            player.sendMessage("§e[DEBUG] Fallback: Thay dòng cuối cùng");
-            replaced = true;
+        // Fallback: so sánh không màu, phòng trường hợp mã màu lệch nhưng nội dung giống nhau.
+        if (!replaced) {
+            String strippedGem = ChatColor.stripColor(coloredGem);
+            for (int i = 0; i < lore.size(); i++) {
+                if (ChatColor.stripColor(lore.get(i)).equals(strippedGem)) {
+                    lore.set(i, coloredEmpty);
+                    replaced = true;
+                    break;
+                }
+            }
         }
 
         if (replaced) {
             meta.setLore(lore);
-            player.sendMessage("§a[DEBUG] Hoàn tất thay lore theo type.yml - THÀNH CÔNG!");
         } else {
-            player.sendMessage("§c[DEBUG] Không thay được lore nào!");
+            Main.getInstance().getLogger().warning(
+                    "[GemRemover] Không tìm thấy dòng lore của ngọc '" + gemIdToRemove
+                            + "' để khôi phục — lore có thể không đồng bộ với item_sockets.");
         }
     }
 
-    
     private ItemStack createGemItem(String gemId) {
         FileConfiguration gemConfig = Main.getInstance().getGemConfig();
         if (gemId == null || !gemConfig.contains(gemId)) return null;

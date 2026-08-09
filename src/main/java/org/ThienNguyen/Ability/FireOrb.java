@@ -15,6 +15,11 @@ import java.util.Set;
 
 public class FireOrb implements IAbility {
 
+    // Dedicated lock tag, set on activation and cleared only once the full sequence (orbit +
+    // explosion) has finished. Prevents this ability from being re-triggered off its own
+    // self-inflicted damage without depending on EventDamage's transient "IS_ABILITY" flag.
+    private static final String METADATA_LOCK = "ABILITY_LOCK_FIRE_ORB";
+
     @Override
     public String getName() {
         return "FIRE_ORB";
@@ -23,8 +28,10 @@ public class FireOrb implements IAbility {
     @Override
     public void execute(Player attacker, LivingEntity target, int level, double baseDamage) {
         if (attacker == null || target == null) return;
+        if (target.hasMetadata(METADATA_LOCK)) return;
+        target.setMetadata(METADATA_LOCK, new FixedMetadataValue(Main.getInstance(), true));
 
-        
+
         final Location centerLoc = target.getLocation().add(0, 0.5, 0);
 
         double burnMultiplier = 0.06 + (Math.max(0, level - 1) * 0.03);
@@ -37,23 +44,23 @@ public class FireOrb implements IAbility {
 
             @Override
             public void run() {
-                if (ticks >= 100) { 
+                if (ticks >= 100) {
                     if (!exploded) {
-                        spawnFireWave(attacker, centerLoc, explodeDamage);
+                        spawnFireWave(attacker, target, centerLoc, explodeDamage);
                         exploded = true;
                         this.cancel();
                     }
                     return;
                 }
 
-                
+
                 double angle = ticks * 0.5;
                 double x = Math.cos(angle) * 1.0;
                 double z = Math.sin(angle) * 1.0;
                 centerLoc.getWorld().spawnParticle(Particle.FLAME, centerLoc.clone().add(x, 0.5, z), 3, 0.02, 0.02, 0.02, 0.02);
                 centerLoc.getWorld().spawnParticle(Particle.SMALL_FLAME, centerLoc.clone().add(0, 0.5, 0), 5, 0.2, 0.2, 0.2, 0.01);
 
-                
+
                 if (ticks % 20 == 0) {
                     centerLoc.getWorld().playSound(centerLoc, Sound.BLOCK_FIRE_AMBIENT, 1.0f, 1.0f);
                     for (Entity entity : centerLoc.getWorld().getNearbyEntities(centerLoc, 2, 2, 2)) {
@@ -69,11 +76,11 @@ public class FireOrb implements IAbility {
         }.runTaskTimer(Main.getInstance(), 0L, 2L);
     }
 
-    
-    private void spawnFireWave(Player attacker, Location center, double damage) {
+
+    private void spawnFireWave(Player attacker, LivingEntity target, Location center, double damage) {
         center.getWorld().playSound(center, Sound.ENTITY_DRAGON_FIREBALL_EXPLODE, 1.5f, 0.8f);
 
-        
+
         Set<Integer> hitList = new HashSet<>();
 
         new BukkitRunnable() {
@@ -83,11 +90,12 @@ public class FireOrb implements IAbility {
             @Override
             public void run() {
                 if (currentRadius >= maxRadius) {
+                    if (target.isValid()) target.removeMetadata(METADATA_LOCK, Main.getInstance());
                     this.cancel();
                     return;
                 }
 
-                
+
                 for (int i = 0; i < 360; i += 10) {
                     double radians = Math.toRadians(i);
                     double x = Math.cos(radians) * currentRadius;
@@ -95,26 +103,26 @@ public class FireOrb implements IAbility {
                     Location particleLoc = center.clone().add(x, 0.1, z);
 
                     center.getWorld().spawnParticle(Particle.FLAME, particleLoc, 1, 0, 0, 0, 0.05);
-                    if (currentRadius > 5) { 
+                    if (currentRadius > 5) {
                         center.getWorld().spawnParticle(Particle.SMOKE, particleLoc, 1, 0, 0, 0, 0.02);
                     }
                 }
 
-                
+
                 for (Entity entity : center.getWorld().getNearbyEntities(center, currentRadius, 2, currentRadius)) {
                     if (entity instanceof LivingEntity victim && !entity.equals(attacker) && !(entity instanceof ArmorStand)) {
                         if (!hitList.contains(victim.getEntityId())) {
                             hitList.add(victim.getEntityId());
                             applyAbilityDamage(attacker, victim, damage);
 
-                            
+
                             Vector push = victim.getLocation().toVector().subtract(center.toVector()).normalize().multiply(0.8).setY(0.2);
                             victim.setVelocity(push);
                         }
                     }
                 }
 
-                currentRadius += 1.0; 
+                currentRadius += 1.0;
             }
         }.runTaskTimer(Main.getInstance(), 0L, 2L);
     }

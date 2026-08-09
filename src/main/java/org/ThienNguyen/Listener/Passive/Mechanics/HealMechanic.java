@@ -7,17 +7,7 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.LivingEntity;
 
-/**
- * Hồi máu flat hoặc % maxHP.
- *
- * yml:
- * - type: HEAL
- *   target: SELF
- *   amount: "%player_level% * 2"   # flat HP — số, biểu thức, hoặc placeholder PAPI
- *   percent: "0"                    # % maxHP; nếu > 0 ưu tiên hơn flat
- *
- * Cả "amount" và "percent" đều được resolve lúc execute().
- */
+
 public class HealMechanic extends AbstractMechanic {
 
     private final String rawFlat;

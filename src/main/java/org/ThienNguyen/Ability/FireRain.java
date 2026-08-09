@@ -26,11 +26,11 @@ public class FireRain implements IAbility {
 
     @Override
     public void execute(Player attacker, LivingEntity target, int level, double baseDamage) {
-        if (target == null) return;
+        if (target == null || target.isDead()) return;
 
         Plugin plugin = JavaPlugin.getProvidingPlugin(getClass());
 
-        
+
         if (target.hasMetadata("FIRERAIN_ACTIVE")) return;
         target.setMetadata("FIRERAIN_ACTIVE", new FixedMetadataValue(plugin, true));
 
@@ -38,21 +38,21 @@ public class FireRain implements IAbility {
         double finalDamage = baseDamage * (damagePercent / 100.0);
         Random random = new Random();
 
-        
+
         Map<Location, Material> originalBlocks = new HashMap<>();
         Location center = target.getLocation().clone();
 
-        
+
         for (int x = -2; x <= 2; x++) {
             for (int z = -2; z <= 2; z++) {
                 if (random.nextDouble() < 0.5) {
                     Block block = center.clone().add(x, -1, z).getBlock();
-                    
+
                     if (block.getType().isSolid() && block.getType() != Material.MAGMA_BLOCK) {
-                        
+
                         originalBlocks.put(block.getLocation().clone(), block.getType());
                         block.setType(Material.MAGMA_BLOCK);
-                        
+
                         block.setMetadata("UNBREAKABLE_MAGMA", new FixedMetadataValue(plugin, true));
                     }
                 }
@@ -64,9 +64,14 @@ public class FireRain implements IAbility {
 
             @Override
             public void run() {
-                
-                if (ticks >= 40 || target.isDead()) {
-                    
+                // FIX: also bail out on !target.isValid() (not just isDead()). Without this,
+                // if the target becomes invalid for any reason other than dying (world unload,
+                // entity removal, etc.) this runnable never reaches the cleanup branch below —
+                // originalBlocks never gets restored, leaving permanent, unbreakable
+                // MAGMA_BLOCKs behind, and target.getLocation() calls on an invalid entity risk
+                // throwing.
+                if (ticks >= 40 || target.isDead() || !target.isValid()) {
+
                     originalBlocks.forEach((loc, material) -> {
                         Block b = loc.getBlock();
                         b.setType(material);
@@ -80,7 +85,7 @@ public class FireRain implements IAbility {
 
                 Location currentLoc = target.getLocation();
 
-                
+
                 for (int i = 0; i < 2; i++) {
                     double offsetX = (random.nextDouble() - 0.5) * 4;
                     double offsetZ = (random.nextDouble() - 0.5) * 4;
@@ -90,20 +95,20 @@ public class FireRain implements IAbility {
                     }
                 }
 
-                
+
                 if (ticks % 10 == 0) {
                     currentLoc.getWorld().playSound(currentLoc, Sound.BLOCK_LAVA_AMBIENT, 0.6f, 1.2f);
                     for (Entity entity : currentLoc.getWorld().getNearbyEntities(currentLoc, 3, 2, 3)) {
                         if (entity instanceof LivingEntity victim && !victim.equals(attacker)) {
 
-                            
-                            
+
+
                             victim.setMetadata("IS_ABILITY", new FixedMetadataValue(plugin, true));
 
-                            
+
                             victim.damage(finalDamage, attacker);
 
-                            
+
                             new BukkitRunnable() {
                                 @Override
                                 public void run() {
@@ -112,7 +117,7 @@ public class FireRain implements IAbility {
                                     }
                                 }
                             }.runTaskLater(plugin, 1L);
-                            
+
 
                         }
                     }

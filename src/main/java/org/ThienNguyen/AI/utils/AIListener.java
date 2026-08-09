@@ -44,16 +44,16 @@ public class AIListener implements Listener {
         
         if (message.equalsIgnoreCase("cancel") || message.equalsIgnoreCase("huy")) {
             player.removeMetadata("ai_prompt_mode", Main.getInstance());
-            player.sendMessage("§c§l[WindyAI] §7Đã hủy quá trình nhập prompt.");
+            player.sendMessage("§8[§bMyItem§8] §7Prompt input process cancelled.");
             return;
         }
 
         
         player.removeMetadata("ai_prompt_mode", Main.getInstance());
 
-        
-        player.sendMessage("§b§l[WindyAI] §7Đang tiếp nhận yêu cầu với Profile: §e" + profileId);
-        player.sendMessage("§f⚡ §7Hệ thống đang xử lý, vui lòng đợi trong giây lát...");
+
+        player.sendMessage("§8[§bMyItem§8] §7Receiving request with Profile: §e" + profileId);
+        player.sendMessage("§8[§bMyItem§8] §f⚡ §7Processing, please wait a moment...");
 
         
         Main.getInstance().getAiProcessor().handleItemCreation(player, message, profileId);

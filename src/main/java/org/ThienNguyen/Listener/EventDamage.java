@@ -21,6 +21,7 @@ import org.bukkit.metadata.FixedMetadataValue;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 
 public class EventDamage implements Listener {
     private String cachedArmorFormula = null;
@@ -29,16 +30,36 @@ public class EventDamage implements Listener {
     private net.objecthunter.exp4j.Expression cachedMagicExpression = null;
     private static Map<String, String> abilityTriggerCache = null;
     private final Random random = new Random();
+    private final Map<UUID, Long> hitTriggerCooldown = new HashMap<>();
     private final String METADATA_CURSE = "CURSED_REDUCTION";
     private static final String METADATA_EXTRA_DAMAGE = "ABILITY_EXTRA_DAMAGE";
+
+    
+    private Double cachedCritMultiplierBase = null;
+    private Double cachedCritDamageReductionCap = null;
+    private Integer cachedDeepWoundDurationTicks = null;
+    private Double cachedDamageReductionMin = null;
+    private Double cachedDeathDamageThreshold = null;
+    private final Map<String, double[]> elementBaseConfigCache = new HashMap<>();
+    private Boolean mmoCoreEnabledCache = null;
+    private int cooldownCleanupCounter = 0;
+    private static final int COOLDOWN_CLEANUP_INTERVAL = 200;
+    private static final long COOLDOWN_ENTRY_TTL_MS = 5000L;
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onDamage(EntityDamageByEntityEvent event) {
 
         if (!(event.getEntity() instanceof LivingEntity target)) return;
+        final double healthAtHitStart = target.getHealth();
         if (event.getDamager().hasMetadata("THORNS_REFLECT")) {
             return;
         }
         if (event.getEntity().hasMetadata("passive_damage_skip")) {
+            return;
+        }
+        
+        
+        if (target.hasMetadata("INVINCIBLE_STATUS")) {
+            event.setCancelled(true);
             return;
         }
         double scriptDamage = 0;
@@ -53,26 +74,32 @@ public class EventDamage implements Listener {
 
         if (target.hasMetadata("IS_ABILITY") || target.hasMetadata("IS_SKILL_PROCESS")) {
             isFromAbility = true;
+            
+            
+            
+            
+            
+            if (target.hasMetadata("IS_ABILITY")) target.removeMetadata("IS_ABILITY", Main.getInstance());
+            if (target.hasMetadata("IS_SKILL_PROCESS")) target.removeMetadata("IS_SKILL_PROCESS", Main.getInstance());
         }
 
-        // ========== XỬ LÝ HIỂN THỊ CHO SKILL/ABILITY ==========
+        
         if (isFromAbility) {
             double damageToDisplay = isFromScript ? scriptDamage : event.getDamage();
 
-            // Set damage vào metadata Normal Damage
-            target.setMetadata("DISPLAY_NORMAL_DAMAGE", new FixedMetadataValue(Main.getInstance(), damageToDisplay));
-
-            // Gọi hiển thị damage
+            
+            TextDisplayManager.setNormalDamage(target, damageToDisplay);
             org.ThienNguyen.Listener.TextDisplayManager.displayAll(target);
         }
-
-        // Return sớm cho Ability (sau khi đã hiển thị)
         if (!isFromScript && isFromAbility) {
             return;
         }
 
-        boolean isFromThorns = event.getDamager().hasMetadata("THORNS_REFLECT");
-        if (isFromThorns) return;
+        
+        
+        
+        
+        boolean isFromThorns = false;
 
         boolean isSkillDamage = target.hasMetadata("SKILL_DAMAGE_PROCESSED");
 
@@ -91,20 +118,32 @@ public class EventDamage implements Listener {
             return;
         }
 
-        if (!isFromScript && attacker != null && !isSkillDamage && !isFromAbility) {
-            if (Bukkit.getPluginManager().isPluginEnabled("MMOCore")) {
-                ItemStack weapon = attacker.getInventory().getItemInMainHand();
-                if (weapon != null && !weapon.getType().isAir()) {
-                    if (!MMOCORE.canUse(attacker, weapon)) {
-                        event.setCancelled(true);
-                        attacker.sendMessage("§cNo Level !:)");
-                        return;
-                    }
+        
+        
+        
+        if (!isFromScript && event.getDamager().hasMetadata("STUNNED_STATUS") && !isFromAbility) {
+            event.setCancelled(true);
+            if (attacker != null) attacker.sendActionBar("§c§l✖ Bạn đang bị choáng!");
+            return;
+        }
+
+        
+        
+        
+        
+        
+        boolean isBasicAttack = attacker != null && !isFromScript && !isFromAbility && !isSkillDamage;
+
+        if (isBasicAttack && isMmoCoreEnabled()) {
+            ItemStack weapon = attacker.getInventory().getItemInMainHand();
+            if (weapon != null && !weapon.getType().isAir()) {
+                if (!MMOCORE.canUse(attacker, weapon)) {
+                    event.setCancelled(true);
+                    attacker.sendMessage("§cNo Level !:)");
+                    return;
                 }
             }
         }
-
-        double currentDamage = isFromScript ? scriptDamage : event.getDamage();
 
         double curseMultiplier = 1.0;
         if (event.getDamager().hasMetadata(METADATA_CURSE)) {
@@ -112,23 +151,47 @@ public class EventDamage implements Listener {
             curseMultiplier = Math.max(0.1, 1.0 - (Math.min(90.0, reductionPercent) / 100.0));
         }
 
+        double currentDamage = isFromScript ? scriptDamage : event.getDamage();
+
+        
+        
+        
+        if (isFromScript && attacker != null) {
+            PlayerCombatCache.CombatStats casterStats = PlayerCombatCache.getStats(attacker.getUniqueId());
+            double effCasterMagicDamage = PlayerCombatCache.getEffective(
+                    attacker.getUniqueId(), "magic_damage", casterStats.totalMagicDamage);
+            currentDamage += effCasterMagicDamage * curseMultiplier;
+        }
+
         double damageBeforeReduction = currentDamage;
 
         PlayerCombatCache.CombatStats attackerStats = null;
-        PlayerCombatCache.CombatStats victimStats = null;
+        
+        
+        PlayerCombatCache.CombatStats victimStats = (target instanceof Player targetAsPlayer)
+                ? PlayerCombatCache.getStats(targetAsPlayer.getUniqueId()) : null;
         double weaponElementTotalDmg = 0.0;
         StringBuilder elementDisplayBuilder = new StringBuilder();
 
-        // Xóa metadata hiển thị cũ
-        target.removeMetadata("DISPLAY_SPECIAL_STATUS", Main.getInstance());
-        target.removeMetadata("LAST_HIT_CRIT", Main.getInstance());
-        target.removeMetadata("DISPLAY_ELEMENTS_DATA", Main.getInstance());
-        target.removeMetadata("DISPLAY_NORMAL_DAMAGE", Main.getInstance());
-        target.removeMetadata("DISPLAY_TRUE_DAMAGE", Main.getInstance());
-        target.removeMetadata("DISPLAY_MAGIC_DAMAGE", Main.getInstance());
-        target.removeMetadata("DISPLAY_PENDING", Main.getInstance());
+        
+        
+        
+        double effAttackerCritChance = 0.0;
+        double effAttackerCritDamage = 0.0;
+        
+        
+        
+        boolean isCritHit = false;
+        
+        double effVictimDodgeRate = 0.0;
+        
+        
+        double effAttackerMagicDamage = 0.0;
 
-        if (attacker != null && !isSkillDamage) {
+        
+        TextDisplayManager.clearDisplayData(target);
+
+        if (isBasicAttack) {
             attackerStats = PlayerCombatCache.getStats(attacker.getUniqueId());
             java.util.UUID attackerUuid = attacker.getUniqueId();
 
@@ -150,8 +213,9 @@ public class EventDamage implements Listener {
                     int attackLevel = entry.getValue();
                     int defenseLevel = 0;
                     int effectiveLevel = attackLevel - defenseLevel;
-                    double baseDmg = Main.getInstance().getElementConfig().getDouble(eId + ".base-damage", 2.0);
-                    double perDmg = Main.getInstance().getElementConfig().getDouble(eId + ".damage-per", 5.0);
+                    double[] elementBaseCfg = getElementBaseConfig(eId);
+                    double baseDmg = elementBaseCfg[0];
+                    double perDmg = elementBaseCfg[1];
 
                     double eDmg = (baseDmg + (effectiveLevel * perDmg)) * curseMultiplier;
                     weaponElementTotalDmg += eDmg;
@@ -163,38 +227,39 @@ public class EventDamage implements Listener {
                 }
             }
 
-            double effectiveCritChance = PlayerCombatCache.getEffective(attackerUuid, "critical_chance", attackerStats.totalCritChance);
-            if (random.nextDouble() * 100 <= effectiveCritChance) {
-                double baseCritMult = Main.getInstance().getCustomListenerConfig().getDouble("crit-multiplier", 1.5);
-                double effectiveCritDamage = PlayerCombatCache.getEffective(attackerUuid, "critical_damage", attackerStats.totalCritDamage);
-                double critMultiplier = baseCritMult + (effectiveCritDamage / 100.0);
+            effAttackerCritChance = PlayerCombatCache.getEffective(attackerUuid, "critical_chance", attackerStats.totalCritChance);
+            effAttackerCritDamage = PlayerCombatCache.getEffective(attackerUuid, "critical_damage", attackerStats.totalCritDamage);
+            
+            if (random.nextDouble() * 100 <= effAttackerCritChance) {
+                double baseCritMult = getCritMultiplierBase();
+                double critMultiplier = baseCritMult + (effAttackerCritDamage / 100.0);
 
-                // Áp dụng giảm sát thương chí mạng của nạn nhân (nếu có)
+                
                 if (target instanceof Player victimForCrit) {
-                    PlayerCombatCache.CombatStats victimCritStats = PlayerCombatCache.getStats(victimForCrit.getUniqueId());
                     double effectiveCritDmgReduction = PlayerCombatCache.getEffective(
                             victimForCrit.getUniqueId(), "crit_damage_reduction",
-                            victimCritStats != null ? victimCritStats.totalCritDamageReduction : 0.0);
+                            victimStats != null ? victimStats.totalCritDamageReduction : 0.0);
                     if (effectiveCritDmgReduction > 0) {
-                        double maxReduction = Main.getInstance().getCustomListenerConfig().getDouble("crit-damage-reduction-cap", 80.0);
+                        double maxReduction = getCritDamageReductionCap();
                         double reduction = Math.min(effectiveCritDmgReduction, maxReduction) / 100.0;
                         critMultiplier = Math.max(1.0, critMultiplier * (1.0 - reduction / 100.0));
                     }
                 }
 
                 currentDamage *= critMultiplier;
-                target.setMetadata("LAST_HIT_CRIT", new FixedMetadataValue(Main.getInstance(), true));
+                isCritHit = true;
+                TextDisplayManager.setLastHitCrit(target);
+                CritEffectManager.playCritEffect(target);
             }
             double effectiveDeepWound = PlayerCombatCache.getEffective(attackerUuid, "deep_wound", attackerStats.totalDeepWound);
             if (effectiveDeepWound > 0) {
-                int durationTicks = Main.getInstance().getCustomListenerConfig()
-                        .getInt("deep-wound-duration-ticks", 60);
+                int durationTicks = getDeepWoundDurationTicks();
                 double existing = target.hasMetadata("DEEP_WOUND_REDUCTION")
                         ? target.getMetadata("DEEP_WOUND_REDUCTION").get(0).asDouble() : 0.0;
                 double newVal = Math.max(existing, Math.min(effectiveDeepWound, 100.0));
                 target.setMetadata("DEEP_WOUND_REDUCTION", new FixedMetadataValue(Main.getInstance(), newVal));
 
-                // FIX: cancel task cũ trước khi tạo mới
+                
                 if (target.hasMetadata("DEEP_WOUND_TASK")) {
                     Bukkit.getScheduler().cancelTask(target.getMetadata("DEEP_WOUND_TASK").get(0).asInt());
                     target.removeMetadata("DEEP_WOUND_TASK", Main.getInstance());
@@ -207,29 +272,40 @@ public class EventDamage implements Listener {
             }
             damageBeforeReduction = currentDamage;
 
-            if (!isFromScript && !isFromAbility) {
-                double magicDmgForAbility = (attackerStats != null) ? (attackerStats.totalMagicDamage * curseMultiplier) : 0.0;
-                double totalPowerForAbility = currentDamage + magicDmgForAbility;
+            
+            
+            effAttackerMagicDamage = PlayerCombatCache.getEffective(
+                    attackerUuid, "magic_damage", attackerStats.totalMagicDamage);
+            double magicDmgForAbility = effAttackerMagicDamage * curseMultiplier;
+            double totalPowerForAbility = currentDamage + magicDmgForAbility;
 
-                handleCachedAbilities(attacker, target, attackerStats.bestAbilities, totalPowerForAbility, "attack");
-                handleCachedAbilities(attacker, target, attackerStats.bestAbilities, totalPowerForAbility, "attack_self");
-            }
+            handleCachedAbilities(attacker, target, attackerStats.bestAbilities, totalPowerForAbility, "attack");
+            handleCachedAbilities(attacker, target, attackerStats.bestAbilities, totalPowerForAbility, "attack_self");
         } else {
             damageBeforeReduction = currentDamage;
         }
 
-        if (target instanceof Player victim) {
-            victimStats = PlayerCombatCache.getStats(victim.getUniqueId());
+        
+        
+        
+        
+        boolean isSkillLikeDamage = isFromScript || isFromAbility || isSkillDamage;
+
+        
+        boolean isMobOrBasicAttack = (isBasicAttack || (event.getDamager() instanceof LivingEntity && attacker == null))
+                && !isFromScript && !isFromAbility && !isSkillDamage;
+
+        if (isMobOrBasicAttack && target instanceof Player victim) {
             java.util.UUID victimUuid = victim.getUniqueId();
 
-            double rawDodge = (victimStats != null)
+            effVictimDodgeRate = (victimStats != null)
                     ? PlayerCombatCache.getEffective(victimUuid, "dodge_rate", victimStats.totalDodge) : 0;
             double attackerAccuracy = (attackerStats != null)
                     ? PlayerCombatCache.getEffective(attacker.getUniqueId(), "accuracy", attackerStats.totalAccuracy) : 0.0;
-            double finalDodgeChance = Math.max(0, rawDodge - attackerAccuracy);
+            double finalDodgeChance = Math.max(0, effVictimDodgeRate - attackerAccuracy);
 
             if (random.nextDouble() * 100 <= finalDodgeChance) {
-                target.setMetadata("DISPLAY_SPECIAL_STATUS", new FixedMetadataValue(Main.getInstance(), "DODGE"));
+                TextDisplayManager.setSpecialStatus(target, "DODGE");
                 event.setCancelled(true);
                 org.ThienNguyen.Listener.TextDisplayManager.displayAll(target);
                 return;
@@ -238,37 +314,54 @@ public class EventDamage implements Listener {
             double blockChance = (victimStats != null)
                     ? PlayerCombatCache.getEffective(victimUuid, "block_rate", victimStats.totalBlock) : 0;
             if (random.nextDouble() * 100 <= blockChance) {
-                target.setMetadata("DISPLAY_SPECIAL_STATUS", new FixedMetadataValue(Main.getInstance(), "BLOCK"));
+                TextDisplayManager.setSpecialStatus(target, "BLOCK");
                 event.setCancelled(true);
                 org.ThienNguyen.Listener.TextDisplayManager.displayAll(target);
                 return;
             }
 
-            double defMultiplier = (attacker != null)
-                    ? PlayerCombatCache.getEffective(victimUuid, "pvp_defense", victimStats.totalPvpDef)
-                    : PlayerCombatCache.getEffective(victimUuid, "pve_defense", victimStats.totalPveDef);
-            currentDamage *= Math.max(0, 1 - defMultiplier / 100.0);
-            currentDamage *= Math.max(0, 1 - PlayerCombatCache.getEffective(victimUuid, "all_defense", victimStats.totalAllDefense) / 100.0);
+            
+            boolean isAttackerAPlayer = (attacker != null);
+            double defMultiplier = isAttackerAPlayer
+                    ? PlayerCombatCache.getEffective(victimUuid, "pvp_defense", victimStats != null ? victimStats.totalPvpDef : 0.0)
+                    : PlayerCombatCache.getEffective(victimUuid, "pve_defense", victimStats != null ? victimStats.totalPveDef : 0.0);
 
-            double finalArmor = PlayerCombatCache.getEffective(victimUuid, "armor", victimStats.totalArmor);
-            if (attackerStats != null) {
+            currentDamage *= Math.max(0, 1 - defMultiplier / 100.0);
+
+            
+            double allDefPercent = victimStats != null ? PlayerCombatCache.getEffective(victimUuid, "all_defense", victimStats.totalAllDefense) : 0.0;
+            if (allDefPercent >= 100.0) {
+                currentDamage = 0;
+            } else {
+                currentDamage *= Math.max(0, 1 - allDefPercent / 100.0);
+            }
+
+            double finalArmor = victimStats != null ? PlayerCombatCache.getEffective(victimUuid, "armor", victimStats.totalArmor) : 0.0;
+            if (attackerStats != null && isAttackerAPlayer) {
                 java.util.UUID atkUuid = attacker.getUniqueId();
                 double effectiveArmorPen = PlayerCombatCache.getEffective(atkUuid, "armor_pen", attackerStats.totalArmorPen);
                 double effectivePenetration = PlayerCombatCache.getEffective(atkUuid, "penetration", attackerStats.totalPenetration);
                 double armorAfterFlatPen = Math.max(0, finalArmor - effectiveArmorPen);
                 finalArmor = armorAfterFlatPen * Math.max(0, 1 - effectivePenetration / 100.0);
             }
+
             currentDamage = applyArmorFormula(currentDamage, finalArmor);
+
             double effectiveDamageReduction = (victimStats != null)
                     ? PlayerCombatCache.getEffective(victimUuid, "damage_reduction", victimStats.totalDamageReduction) : 0.0;
             if (effectiveDamageReduction > 0) {
-                double minDamage = Main.getInstance().getCustomListenerConfig().getDouble("damage-reduction-min", 1.0);
+                double minDamage = getDamageReductionMin();
                 currentDamage = Math.max(minDamage, currentDamage - effectiveDamageReduction);
             }
-            if (!isFromScript && event.getDamager() instanceof LivingEntity attackerEntity && !isSkillDamage && !isFromAbility) {
+            if (event.getDamager() instanceof LivingEntity attackerEntity && victimStats != null) {
                 handleCachedAbilities(victim, attackerEntity, victimStats.bestAbilities, currentDamage, "defense");
                 handleCachedAbilities(victim, attackerEntity, victimStats.bestAbilities, currentDamage, "defense_self");
             }
+        } else if (isSkillLikeDamage && target instanceof Player magicVictim) {
+            double effectiveMagicDef = (victimStats != null)
+                    ? PlayerCombatCache.getEffective(magicVictim.getUniqueId(), "magic_defense", victimStats.totalMagicDefense)
+                    : 0.0;
+            currentDamage = applyMagicDefenseFormula(currentDamage, effectiveMagicDef);
         }
 
         double extraFromAbilities = 0.0;
@@ -281,23 +374,7 @@ public class EventDamage implements Listener {
                 ? PlayerCombatCache.getEffective(attacker.getUniqueId(), "true_damage", attackerStats.totalTrueDamage)
                 : 0.0;
 
-        double effectiveMagicDamage = (attackerStats != null)
-                ? PlayerCombatCache.getEffective(attacker.getUniqueId(), "magic_damage", attackerStats.totalMagicDamage)
-                : 0.0;
-
         double finalMagicDmg = 0.0;
-        if (attackerStats != null && effectiveMagicDamage > 0) {
-            if (isFromAbility || isFromScript || isSkillDamage) {
-                double rawMagic = effectiveMagicDamage * curseMultiplier;
-                if (target instanceof Player && victimStats != null) {
-                    double effectiveMagicDef = PlayerCombatCache.getEffective(
-                            ((Player) target).getUniqueId(), "magic_defense", victimStats.totalMagicDefense);
-                    finalMagicDmg = applyMagicDefenseFormula(rawMagic, effectiveMagicDef);
-                } else {
-                    finalMagicDmg = rawMagic;
-                }
-            }
-        }
 
         double effectiveDeathDamage = (attackerStats != null)
                 ? PlayerCombatCache.getEffective(attacker.getUniqueId(), "death_damage", attackerStats.totalDeathDamage)
@@ -305,7 +382,7 @@ public class EventDamage implements Listener {
 
         double finalDeathDmg = 0.0;
         if (attackerStats != null && effectiveDeathDamage > 0) {
-            double threshold = Main.getInstance().getCustomListenerConfig().getDouble("death-damage-threshold", 50.0);
+            double threshold = getDeathDamageThreshold();
             double maxHealth = target.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
             double currentHealthPercent = (target.getHealth() / maxHealth) * 100.0;
 
@@ -322,52 +399,51 @@ public class EventDamage implements Listener {
 
         double theoreticalTotal = finalPhysicalDmg + finalElementDamage + trueDmg + finalDeathDmg + finalMagicDmg;
 
-        // Set các value khác (giữ nguyên)
-        target.setMetadata("VALUE_FINAL_DAMAGE", new FixedMetadataValue(Main.getInstance(), theoreticalTotal));
-        target.setMetadata("VALUE_ELEMENTAL_DAMAGE", new FixedMetadataValue(Main.getInstance(), finalElementDamage));
-        target.setMetadata("VALUE_MAGIC_DAMAGE", new FixedMetadataValue(Main.getInstance(), finalMagicDmg));
-        target.setMetadata("VALUE_TRUE_DAMAGE", new FixedMetadataValue(Main.getInstance(), trueDmg));
-
-        if (attackerStats != null) {
-            target.setMetadata("STAT_ATTACKER_CRIT_CHANCE", new FixedMetadataValue(Main.getInstance(),
-                    PlayerCombatCache.getEffective(attacker.getUniqueId(), "critical_chance", attackerStats.totalCritChance)));
-            target.setMetadata("STAT_ATTACKER_CRIT_DMG", new FixedMetadataValue(Main.getInstance(),
-                    PlayerCombatCache.getEffective(attacker.getUniqueId(), "critical_damage", attackerStats.totalCritDamage)));
-        }
-        if (victimStats != null && target instanceof Player victimForDisplay) {
-            target.setMetadata("STAT_VICTIM_DODGE", new FixedMetadataValue(Main.getInstance(),
-                    PlayerCombatCache.getEffective(victimForDisplay.getUniqueId(), "dodge_rate", victimStats.totalDodge)));
-        }
-
-        target.setMetadata("DISPLAY_MAGIC_DAMAGE", new FixedMetadataValue(Main.getInstance(), finalMagicDmg));
+        TextDisplayManager.setMagicDamage(target, finalMagicDmg);
 
         if (elementDisplayBuilder.length() > 0) {
-            target.setMetadata("DISPLAY_ELEMENTS_DATA", new FixedMetadataValue(Main.getInstance(), elementDisplayBuilder.toString()));
+            TextDisplayManager.setElementsData(target, elementDisplayBuilder.toString());
         }
 
         event.setDamage(theoreticalTotal);
 
-        // ── Passive Triggers ──────────────────────────────────────────────────────────
+        
         final Player attackerFinal = attacker;
-        final boolean isCritForPassive = target.hasMetadata("LAST_HIT_CRIT");
+        final boolean isCritForPassive = isCritHit;
         boolean isFatalBlows = target instanceof org.bukkit.entity.LivingEntity livingTarget
                 && theoreticalTotal >= livingTarget.getHealth();
-        if (attackerFinal != null && target instanceof Player victimPlayerPassive) {
-            org.ThienNguyen.Listener.Passive.PassiveManager.getInstance().trigger(
-                    org.ThienNguyen.Listener.Passive.Trigger.PassiveTrigger.ON_HIT,
-                    attackerFinal, victimPlayerPassive, theoreticalTotal, isCritForPassive, event
-            );
+
+        if (attackerFinal != null) {
+            long now = System.currentTimeMillis();
+            UUID targetKey = target.getUniqueId();
+            if (hitTriggerCooldown.getOrDefault(targetKey, 0L) + 500 <= now) {
+                hitTriggerCooldown.put(targetKey, now);
+
+                if (++cooldownCleanupCounter >= COOLDOWN_CLEANUP_INTERVAL) {
+                    cooldownCleanupCounter = 0;
+                    long cutoff = now - COOLDOWN_ENTRY_TTL_MS;
+                    hitTriggerCooldown.entrySet().removeIf(entry -> entry.getValue() < cutoff);
+                }
+
+                if (target instanceof Player victimPlayerPassive) {
+                    org.ThienNguyen.Listener.Passive.PassiveManager.getInstance().trigger(
+                            org.ThienNguyen.Listener.Passive.Trigger.PassiveTrigger.ON_HIT,
+                            attackerFinal, victimPlayerPassive, theoreticalTotal, isCritForPassive, event
+                    );
+                } else {
+                    org.ThienNguyen.Listener.Passive.PassiveManager.getInstance().trigger(
+                            org.ThienNguyen.Listener.Passive.Trigger.PassiveTrigger.ON_HIT,
+                            attackerFinal, target, theoreticalTotal, isCritForPassive, event
+                    );
+                }
+            }
         } else if (attackerFinal != null) {
-            // FIX: truyền target (mob) thay vì null — đây là lý do passive không trigger khi đánh mob.
             org.ThienNguyen.Listener.Passive.PassiveManager.getInstance().trigger(
                     org.ThienNguyen.Listener.Passive.Trigger.PassiveTrigger.ON_HIT,
                     attackerFinal, target, theoreticalTotal, isCritForPassive, event
             );
         }
 
-        // ON_TAKE_DAMAGE: actor = nạn nhân (target), victim-trong-context = nguồn gây damage.
-        // Mở rộng so với bản cũ: trigger bất kể "kẻ đánh" là Player hay mob/projectile,
-        // miễn target (người nhận damage) là Player và sở hữu passive đó.
         if (target instanceof Player victimAsActor) {
             LivingEntity damageSource = (event.getDamager() instanceof LivingEntity le) ? le : null;
             org.ThienNguyen.Listener.Passive.PassiveManager.getInstance().trigger(
@@ -377,9 +453,6 @@ public class EventDamage implements Listener {
         }
 
         if (attackerFinal != null && isFatalBlows) {
-            // FIX: truyền target (LivingEntity, có thể là mob) thay vì ép về null khi không
-            // phải Player — đây là lý do ON_KILL "không áp dụng" khi kill mob: victim luôn null
-            // nên mechanic như DROP_ITEM/EXPLODE target VICTIM không có entity nào để tác động.
             org.ThienNguyen.Listener.Passive.PassiveManager.getInstance().trigger(
                     org.ThienNguyen.Listener.Passive.Trigger.PassiveTrigger.ON_KILL,
                     attackerFinal,
@@ -388,8 +461,8 @@ public class EventDamage implements Listener {
             );
         }
 
-        // ──────────────────────────────────────────────────────────────
-        if (!isFromScript && !isSkillDamage && !isFromAbility && !isFromThorns && damageBeforeReduction > 0) {
+        
+        if (isBasicAttack && !isFromThorns && damageBeforeReduction > 0) {
             double effectiveThorns = (victimStats != null && target instanceof Player thornsVictim)
                     ? PlayerCombatCache.getEffective(thornsVictim.getUniqueId(), "thorns", victimStats.totalThorns) : 0.0;
             if (effectiveThorns > 0 && event.getDamager() instanceof LivingEntity attackerEntity) {
@@ -409,7 +482,7 @@ public class EventDamage implements Listener {
             }
         }
 
-        // ====================== FINAL DISPLAY LOGIC (ĐÃ SỬA) ======================
+        
         double displayPhysicalFinal = finalPhysicalDmg;
         if (finalDeathDmg > 0) {
             displayPhysicalFinal += finalDeathDmg;
@@ -419,7 +492,6 @@ public class EventDamage implements Listener {
         final double fPhysical = displayPhysicalFinal;
         final double fTrue = trueDmg;
         final double fMagic = finalMagicDmg;
-        final boolean isCritFinal = target.hasMetadata("LAST_HIT_CRIT");
 
         boolean isFatalBlow = (target.getHealth() - theoreticalTotal) <= 0;
 
@@ -427,57 +499,74 @@ public class EventDamage implements Listener {
         double displayTrue = fTrue;
         double displayMagic = fMagic;
 
-        // Cộng dồn nếu có damage pending
-        if (target.hasMetadata("DISPLAY_PENDING")) {
-            double oldNormal = target.hasMetadata("DISPLAY_NORMAL_DAMAGE") ? target.getMetadata("DISPLAY_NORMAL_DAMAGE").get(0).asDouble() : 0;
-            double oldTrue = target.hasMetadata("DISPLAY_TRUE_DAMAGE") ? target.getMetadata("DISPLAY_TRUE_DAMAGE").get(0).asDouble() : 0;
-            double oldMagic = target.hasMetadata("DISPLAY_MAGIC_DAMAGE") ? target.getMetadata("DISPLAY_MAGIC_DAMAGE").get(0).asDouble() : 0;
+        boolean hadPendingDisplay = TextDisplayManager.isPending(target);
 
-            displayNormal += oldNormal;
-            displayTrue += oldTrue;
-            displayMagic += oldMagic;
+        
+        
+        
+        if (!hadPendingDisplay) {
+            TextDisplayManager.setHealthBeforeHit(target, healthAtHitStart);
         }
 
-        // Set metadata cuối
-        target.setMetadata("DISPLAY_NORMAL_DAMAGE", new FixedMetadataValue(Main.getInstance(), displayNormal));
-        target.setMetadata("DISPLAY_TRUE_DAMAGE", new FixedMetadataValue(Main.getInstance(), displayTrue));
-        target.setMetadata("DISPLAY_MAGIC_DAMAGE", new FixedMetadataValue(Main.getInstance(), displayMagic));
-
-        if (isCritFinal) {
-            target.setMetadata("LAST_HIT_CRIT", new FixedMetadataValue(Main.getInstance(), true));
+        if (hadPendingDisplay) {
+            displayNormal += TextDisplayManager.getNormalDamage(target);
+            displayTrue += TextDisplayManager.getTrueDamage(target);
+            displayMagic += TextDisplayManager.getMagicDamage(target);
         }
 
-        // Hiển thị
+        TextDisplayManager.setNormalDamage(target, displayNormal);
+        TextDisplayManager.setTrueDamage(target, displayTrue);
+        TextDisplayManager.setMagicDamage(target, displayMagic);
+
         if (isFatalBlow) {
+            
+            
+            
+            
+            
+            
             org.ThienNguyen.Listener.TextDisplayManager.displayAll(target);
         } else {
-            if (!target.hasMetadata("DISPLAY_PENDING")) {
-                target.setMetadata("DISPLAY_PENDING", new FixedMetadataValue(Main.getInstance(), true));
+            if (!hadPendingDisplay) {
+                TextDisplayManager.setPending(target);
             }
 
             Bukkit.getScheduler().runTask(Main.getInstance(), () -> {
                 if (target == null || !target.isValid() || target.isDead()) return;
+
+                
+                
+                
+                
+                
+                Double healthBeforeHit = TextDisplayManager.getHealthBeforeHit(target);
+                if (healthBeforeHit != null) {
+                    double actualDamage = Math.max(0, healthBeforeHit - target.getHealth());
+                    TextDisplayManager.scaleDisplayToActualDamage(target, actualDamage);
+                }
+
                 org.ThienNguyen.Listener.TextDisplayManager.displayAll(target);
-                target.removeMetadata("DISPLAY_PENDING", Main.getInstance());
+                TextDisplayManager.clearPending(target);
             });
         }
-
     }
 
-    /**
-     * Xử lý sát thương từ nguồn không rõ (poison, fall, void, burn, custom skill,...)
-     * Áp dụng cho cả Player và Mob
-     */
+    
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onUnknownDamage(EntityDamageEvent event) {
-        if (event instanceof EntityDamageByEntityEvent) return; // Đã xử lý ở event chính
+        if (event instanceof EntityDamageByEntityEvent) return; 
         if (!(event.getEntity() instanceof LivingEntity target)) return;
         if (event.getFinalDamage() <= 0) return;
+        
+        if (target.hasMetadata("INVINCIBLE_STATUS")) {
+            event.setCancelled(true);
+            return;
+        }
 
-        // ── Passive Trigger: ON_TAKE_DAMAGE cho damage tự gây (fall/fire/poison/void/lava...) ──
-        // victim = target chính nó (actor) -> cho phép condition "target-type: SELF" hoạt động
-        // (passive chỉ áp dụng khi nạn nhân tự gây damage lên bản thân, không phải bị ai đánh).
-        // Chỉ trigger khi target là Player, vì PassiveManager đọc passive_ids từ equipment player.
+        
+        
+        
+        
         if (target instanceof Player selfDamagedPlayer) {
             org.ThienNguyen.Listener.Passive.PassiveManager.getInstance().trigger(
                     org.ThienNguyen.Listener.Passive.Trigger.PassiveTrigger.ON_TAKE_DAMAGE,
@@ -485,24 +574,24 @@ public class EventDamage implements Listener {
             );
         }
 
-        // Xóa metadata cũ để tránh hiển thị lẫn lộn
+        
         clearDisplayMetadata(target);
 
         double damage = event.getFinalDamage();
 
-        // Set metadata cho hiển thị Normal Damage
-        target.setMetadata("DISPLAY_NORMAL_DAMAGE", new FixedMetadataValue(Main.getInstance(), damage));
-        target.setMetadata("DISPLAY_TRUE_DAMAGE", new FixedMetadataValue(Main.getInstance(), 0));
-        target.setMetadata("DISPLAY_MAGIC_DAMAGE", new FixedMetadataValue(Main.getInstance(), 0));
+        
+        TextDisplayManager.setNormalDamage(target, damage);
+        TextDisplayManager.setTrueDamage(target, 0);
+        TextDisplayManager.setMagicDamage(target, 0);
 
-        // Kiểm tra có phải đòn kết liễu không
+        
         boolean isFatal = (target.getHealth() - damage) <= 0;
 
         if (isFatal) {
-            // Nếu là đòn giết → hiển thị ngay
+            
             org.ThienNguyen.Listener.TextDisplayManager.displayAll(target);
         } else {
-            // Damage thường → delay 1 tick để gộp nếu có nhiều damage cùng lúc
+            
             Bukkit.getScheduler().runTask(Main.getInstance(), () -> {
                 if (target.isValid() && !target.isDead()) {
                     org.ThienNguyen.Listener.TextDisplayManager.displayAll(target);
@@ -511,25 +600,37 @@ public class EventDamage implements Listener {
         }
 
     }
-    private void clearDisplayMetadata(LivingEntity target) {
-        target.removeMetadata("DISPLAY_NORMAL_DAMAGE", Main.getInstance());
-        target.removeMetadata("DISPLAY_TRUE_DAMAGE", Main.getInstance());
-        target.removeMetadata("DISPLAY_MAGIC_DAMAGE", Main.getInstance());
-        target.removeMetadata("DISPLAY_ELEMENTS_DATA", Main.getInstance());
-        target.removeMetadata("LAST_HIT_CRIT", Main.getInstance());
-        target.removeMetadata("DISPLAY_PENDING", Main.getInstance());
+
+    
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onFatalDamageRevive(EntityDamageEvent event) {
+        if (!(event.getEntity() instanceof Player player)) return;
+        if (!player.hasMetadata("REVIVE_ARMED")) return;
+
+        boolean wouldBeFatal = (player.getHealth() - event.getFinalDamage()) <= 0;
+        if (!wouldBeFatal) return;
+
+        event.setCancelled(true);
+
+        if (!player.hasMetadata("REVIVE_MECHANIC_REF")) return; 
+        Object ref = player.getMetadata("REVIVE_MECHANIC_REF").get(0).value();
+        if (ref instanceof org.ThienNguyen.Listener.Passive.Mechanics.RevivalMechanic mechanic) {
+            mechanic.onRevive(player);
+        }
     }
-    /**
-     * HÀM QUAN TRỌNG: Cung cấp dữ liệu cho PlaceholderAPI (Sửa lỗi BUILD FAILURE)
-     */
+
+    private void clearDisplayMetadata(LivingEntity target) {
+        TextDisplayManager.clearDisplayData(target);
+    }
+    
     public static Map<String, Double> calculateFullStaticStats(Player player) {
         Map<String, Double> stats = new HashMap<>();
         PlayerCombatCache.CombatStats cached = PlayerCombatCache.getStats(player.getUniqueId());
         java.util.UUID uuid = player.getUniqueId();
 
-        // Dùng getEffective() thay vì đọc field gốc trực tiếp, để placeholder hiển thị đúng
-        // số liệu thật (đã cộng buff tạm từ passive BUFF_STAT) — khớp với cách onDamage() tính
-        // damage thật, tránh trường hợp combat tính 1 số nhưng UI/placeholder hiện số khác.
+        
+        
+        
         double effBonusDmg   = PlayerCombatCache.getEffective(uuid, "damage", cached.totalBonusDmg);
         double effTrueDmg    = PlayerCombatCache.getEffective(uuid, "true_damage", cached.totalTrueDamage);
         double effCritChance = PlayerCombatCache.getEffective(uuid, "critical_chance", cached.totalCritChance);
@@ -586,7 +687,7 @@ public class EventDamage implements Listener {
     private void applyLifesteal(Player player, double damage, double percent) {
         double heal = damage * (percent / 100.0);
 
-        // Áp dụng vết thương sâu nếu player đang bị debuff
+        
         if (player.hasMetadata("DEEP_WOUND_REDUCTION")) {
             double reduction = player.getMetadata("DEEP_WOUND_REDUCTION").get(0).asDouble();
             heal *= Math.max(0.0, 1.0 - (reduction / 100.0));
@@ -594,6 +695,56 @@ public class EventDamage implements Listener {
 
         double maxHp = player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
         player.setHealth(Math.min(maxHp, player.getHealth() + heal));
+    }
+
+    private boolean isMmoCoreEnabled() {
+        if (mmoCoreEnabledCache == null) {
+            mmoCoreEnabledCache = Bukkit.getPluginManager().isPluginEnabled("MMOCore");
+        }
+        return mmoCoreEnabledCache;
+    }
+
+    private double getCritMultiplierBase() {
+        if (cachedCritMultiplierBase == null) {
+            cachedCritMultiplierBase = Main.getInstance().getCustomListenerConfig().getDouble("crit-multiplier", 1.5);
+        }
+        return cachedCritMultiplierBase;
+    }
+
+    private double getCritDamageReductionCap() {
+        if (cachedCritDamageReductionCap == null) {
+            cachedCritDamageReductionCap = Main.getInstance().getCustomListenerConfig().getDouble("crit-damage-reduction-cap", 80.0);
+        }
+        return cachedCritDamageReductionCap;
+    }
+
+    private int getDeepWoundDurationTicks() {
+        if (cachedDeepWoundDurationTicks == null) {
+            cachedDeepWoundDurationTicks = Main.getInstance().getCustomListenerConfig().getInt("deep-wound-duration-ticks", 60);
+        }
+        return cachedDeepWoundDurationTicks;
+    }
+
+    private double getDamageReductionMin() {
+        if (cachedDamageReductionMin == null) {
+            cachedDamageReductionMin = Main.getInstance().getCustomListenerConfig().getDouble("damage-reduction-min", 1.0);
+        }
+        return cachedDamageReductionMin;
+    }
+
+    private double getDeathDamageThreshold() {
+        if (cachedDeathDamageThreshold == null) {
+            cachedDeathDamageThreshold = Main.getInstance().getCustomListenerConfig().getDouble("death-damage-threshold", 50.0);
+        }
+        return cachedDeathDamageThreshold;
+    }
+
+    
+    private double[] getElementBaseConfig(String eId) {
+        return elementBaseConfigCache.computeIfAbsent(eId, id -> new double[]{
+                Main.getInstance().getElementConfig().getDouble(id + ".base-damage", 2.0),
+                Main.getInstance().getElementConfig().getDouble(id + ".damage-per", 5.0)
+        });
     }
 
     private double applyArmorFormula(double damage, double armor) {
@@ -658,6 +809,13 @@ public class EventDamage implements Listener {
             instance.cachedArmorExpression = null;
             instance.cachedMagicFormula = null;
             instance.cachedMagicExpression = null;
+            instance.cachedCritMultiplierBase = null;
+            instance.cachedCritDamageReductionCap = null;
+            instance.cachedDeepWoundDurationTicks = null;
+            instance.cachedDamageReductionMin = null;
+            instance.cachedDeathDamageThreshold = null;
+            instance.elementBaseConfigCache.clear();
+            instance.mmoCoreEnabledCache = null;
         }
     }
 }

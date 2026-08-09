@@ -9,19 +9,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
 
-/**
- * Đốt lửa lên target với damage/giây và thời gian cháy tuỳ chỉnh.
- *
- * yml:
- * - type: FLAME
- *   target: VICTIM
- *   damage-per-second: "%player_level% * 1.5"   # số, biểu thức, hoặc placeholder PAPI
- *   duration-seconds: "5"                          # tương tự
- *   visual-fire: true
- *
- * Cả "damage-per-second" và "duration-seconds" resolve lúc execute() để phản ánh
- * đúng stat actor tại thời điểm trigger (không phải lúc load config).
- */
+
 public class FlameMechanic extends AbstractMechanic {
 
     private final String rawDamagePerSecond;

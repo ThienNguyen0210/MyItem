@@ -12,10 +12,7 @@ import java.util.Map;
 
 public class Effect {
 
-    /**
-     * Quét toàn bộ trang bị trên người Player và áp dụng Potion Effects.
-     * Nên được gọi mỗi 2-3 giây một lần.
-     */
+    
     public void updatePlayerEffects(Player player) {
         if (player == null || !player.isOnline()) return;
 

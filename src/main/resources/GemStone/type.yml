@@ -1,8 +1,46 @@
+# ==================================================================
+# GemStone/type.yml
+# DucLo.yml đã bị xóa — toàn bộ dữ liệu mũi khoan (cost, success, model-id)
+# giờ nằm lồng trong từng loại lỗ, ở mục "drills".
+#
+# Cấu trúc mỗi loại lỗ (vd: common, rare, legendary...):
+#   format:  dòng lore hiển thị khi lỗ còn trống
+#   limit:   số lượng lỗ CỦA RIÊNG LOẠI NÀY được phép trên 1 item
+#   drills:  danh sách các mũi khoan (gem_item_id) tạo ra loại lỗ này
+#     <drillId>:
+#       cost:      giá tiền đục lỗ (0 = miễn phí)
+#       success:   tỉ lệ thành công khi đục (0-100)
+#       model-id:  custom-model-data mới gán cho item sau khi đục (bỏ qua nếu không cần)
+# ==================================================================
+
+general:
+  # Tổng số lỗ TỐI ĐA trên 1 item, áp dụng chung cho MỌI loại ngọc.
+  # Chỉ cần chỉnh 1 giá trị này để tăng/giảm số lỗ tối đa toàn item.
+  max-sockets: 4
+
 common:
-  format: "&fミ&7 Trống"
-  color: "&a"
-  limit: 6          # Giới hạn số lỗ loại common
-  max-total: 8
+  format: "&7[ ○ ] Lỗ trống"
+  limit: 2
+  drills:
+    DRILL_COMMON:
+      cost: 100
+      success: 100
+      model-id: 10001
+
 rare:
-  format: "&7[ &bLỗ Hiếm &7]"
-  color: "&b"
+  format: "&9[ ◇ ] Lỗ trống Hiếm"
+  limit: 2
+  drills:
+    DRILL_RARE:
+      cost: 500
+      success: 90
+      model-id: 10002
+
+legendary:
+  format: "&6[ ★ ] Lỗ trống Huyền Thoại"
+  limit: 1
+  drills:
+    DRILL_LEGENDARY:
+      cost: 5000
+      success: 60
+      model-id: 10003

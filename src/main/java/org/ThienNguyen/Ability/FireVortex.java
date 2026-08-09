@@ -12,6 +12,11 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 public class FireVortex implements IAbility {
 
+    // Dedicated lock tag, set on activation and cleared once the vortex finishes. Replaces the
+    // old guard on the shared "IS_ABILITY" flag, which belongs to EventDamage's per-event
+    // bookkeeping rather than to this ability.
+    private static final String METADATA_LOCK = "ABILITY_LOCK_FIRE_VORTEX";
+
     @Override
     public String getName() {
         return "FIRE_VORTEX";
@@ -19,39 +24,42 @@ public class FireVortex implements IAbility {
 
     @Override
     public void execute(Player attacker, LivingEntity target, int level, double baseDamage) {
-        if (target == null || target.isDead() || target.hasMetadata("IS_ABILITY")) return;
+        if (target == null || target.isDead()) return;
+        if (target.hasMetadata(METADATA_LOCK)) return;
+        target.setMetadata(METADATA_LOCK, new FixedMetadataValue(Main.getInstance(), true));
 
-        
+
         double tickPercent = 2.0 + (level * 1.0);
         double damagePerTick = baseDamage * (tickPercent / 100.0);
         final Location center = target.getLocation();
 
-        
+
         center.getWorld().playSound(center, Sound.ITEM_FIRECHARGE_USE, 0.8f, 1.2f);
 
-        
+
         new BukkitRunnable() {
             int ticks = 0;
 
             @Override
             public void run() {
                 if (ticks >= 60 || attacker == null) {
+                    if (target.isValid()) target.removeMetadata(METADATA_LOCK, Main.getInstance());
                     this.cancel();
                     return;
                 }
 
-                
+
                 for (int i = 0; i < 2; i++) {
-                    double angle = (ticks * 0.4) + (i * Math.PI); 
+                    double angle = (ticks * 0.4) + (i * Math.PI);
                     double x = Math.cos(angle) * 1.0;
                     double z = Math.sin(angle) * 1.0;
 
                     Location particleLoc = center.clone().add(x, 0.1, z);
-                    
+
                     center.getWorld().spawnParticle(Particle.FLAME, particleLoc, 1, 0, 0, 0, 0.01);
                 }
 
-                
+
                 if (ticks % 20 == 0) {
                     center.getWorld().playSound(center, Sound.BLOCK_FIRE_AMBIENT, 0.5f, 1.5f);
 

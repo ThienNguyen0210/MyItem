@@ -7,20 +7,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.util.Vector;
 
-/**
- * Phóng entity theo vector tự do dựa theo hướng nhìn của entity tham chiếu.
- *
- * yml:
- * - type: LAUNCH
- *   target: VICTIM
- *   reference: SELF
- *   forward: "%player_level% / 20"   # số, biểu thức, hoặc placeholder PAPI
- *   side: "0"
- *   up: "0.8"
- *   reset-velocity: true
- *
- * Tất cả vector component resolve lúc execute().
- */
+
 public class LaunchMechanic extends AbstractMechanic {
 
     private final String referenceKey;

@@ -14,9 +14,11 @@ import org.bukkit.util.Vector;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 
 public class TextDisplayManager {
 
@@ -24,13 +26,99 @@ public class TextDisplayManager {
     private static final java.util.regex.Pattern HEX_PATTERN =
             java.util.regex.Pattern.compile("&#([A-Fa-f0-9]{6})");
 
-    // ─── Global runnable ────────────────────────────────────────────────────
-    /**
-     * Tất cả TextDisplay đang active được quản lý trong 1 danh sách duy nhất.
-     * 1 BukkitRunnable duy nhất chạy mỗi tick xử lý toàn bộ — không spawn N runnable riêng.
-     */
+    
+    
     private static final List<ActiveDisplay> ACTIVE = new ArrayList<>();
     private static boolean schedulerRunning = false;
+
+    
+    
+    private static final Map<UUID, DisplayData> DISPLAY_META = new HashMap<>();
+
+    private static class DisplayData {
+        String specialStatus;
+        Double normalDamage;
+        Double trueDamage;
+        Double magicDamage;
+        String elementsData;
+        boolean lastHitCrit;
+        boolean pending;
+        
+        
+        
+        
+        
+        
+        Double healthBeforeHit;
+    }
+
+    private static DisplayData data(LivingEntity e) {
+        return DISPLAY_META.computeIfAbsent(e.getUniqueId(), k -> new DisplayData());
+    }
+
+    private static DisplayData peek(LivingEntity e) {
+        return DISPLAY_META.get(e.getUniqueId());
+    }
+
+    static void setSpecialStatus(LivingEntity e, String status) { data(e).specialStatus = status; }
+    static void setNormalDamage(LivingEntity e, double v)       { data(e).normalDamage = v; }
+    static void setTrueDamage(LivingEntity e, double v)         { data(e).trueDamage = v; }
+    static void setMagicDamage(LivingEntity e, double v)        { data(e).magicDamage = v; }
+    static void setElementsData(LivingEntity e, String v)       { data(e).elementsData = v; }
+    static void setLastHitCrit(LivingEntity e)                  { data(e).lastHitCrit = true; }
+    static void setPending(LivingEntity e)                      { data(e).pending = true; }
+    static void clearPending(LivingEntity e) {
+        DisplayData d = peek(e);
+        if (d != null) d.pending = false;
+    }
+
+    
+    static void setHealthBeforeHit(LivingEntity e, double hp)   { data(e).healthBeforeHit = hp; }
+    static Double getHealthBeforeHit(LivingEntity e) { DisplayData d = peek(e); return d != null ? d.healthBeforeHit : null; }
+
+    
+    static void scaleDisplayToActualDamage(LivingEntity e, double actualDamage) {
+        DisplayData d = peek(e);
+        if (d == null) return;
+
+        double normal = d.normalDamage != null ? d.normalDamage : 0;
+        double trueDmg = d.trueDamage != null ? d.trueDamage : 0;
+        double magic = d.magicDamage != null ? d.magicDamage : 0;
+        double theoreticalSum = normal + trueDmg + magic;
+
+        if (actualDamage <= 0) {
+            d.normalDamage = 0.0;
+            d.trueDamage = 0.0;
+            d.magicDamage = 0.0;
+            return;
+        }
+        if (theoreticalSum <= 0) {
+            
+            
+            d.normalDamage = actualDamage;
+            return;
+        }
+
+        double scale = actualDamage / theoreticalSum;
+        d.normalDamage = normal * scale;
+        d.trueDamage = trueDmg * scale;
+        d.magicDamage = magic * scale;
+    }
+
+    static boolean hasNormalDamage(LivingEntity e) { DisplayData d = peek(e); return d != null && d.normalDamage != null; }
+    static boolean hasTrueDamage(LivingEntity e)   { DisplayData d = peek(e); return d != null && d.trueDamage != null; }
+    static boolean hasMagicDamage(LivingEntity e)  { DisplayData d = peek(e); return d != null && d.magicDamage != null; }
+    static boolean isPending(LivingEntity e)       { DisplayData d = peek(e); return d != null && d.pending; }
+    static boolean isLastHitCrit(LivingEntity e)   { DisplayData d = peek(e); return d != null && d.lastHitCrit; }
+
+    static double getNormalDamage(LivingEntity e) { DisplayData d = peek(e); return (d != null && d.normalDamage != null) ? d.normalDamage : 0; }
+    static double getTrueDamage(LivingEntity e)   { DisplayData d = peek(e); return (d != null && d.trueDamage != null) ? d.trueDamage : 0; }
+    static double getMagicDamage(LivingEntity e)  { DisplayData d = peek(e); return (d != null && d.magicDamage != null) ? d.magicDamage : 0; }
+    static String getSpecialStatus(LivingEntity e) { DisplayData d = peek(e); return d != null ? d.specialStatus : null; }
+    static String getElementsData(LivingEntity e)  { DisplayData d = peek(e); return d != null ? d.elementsData : null; }
+
+    
+    static void clearDisplayData(LivingEntity e) { DISPLAY_META.remove(e.getUniqueId()); }
 
     private static void ensureScheduler() {
         if (schedulerRunning) return;
@@ -44,7 +132,7 @@ public class TextDisplayManager {
         }.runTaskTimer(Main.getInstance(), 0L, 1L);
     }
 
-    // ─── ActiveDisplay wrapper ───────────────────────────────────────────────
+    
     private static class ActiveDisplay {
         final TextDisplay entity;
         final double targetScale;
@@ -52,15 +140,30 @@ public class TextDisplayManager {
         final int stayTicks;
         final int fadeTicks;
         final int totalTicks;
-        // physics (null = no physics)
+        
         Vector velocity;
         final double gravity;
         final double drag;
         int tick = 0;
 
+        
+        
+        
+        
+        
+        
+        
+        final Vector pendingMove = new Vector();
+        final int moveIntervalTicks;
+        int ticksSincePositionFlush = 0;
+
+        
+        
+        boolean fadeStarted = false;
+
         ActiveDisplay(TextDisplay entity, double targetScale,
                       int appearTicks, int stayTicks, int fadeTicks,
-                      Vector velocity, double gravity, double drag) {
+                      Vector velocity, double gravity, double drag, int moveIntervalTicks) {
             this.entity      = entity;
             this.targetScale = targetScale;
             this.appearTicks = appearTicks;
@@ -70,32 +173,42 @@ public class TextDisplayManager {
             this.velocity    = velocity;
             this.gravity     = gravity;
             this.drag        = drag;
+            this.moveIntervalTicks = Math.max(1, moveIntervalTicks);
         }
 
-        /**
-         * @return true nếu đã xong (cần xoá khỏi list)
-         */
+        
         boolean tick() {
             if (!entity.isValid() || tick >= totalTicks) {
+                
+                
+                if (velocity != null && (pendingMove.getX() != 0 || pendingMove.getY() != 0 || pendingMove.getZ() != 0)) {
+                    entity.teleport(entity.getLocation().add(pendingMove));
+                }
                 entity.remove();
                 return true;
             }
 
-            // Physics: teleport chỉ khi có velocity
+            
             if (velocity != null) {
-                Location cur = entity.getLocation();
-                cur.add(velocity);
-                entity.teleport(cur);
+                pendingMove.add(velocity);
                 velocity.setY(velocity.getY() - gravity);
                 velocity.multiply(drag);
+
+                ticksSincePositionFlush++;
+                if (ticksSincePositionFlush >= moveIntervalTicks) {
+                    entity.teleport(entity.getLocation().add(pendingMove));
+                    pendingMove.setX(0).setY(0).setZ(0);
+                    ticksSincePositionFlush = 0;
+                }
             }
 
-            // Fade out: scale nhỏ dần trong fadeTicks cuối
-            if (tick >= appearTicks + stayTicks) {
-                float progress = (float)(totalTicks - tick) / fadeTicks;
-                float s = (float)(targetScale * progress);
+            
+            
+            
+            if (!fadeStarted && tick >= appearTicks + stayTicks) {
+                fadeStarted = true;
                 Transformation t = entity.getTransformation();
-                t.getScale().set(s, s, s);
+                t.getScale().set(0f, 0f, 0f);
                 entity.setTransformation(t);
             }
 
@@ -104,7 +217,7 @@ public class TextDisplayManager {
         }
     }
 
-    // ─── Colorize ────────────────────────────────────────────────────────────
+    
     private static String colorize(String message) {
         if (message == null || message.isEmpty()) return "";
         java.util.regex.Matcher matcher = HEX_PATTERN.matcher(message);
@@ -119,7 +232,7 @@ public class TextDisplayManager {
         return ChatColor.translateAlternateColorCodes('&', buffer.toString());
     }
 
-    // ─── Public entry point ──────────────────────────────────────────────────
+    
     public static void displayAll(LivingEntity victim) {
         FileConfiguration config = Main.getInstance().getCustomConfig();
         if (config == null || !config.getBoolean("text-display.enabled", true)) return;
@@ -137,9 +250,9 @@ public class TextDisplayManager {
         cleanupMetadata(victim);
     }
 
-    // ─── Handlers ────────────────────────────────────────────────────────────
+    
     private static void handleSpecialStatus(LivingEntity victim, Location baseLoc, FileConfiguration config) {
-        String special = getMetaString(victim, "DISPLAY_SPECIAL_STATUS");
+        String special = getSpecialStatus(victim);
         if (special == null || special.isEmpty()) return;
 
         String key    = special.toLowerCase();
@@ -154,11 +267,11 @@ public class TextDisplayManager {
     }
 
     private static void handleNormalDamage(LivingEntity victim, Location baseLoc, FileConfiguration config) {
-        if (!victim.hasMetadata("DISPLAY_NORMAL_DAMAGE")) return;
-        double dmg = getMetaDouble(victim, "DISPLAY_NORMAL_DAMAGE");
+        if (!hasNormalDamage(victim)) return;
+        double dmg = getNormalDamage(victim);
         if (dmg <= 0) return;
 
-        boolean crit  = victim.hasMetadata("LAST_HIT_CRIT");
+        boolean crit  = isLastHitCrit(victim);
         String key    = crit ? "critical" : "normal";
         String format = colorize(config.getString("text-display.format." + key,
                 crit ? "&e&l✦ {value} ✦" : "&f{value}"));
@@ -169,8 +282,8 @@ public class TextDisplayManager {
     }
 
     private static void handleTrueDamage(LivingEntity victim, Location baseLoc, FileConfiguration config) {
-        if (!victim.hasMetadata("DISPLAY_TRUE_DAMAGE")) return;
-        double dmg = getMetaDouble(victim, "DISPLAY_TRUE_DAMAGE");
+        if (!hasTrueDamage(victim)) return;
+        double dmg = getTrueDamage(victim);
         if (dmg <= 0) return;
 
         double extraY = config.getDouble("text-display.offset.true-dmg-extra-y", 0.8);
@@ -184,7 +297,7 @@ public class TextDisplayManager {
     private static void handleMultiElementDamage(LivingEntity victim, FileConfiguration config) {
         if (!config.getBoolean("text-display.multi-element.enabled", true)) return;
 
-        String elementData = getMetaString(victim, "DISPLAY_ELEMENTS_DATA");
+        String elementData = getElementsData(victim);
         if (elementData == null || elementData.isBlank()) return;
 
         String[]  entries = elementData.split(",");
@@ -261,7 +374,7 @@ public class TextDisplayManager {
         }
     }
 
-    // ─── Spawn + register (KHÔNG tạo BukkitRunnable riêng nữa) ─────────────
+    
     private static void spawnText(Location loc, String text, double targetScale,
                                   FileConfiguration config, boolean usePhysics) {
         TextDisplay display = (TextDisplay) loc.getWorld().spawnEntity(loc, EntityType.TEXT_DISPLAY);
@@ -270,7 +383,7 @@ public class TextDisplayManager {
         display.setShadowed(true);
         display.setBackgroundColor(org.bukkit.Color.fromARGB(0, 0, 0, 0));
 
-        // Đặt scale ban đầu
+        
         Transformation trans = display.getTransformation();
         trans.getScale().set((float) targetScale, (float) targetScale, (float) targetScale);
         display.setTransformation(trans);
@@ -279,8 +392,15 @@ public class TextDisplayManager {
         int stayTicks   = config.getInt("text-display.animation.stay-ticks", 12);
         int fadeTicks   = config.getInt("text-display.animation.fade-ticks", 14);
 
+        
+        
+        
+        display.setInterpolationDelay(0);
+        display.setInterpolationDuration(Math.max(1, fadeTicks));
+
         Vector vel = null;
         double gravity = 0, drag = 1;
+        int moveIntervalTicks = Math.max(1, config.getInt("text-display.multi-element.physics.move-interval-ticks", 3));
 
         if (usePhysics) {
             double sideSpread = config.getDouble("text-display.multi-element.physics.side-spread", 0.15);
@@ -294,27 +414,35 @@ public class TextDisplayManager {
                     upBase + random.nextDouble() * upRandom,
                     (random.nextDouble() - 0.5) * sideSpread
             );
+
+            
+            
+            
+            try {
+                display.setTeleportDuration(moveIntervalTicks);
+            } catch (NoSuchMethodError ignored) {
+                
+                
+                
+                
+            }
         }
 
-        // Đăng ký vào global list — KHÔNG tạo runnable riêng
+        
         ACTIVE.add(new ActiveDisplay(display, targetScale,
-                appearTicks, stayTicks, fadeTicks, vel, gravity, drag));
+                appearTicks, stayTicks, fadeTicks, vel, gravity, drag, moveIntervalTicks));
     }
 
-    // ─── Cleanup ──────────────────────────────────────────────────────────────
+    
     private static void cleanupMetadata(LivingEntity victim) {
-        for (String key : Arrays.asList(
-                "DISPLAY_SPECIAL_STATUS", "DISPLAY_NORMAL_DAMAGE", "DISPLAY_TRUE_DAMAGE",
-                "LAST_HIT_CRIT", "DISPLAY_ELEMENTS_DATA", "SPECIAL_STATUS_PROCESSED")) {
-            victim.removeMetadata(key, Main.getInstance());
-        }
-    }
+        
+        
+        
+        clearDisplayData(victim);
 
-    private static String getMetaString(LivingEntity e, String key) {
-        return e.hasMetadata(key) ? e.getMetadata(key).get(0).asString() : null;
-    }
-
-    private static double getMetaDouble(LivingEntity e, String key) {
-        return e.hasMetadata(key) ? e.getMetadata(key).get(0).asDouble() : 0;
+        
+        
+        
+        victim.removeMetadata("SPECIAL_STATUS_PROCESSED", Main.getInstance());
     }
 }

@@ -34,7 +34,7 @@ public class DeathMarkSkill implements ISkill {
         }
 
         if (target == null) {
-            player.sendMessage("§cKhông tìm thấy mục tiêu trong tầm nhìn!");
+            player.sendMessage("§8[§bMyItem§8] §cTarget not found within line of sight!");
             return;
         }
 

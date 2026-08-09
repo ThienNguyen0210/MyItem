@@ -16,8 +16,7 @@ public class AIProcessor {
     }
 
     public void handleItemCreation(Player player, String prompt, String profileId) {
-        player.sendMessage("§b§l[WindyAI] §7Đang kết nối trí tuệ nhân tạo (Profile: §e" + profileId.toUpperCase() + "§7)...");
-
+        player.sendMessage("§8[§bMyItem§8] §7Connecting to Artificial Intelligence (Profile: §e" + profileId.toUpperCase() + "§7)...");
         // Sử dụng runTaskAsynchronously để không làm treo server khi đợi API phản hồi
         Bukkit.getScheduler().runTaskAsynchronously(Main.getInstance(), () -> {
             try {
@@ -27,7 +26,7 @@ public class AIProcessor {
 
                 // 2. Kiểm tra kết quả trả về
                 if (result == null || result.isEmpty()) {
-                    player.sendMessage("§c§l[!] §7AI không trả về dữ liệu. Hãy thử lại.");
+                    player.sendMessage("§8[§bMyItem§8] §c§l[!] §7AI returned no data. Please try again.");
                     return;
                 }
 
@@ -41,21 +40,21 @@ public class AIProcessor {
                 // 4. Quay về Main Thread để gửi tin nhắn và thực hiện các lệnh Bukkit an toàn
                 Bukkit.getScheduler().runTask(Main.getInstance(), () -> {
                     if (assignedId != -1) {
-                        player.sendMessage("§a§l✔ §fPhân tích hoàn tất! Mã số vật phẩm: §e#" + assignedId);
-                        player.sendMessage("§7» Dùng lệnh: §6/mi getai " + assignedId + " §7để nhận item.");
+                        player.sendMessage("§8[§bMyItem§8] §a§l✔ §fAnalysis complete! Item ID: §e#" + assignedId);
+                        player.sendMessage("§8[§bMyItem§8] §7» Use command: §6/mi getai " + assignedId + " §7to claim the item.");
 
                         // Hiệu ứng nhỏ cho người chơi
                         player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1f, 1.2f);
                     } else {
-                        player.sendMessage("§c§l[!] §7Lỗi hệ thống: Không thể lưu dữ liệu vào AI/Item.yml");
+                        player.sendMessage("§8[§bMyItem§8] §c§l[!] §7System error: Could not save data to AI/Item.yml");
                     }
                 });
 
             } catch (Exception e) {
                 // Xử lý lỗi (API Key sai, mất mạng, model lỗi...)
                 Bukkit.getScheduler().runTask(Main.getInstance(), () -> {
-                    player.sendMessage("§c§l[!] §7Lỗi AI: §f" + e.getMessage());
-                    player.sendMessage("§7Gợi ý: Kiểm tra lại API-KEY trong AIConfig.yml");
+                    player.sendMessage("§8[§bMyItem§8] §c§l[!] §7AI Error: §f" + e.getMessage());
+                    player.sendMessage("§8[§bMyItem§8] §7Tip: Check the API-KEY in AIConfig.yml");
                 });
             }
         });

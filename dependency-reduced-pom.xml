@@ -62,12 +62,11 @@
             <option>-ignorewarnings</option>
             <option>-allowaccessmodification</option>
             <option>-keepparameternames</option>
-            <option>-keepnames class * implements org.bukkit.event.Listener { *; }</option>
             <option>-keepnames class * extends org.bukkit.plugin.java.JavaPlugin { *; }</option>
-            <option>-keep public class org.ThienNguyen.** { public protected &lt;fields&gt;; public protected &lt;methods&gt;; }</option>
-            <option>-keepclassmembers class * { public static final java.lang.String *; }</option>
-            <option>-keep class org.ThienNguyen.Hook.** { *; }</option>
+            <option>-keepnames class * implements org.bukkit.event.Listener { *; }</option>
             <option>-keep class org.ThienNguyen.Listener.** { *; }</option>
+            <option>-keep class org.ThienNguyen.Hook.** { *; }</option>
+            <option>-keep class !org.ThienNguyen.Command.**, !org.ThienNguyen.GemSocket.**, !org.ThienNguyen.Utils.**, !org.ThienNguyen.Evolution.**, org.ThienNguyen.** { *; }</option>
           </options>
           <libs>
             <lib>${java.home}/jmods/java.base.jmod</lib>

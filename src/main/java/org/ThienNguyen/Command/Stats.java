@@ -74,8 +74,7 @@ public class Stats {
 
         updateItemLore(item);
 
-        player.sendMessage("§a[MyItem] Đã cập nhật §f" + type + " §athành §e" + rawValue + " §7(Slot: §b" + slot + "§7)");
-    }
+        player.sendMessage("§8[§bMyItem§8] §e⚠ §7Updated §f" + type + " §7to §e" + rawValue + " §7(Slot: §b" + slot + "§7)");    }
 
     /**
      * Hàm vẽ Lore cũ: Giữ lại để đảm bảo tương thích ngược, không gây lỗi logic cũ.

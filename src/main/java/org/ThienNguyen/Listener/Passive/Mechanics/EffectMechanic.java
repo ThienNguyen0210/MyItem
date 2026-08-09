@@ -8,20 +8,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
-/**
- * Áp dụng 1 potion effect lên SELF hoặc VICTIM.
- *
- * yml:
- * - type: EFFECT
- *   target: VICTIM
- *   effect: SLOWNESS
- *   seconds: "%player_level% / 10"   # số giây — số, biểu thức, hoặc placeholder PAPI
- *   level: "2"                         # cấp độ (amplifier = level - 1)
- *   ambient: false
- *   particles: true
- *
- * "seconds" và "level" đều được resolve lúc execute().
- */
+
 public class EffectMechanic extends AbstractMechanic {
 
     private final PotionEffectType effectType;

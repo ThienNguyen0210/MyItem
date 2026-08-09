@@ -50,7 +50,6 @@ public class Main extends JavaPlugin {
     private FileConfiguration gemTypeConfig;
     private FileConfiguration chuyenHoaConfig;
     private FileConfiguration particleConfig;
-    private FileConfiguration ducLoConfig;
     private FileConfiguration upgradeGemConfig;
     private FileConfiguration loreFormatConfig;
     private FileConfiguration tiersConfig;
@@ -116,7 +115,7 @@ public class Main extends JavaPlugin {
             // 1. Xử lý thực thi lệnh
             command.setExecutor((sender, cmd, label, args) -> {
                 if (!(sender instanceof Player player)) {
-                    sender.sendMessage("§c[!] Lệnh này chỉ dành cho người chơi!");
+                    sender.sendMessage("§8[§bMyItem§8] §c[!] This command is only for players!");
                     return true;
                 }
 
@@ -130,42 +129,42 @@ public class Main extends JavaPlugin {
                 switch (subCommand) {
                     case "type":
                         if (args.length < 2) {
-                            player.sendMessage("§6§l[!] §7Cách dùng: §e/rpginv type <id>");
+                            player.sendMessage("§8[§bMyItem§8] §6§l[!] §7Usage: §e/rpginv type <id>");
                             return true;
                         }
 
                         String typeId = args[1].toLowerCase();
                         if (JewelryManager.setJewelryType(player, typeId)) {
-                            player.sendMessage("§a§l✔ §7Đã gán thành công loại: §e" + typeId);
+                            player.sendMessage("§8[§bMyItem§8] §a§l✔ §7Successfully assigned type: §e" + typeId);
                             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1f);
                         } else {
-                            player.sendMessage("§c§l✘ §7Thất bại! Bạn phải cầm vật phẩm trên tay.");
+                            player.sendMessage("§8[§bMyItem§8] §c§l✘ §7Failed! You must hold an item in your hand.");
                         }
                         break;
 
                     case "untype":
                         if (JewelryManager.setJewelryType(player, null)) {
-                            player.sendMessage("§a§l✔ §7Đã xóa định dạng trang sức khỏi vật phẩm.");
+                            player.sendMessage("§8[§bMyItem§8] §a§l✔ §7Successfully removed jewelry format from the item.");
                             player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_GRINDSTONE_USE, 1f, 1f);
                         } else {
-                            player.sendMessage("§c§l✘ §7Thất bại! Hãy cầm vật phẩm cần xóa.");
+                            player.sendMessage("§8[§bMyItem§8] §c§l✘ §7Failed! Please hold the item you want to clear.");
                         }
                         break;
 
-                    case "reload": // Thêm sub-command reload cho máu lửa
+                    case "reload":
                         if (!player.hasPermission("myitem.admin")) {
-                            player.sendMessage("§cBạn không có quyền!");
+                            player.sendMessage("§8[§bMyItem§8] §cYou do not have permission!");
                             return true;
                         }
                         reloadPluginConfigs();
-                        player.sendMessage("§a§l✔ §7Đã nạp lại cấu hình trang sức!");
+                        player.sendMessage("§8[§bMyItem§8] §a§l✔ §7Successfully reloaded jewelry configurations!");
                         break;
 
                     default:
                         player.sendMessage("§8§m-------§r §6§lRPG INVENTORY §8§m-------");
-                        player.sendMessage("§7» §e/rpginv §f: Mở kho đồ trang sức");
-                        player.sendMessage("§7» §e/rpginv type <id> §f: Gán ID trang sức");
-                        player.sendMessage("§7» §e/rpginv untype §f: Xóa ID trang sức");
+                        player.sendMessage("§8[§bMyItem§8] §7» §e/rpginv §f: Open jewelry inventory");
+                        player.sendMessage("§8[§bMyItem§8] §7» §e/rpginv type <id> §f: Assign jewelry ID");
+                        player.sendMessage("§8[§bMyItem§8] §7» §e/rpginv untype §f: Remove jewelry ID");
                         player.sendMessage("§8§m---------------------------");
                         break;
                 }
@@ -409,10 +408,6 @@ public class Main extends JavaPlugin {
         this.evolutionConfig = setupConfig("Evolution.yml");
 
         syncStatsWithWeb();
-        File readmeFile = new File(getDataFolder(), "README.md");
-        if (!readmeFile.exists()) {
-            saveResource("README.md", false);
-        }
         if (this.aiProcessor != null) {
             this.aiProcessor = new org.ThienNguyen.AI.AIProcessor();
         }
@@ -433,7 +428,6 @@ public class Main extends JavaPlugin {
         this.protectionConfig = setupConfig("Upgrade/protection.yml");
         this.gemConfig = setupConfig("GemStone/Gem.yml");
         this.gemTypeConfig = setupConfig("GemStone/type.yml");
-        this.ducLoConfig = setupConfig("GemStone/DucLo.yml");
         this.UpgradeGem = setupConfig("Upgrade/Gem.yml");
 
         this.enchantConfig = setupConfig("Enchant.yml");
@@ -658,10 +652,6 @@ public class Main extends JavaPlugin {
         }
         return this.expireConfig;
     }
-    public FileConfiguration getDucLoConfig() {
-        return ducLoConfig;
-    }
-
     public FileConfiguration getGemConfig() {
         return gemConfig;
     }
