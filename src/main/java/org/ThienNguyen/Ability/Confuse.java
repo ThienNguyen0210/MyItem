@@ -15,6 +15,6 @@ public class Confuse implements IAbility {
     public void execute(Player attacker, LivingEntity target, int level, double baseDamage) {
         if (target == null || target.isDead()) return;
         
-        target.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, level * 20 * 4, 0));
+        target.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, level * 20 * 4, 0));
     }
 }

@@ -65,7 +65,7 @@ public class DeathMarkSkill implements ISkill {
                     if (finalTarget.isValid()) {
                         
                         Location loc = finalTarget.getLocation();
-                        loc.getWorld().spawnParticle(Particle.EXPLOSION_HUGE, loc, 1);
+                        loc.getWorld().spawnParticle(Particle.EXPLOSION_EMITTER, loc, 1);
                         loc.getWorld().spawnParticle(Particle.SOUL, loc, 20, 0.5, 0.5, 0.5, 0.1);
                         loc.getWorld().playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 0.5f);
                         loc.getWorld().playSound(loc, Sound.ENTITY_WITHER_SPAWN, 1.0f, 1.0f);
@@ -92,7 +92,7 @@ public class DeathMarkSkill implements ISkill {
                 
                 Location markLoc = finalTarget.getLocation().add(0, 2.5, 0);
                 mark.teleport(markLoc); 
-                markLoc.getWorld().spawnParticle(Particle.SMOKE_NORMAL, markLoc, 3, 0.1, 0.1, 0.1, 0.02);
+                markLoc.getWorld().spawnParticle(Particle.SMOKE, markLoc, 3, 0.1, 0.1, 0.1, 0.02);
 
                 if (ticks % 20 == 0) { 
                     player.getWorld().playSound(finalTarget.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1.0f, 0.5f);

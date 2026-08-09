@@ -52,7 +52,7 @@ public class SunStrikeAOE implements IAbility {
                         hitLoc.getWorld().spawnParticle(Particle.FLAME, hitLoc, 10, 0.3, 0.3, 0.3, 0.05);
 
                         
-                        hitLoc.getWorld().spawnParticle(Particle.REDSTONE, hitLoc, 5, 0.2, 0.2, 0.2, 0,
+                        hitLoc.getWorld().spawnParticle(Particle.DUST, hitLoc, 5, 0.2, 0.2, 0.2, 0,
                                 new Particle.DustOptions(Color.ORANGE, 1.0f));
 
                         
@@ -71,7 +71,7 @@ public class SunStrikeAOE implements IAbility {
     }
 
     private void drawWarningEffect(Location loc) {
-        loc.getWorld().spawnParticle(Particle.REDSTONE, loc.clone().add(0, 0.1, 0), 10, 0.5, 0, 0.5, 0,
+        loc.getWorld().spawnParticle(Particle.DUST, loc.clone().add(0, 0.1, 0), 10, 0.5, 0, 0.5, 0,
                 new Particle.DustOptions(Color.YELLOW, 1.5f));
     }
 
@@ -80,7 +80,7 @@ public class SunStrikeAOE implements IAbility {
         Vector direction = end.toVector().subtract(start.toVector()).normalize();
         for (double d = 0; d < distance; d += 0.3) {
             Location point = start.clone().add(direction.clone().multiply(d));
-            point.getWorld().spawnParticle(Particle.REDSTONE, point, 2, 0.05, 0.05, 0.05, 0,
+            point.getWorld().spawnParticle(Particle.DUST, point, 2, 0.05, 0.05, 0.05, 0,
                     new Particle.DustOptions(Color.YELLOW, 1.2f));
 
             if (d % 2 == 0) {

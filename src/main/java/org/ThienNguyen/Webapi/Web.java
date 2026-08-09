@@ -327,13 +327,13 @@ public class Web {
             case "all_defense" -> AllDefense.set(item, value);         
             case "bow_damage" -> BowDamage.set(item, value);           
             case "knockback_resistance" -> KnockbackResistance.set(item, value);
-            case "durability" -> {
+            case "UNBREAKING" -> {
                 ItemMeta meta = item.getItemMeta();
                 if (meta instanceof org.bukkit.inventory.meta.Damageable damageable) {
                     
                     var pdc = meta.getPersistentDataContainer();
-                    pdc.set(new NamespacedKey(Main.getInstance(), "durability"), PersistentDataType.DOUBLE, value);
-                    pdc.set(new NamespacedKey(Main.getInstance(), "max_durability"), PersistentDataType.DOUBLE, value);
+                    pdc.set(new NamespacedKey(Main.getInstance(), "UNBREAKING"), PersistentDataType.DOUBLE, value);
+                    pdc.set(new NamespacedKey(Main.getInstance(), "max_UNBREAKING"), PersistentDataType.DOUBLE, value);
 
                     
                     damageable.setDamage(0); 

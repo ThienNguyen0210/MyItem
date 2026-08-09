@@ -53,7 +53,6 @@ public class SkillManager {
         
         loadScriptSkills();
 
-        Main.getInstance().getLogger().info("§a[Skill] Đã nạp tổng cộng " + skills.size() + " kỹ năng và đồng bộ Mana!");
     }
 
     private static void loadScriptSkills() {

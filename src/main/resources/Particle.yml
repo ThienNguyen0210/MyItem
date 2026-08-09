@@ -76,7 +76,7 @@ effects:
   # ────────────────────────────────────────────────
   # POLYGON: Tam giác ma thuật xoay dưới chân.
   magic_triangle:
-    particle: "CRIT_MAGIC"
+    particle: "ENCHANTED_HIT"
     arrangement: "POLYGON"
     edges: 3  # Số cạnh (3=tam giác, 5=ngôi sao, 6=lục giác)
     radius: 1.5
@@ -99,7 +99,7 @@ effects:
 
   # SPIRAL: Xoáy khói tối từ dưới lên.
   dark_vortex:
-    particle: "SMOKE_NORMAL"
+    particle: "SMOKE"
     arrangement: "SPIRAL"
     points: 5  # Số luồng xoáy
     radius: 1.8

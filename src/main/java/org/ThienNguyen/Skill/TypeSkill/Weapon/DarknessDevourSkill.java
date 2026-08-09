@@ -57,8 +57,8 @@ public class DarknessDevourSkill implements ISkill {
                     double y = Math.random() * 2.0;
 
                     Location particleLoc = center.clone().add(x, y, z);
-                    player.getWorld().spawnParticle(Particle.SMOKE_LARGE, particleLoc, 1, 0, 0, 0, 0.02);
-                    player.getWorld().spawnParticle(Particle.REDSTONE, particleLoc, 2, new Particle.DustOptions(Color.BLACK, 1.5f));
+                    player.getWorld().spawnParticle(Particle.LARGE_SMOKE, particleLoc, 1, 0, 0, 0, 0.02);
+                    player.getWorld().spawnParticle(Particle.DUST, particleLoc, 2, new Particle.DustOptions(Color.BLACK, 1.5f));
                 }
 
                 

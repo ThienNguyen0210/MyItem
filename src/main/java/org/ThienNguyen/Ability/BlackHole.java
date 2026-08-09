@@ -54,7 +54,7 @@ public class BlackHole implements IAbility {
                         victim.setVelocity(pull);
 
                         
-                        victim.getWorld().spawnParticle(Particle.SMOKE_NORMAL, victim.getLocation().add(0, 1, 0), 1, 0, 0, 0, 0.01);
+                        victim.getWorld().spawnParticle(Particle.SMOKE, victim.getLocation().add(0, 1, 0), 1, 0, 0, 0, 0.01);
                     }
                 }
 
@@ -75,7 +75,7 @@ public class BlackHole implements IAbility {
             Location p = loc.clone().add(v);
 
             
-            loc.getWorld().spawnParticle(Particle.REDSTONE, p, 1, 0, 0, 0, 0,
+            loc.getWorld().spawnParticle(Particle.DUST, p, 1, 0, 0, 0, 0,
                     new Particle.DustOptions(Color.BLACK, 1.5f));
 
             

@@ -1,32 +1,128 @@
-display-format: "%name% &f&l[&a+%level%&f&l]"
+# ============================================================
+#                     UPGRADE.YML
+#         Cấu hình hệ thống Cường Hóa Vật Phẩm
+# ============================================================
 
-color-levels:
-  0: "&f"
-  4: "&a"
-  10: "&d"
-  15: "&6&l"
 
+# ── TÊN HIỂN THỊ KHI VẬT PHẨM ĐƯỢC NÂNG CẤP ──────────────
+#
+# Các placeholder hợp lệ:
+#   %name%   → Tên gốc của vật phẩm (trước khi nâng cấp)
+#   %color%  → Không dùng trực tiếp trong format này (màu được
+#              lấy tự động từ color-levels bên dưới)
+#   %level%  → Số cấp độ, đã kèm màu từ color-levels
+#
+# Ví dụ: "%name% %color%[+%level%]"
+# Kết quả: "Kiếm Rồng §a[+5]"
+#
+display-format: "%name% %color%[+ %level%]"
+
+
+# ── CẤP TỐI ĐA ─────────────────────────────────────────────
+#
+# Vật phẩm không thể nâng quá mức này.
+# Nếu đã đạt max-level, plugin sẽ báo lỗi và từ chối nâng tiếp.
+#
 max-level: 15
-upgrade-costs:
-  levels:
-    1: 1000.0
-    2: 2000.0
-    3: 5000.0
-  default-cost: 500.0 # Giá mặc định nếu không khai báo cụ thể ở trên
-# Tỉ lệ thành công (%) cho từng cấp độ (từ cấp hiện tại lên cấp tiếp theo)
-levels:
-  1: 100
-  2: 70
-  3: 50
-  4: 50
-  5: 40
-  # Các cấp sau không ghi sẽ mặc định là 30%
-  default-chance: 30
 
-# Danh sách stats được phép tăng và tỉ lệ tăng mỗi cấp
-# 0.2 có nghĩa là tăng 20% (nhân với 1.2)
+
+# ── TỈ LỆ THÀNH CÔNG THEO CẤP ──────────────────────────────
+#
+# Mỗi key là cấp SẮP ĐẠT (cấp hiện tại + 1).
+# Ví dụ: key "1" = tỉ lệ để lên từ +0 → +1
+#         key "5" = tỉ lệ để lên từ +4 → +5
+#
+# Nếu một cấp không được khai báo, dùng default-chance.
+# Đơn vị: % (0.0 → 100.0)
+#
+# Lưu ý: Tỉ lệ cuối cùng = base_chance + bonus từ gem (xem gem.yml)
+# Tỉ lệ bị giới hạn tối đa 100%.
+#
+levels:
+  default-chance: 30.0   # Tỉ lệ mặc định cho các cấp không khai báo
+
+  1: 90.0    # +0 → +1 : 90%
+  2: 80.0    # +1 → +2 : 80%
+  3: 70.0    # +2 → +3 : 70%
+  4: 60.0    # +3 → +4 : 60%
+  5: 50.0    # +4 → +5 : 50%
+  6: 45.0    # +5 → +6 : 45%
+  7: 40.0    # +6 → +7 : 40%
+  8: 35.0    # +7 → +8 : 35%
+  9: 30.0    # +8 → +9 : 30%
+  10: 25.0   # +9  → +10: 25%
+  11: 20.0   # +10 → +11: 20%
+  12: 15.0   # +11 → +12: 15%
+  13: 10.0   # +12 → +13: 10%
+  14: 7.0    # +13 → +14: 7%
+  15: 5.0    # +14 → +15: 5%
+
+
+# ── CHỈ SỐ TĂNG KHI NÂNG CẤP THÀNH CÔNG ────────────────────
+#
+# Mỗi key là tên của một chỉ số được lưu trong PersistentDataContainer
+# của vật phẩm dưới dạng DOUBLE (namespace: plugin).
+#
+# Giá trị là % tăng mỗi lần nâng cấp thành công.
+#   stat_mới = stat_hiện_tại × (1 + giá_trị)
+#
+# Khi nâng cấp THẤT BẠI (không có Bùa Hộ Mệnh), cấp tụt 1:
+#   stat_mới = stat_hiện_tại / (1 + giá_trị)   ← ngược lại
+#
+# Ví dụ: attack: 0.10 → mỗi lần lên cấp, attack tăng 10%
+#         defense: 0.05 → mỗi lần lên cấp, defense tăng 5%
+#
+# ⚠ Chỉ áp dụng cho vật phẩm có chứa chỉ số đó trong PDC.
+#    Vật phẩm không có chỉ số "attack" sẽ bỏ qua dòng "attack".
+#
 upgrade-stats:
-  damage: 0.2
-  armor: 0.1
-  health: 0.1
-  true_damage: 0.05
+  damage: 0.10       # Tấn công tăng 10% mỗi cấp
+  armor: 0.05      # Phòng thủ tăng 5% mỗi cấp
+  health: 0.08       # Máu tăng 8% mỗi cấp
+  # Thêm chỉ số tuỳ ý theo tên key trong PDC của vật phẩm bạn
+
+
+# ── MÀU TÊN THEO CẤP ────────────────────────────────────────
+#
+# Dùng mã màu Minecraft (&a, &b, §c...) hoặc hex nếu server hỗ trợ.
+# Hệ thống dùng floorEntry: key nhỏ nhất ≥ cấp hiện tại được áp dụng.
+#
+# Ví dụ: cấp 7 → dùng màu của key "5" (vì 5 ≤ 7 < 10)
+#         cấp 12 → dùng màu của key "10"
+#
+# Thứ tự key phải tăng dần để hệ thống hoạt động đúng.
+#
+color-levels:
+  1: "&a"    # Cấp 1–4   : Xanh lá nhạt
+  5: "&e"    # Cấp 5–9   : Vàng
+  10: "&6"   # Cấp 10–14 : Cam vàng
+  15: "&c"   # Cấp 15    : Đỏ (max)
+
+
+# ── CHI PHÍ NÂNG CẤP (tiền Economy) ────────────────────────
+#
+# Yêu cầu plugin Economy (Vault) được cài đặt và kích hoạt.
+# Nếu không có Vault, chi phí bị bỏ qua hoàn toàn.
+#
+# key dưới "levels" là cấp SẮP ĐẠT (giống phần levels bên trên).
+# Nếu cấp không khai báo, dùng default-cost.
+#
+upgrade-costs:
+  default-cost: 500.0     # Chi phí mặc định nếu cấp không được khai báo
+
+  levels:
+    1: 100.0     # Lên +1 : 100$
+    2: 200.0     # Lên +2 : 200$
+    3: 400.0     # Lên +3 : 400$
+    4: 800.0     # Lên +4 : 800$
+    5: 1500.0    # Lên +5 : 1,500$
+    6: 2500.0    # Lên +6 : 2,500$
+    7: 4000.0    # Lên +7 : 4,000$
+    8: 6000.0    # Lên +8 : 6,000$
+    9: 9000.0    # Lên +9 : 9,000$
+    10: 13000.0  # Lên +10: 13,000$
+    11: 18000.0  # Lên +11: 18,000$
+    12: 25000.0  # Lên +12: 25,000$
+    13: 35000.0  # Lên +13: 35,000$
+    14: 50000.0  # Lên +14: 50,000$
+    15: 75000.0  # Lên +15: 75,000$

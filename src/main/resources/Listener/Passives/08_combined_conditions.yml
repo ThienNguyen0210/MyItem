@@ -1,0 +1,21 @@
+# ─────────────────────────────────────────────────────────────────
+# MẪU 8: Kết hợp nhiều điều kiện (must-be-crit + target-type + HP threshold)
+# Chỉ trigger khi: đòn đánh là CRIT, victim là Player (PvP only),
+# và HP victim dưới 30%. Khi đủ cả 3, 50% tỉ lệ buff critical_damage
+# +30 trong 5 giây cho bản thân (đà chiến thắng).
+# ─────────────────────────────────────────────────────────────────
+id: finisher_momentum
+display-name: "§d[Đà Chiến Thắng]"
+trigger: ON_HIT
+condition:
+  must-be-crit: true
+  target-type: PLAYER
+  target-hp-percent-below: 30
+chance: 50
+cooldown: 15
+actions:
+  - type: BUFF_STAT
+    target: SELF
+    stat: critical_damage
+    amount: 30
+    duration-seconds: 5

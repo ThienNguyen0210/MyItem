@@ -14,6 +14,6 @@ public class Tired implements IAbility {
     @Override
     public void execute(Player attacker, LivingEntity target, int level, double baseDamage) {
         if (target == null || target.isDead()) return;
-        target.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_DIGGING, level * 20 * 2, level));
+        target.addPotionEffect(new PotionEffect(PotionEffectType.MINING_FATIGUE, level * 20 * 2, level));
     }
 }

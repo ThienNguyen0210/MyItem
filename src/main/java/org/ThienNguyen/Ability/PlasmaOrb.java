@@ -46,7 +46,7 @@ public class PlasmaOrb implements IAbility {
 
                 
                 currentLoc.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, currentLoc, 5, 0.1, 0.1, 0.1, 0.05);
-                currentLoc.getWorld().spawnParticle(Particle.REDSTONE, currentLoc, 10, 0.2, 0.2, 0.2, 0,
+                currentLoc.getWorld().spawnParticle(Particle.DUST, currentLoc, 10, 0.2, 0.2, 0.2, 0,
                         new Particle.DustOptions(Color.fromRGB(138, 43, 226), 1.5f)); 
 
                 
@@ -82,7 +82,7 @@ public class PlasmaOrb implements IAbility {
         double distance = start.distance(end);
         for (double i = 0; i < distance; i += 0.3) {
             Vector point = vec.clone().normalize().multiply(i);
-            start.getWorld().spawnParticle(Particle.REDSTONE, start.clone().add(point), 1, 0, 0, 0, 0,
+            start.getWorld().spawnParticle(Particle.DUST, start.clone().add(point), 1, 0, 0, 0, 0,
                     new Particle.DustOptions(Color.fromRGB(0, 191, 255), 0.6f)); 
         }
     }

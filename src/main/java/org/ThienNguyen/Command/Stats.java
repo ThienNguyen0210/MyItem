@@ -26,7 +26,7 @@ public class Stats {
      * HÀM GỐC (2 tham số): Để tránh lỗi COMPILATION ERROR trong MyItemCommand hoặc các class cũ.
      */
     public void handleCommand(Player player, String[] args) {
-        
+
         handleCommand(player, args, "any");
     }
 
@@ -56,14 +56,14 @@ public class Stats {
                 double value;
 
                 if (isPercent) {
-                    
+
                     String numStr = rawValue.substring(0, rawValue.length() - 1);
                     value = Double.parseDouble(numStr);
                 } else {
                     value = Double.parseDouble(rawValue);
                 }
 
-                
+
                 updatePDCNumeric(item, type, value, slot, isPercent);
             } catch (NumberFormatException e) {
                 player.sendMessage("§cGiá trị cho chỉ số này phải là một con số hoặc định dạng % (Ví dụ: 10 hoặc 10%)!");
@@ -71,7 +71,7 @@ public class Stats {
             }
         }
 
-        
+
         updateItemLore(item);
 
         player.sendMessage("§a[MyItem] Đã cập nhật §f" + type + " §athành §e" + rawValue + " §7(Slot: §b" + slot + "§7)");
@@ -100,22 +100,22 @@ public class Stats {
         var pdc = meta.getPersistentDataContainer();
 
         if (isPercent) {
-            
-            
-            
+
+
+
             NamespacedKey pctValueKey = new NamespacedKey(Main.getInstance(), "pct_" + type);
             pdc.set(pctValueKey, PersistentDataType.DOUBLE, value);
 
-            
+
             NamespacedKey pctSlotKey = new NamespacedKey(Main.getInstance(), "slot_pct_" + type);
             pdc.set(pctSlotKey, PersistentDataType.STRING, slot.toLowerCase());
 
             item.setItemMeta(meta);
         } else {
-            
-            
-            
-            item.setItemMeta(meta); 
+
+
+
+            item.setItemMeta(meta);
 
             switch (type) {
                 case "damage" -> Damage.setDamage(item, value);
@@ -152,18 +152,19 @@ public class Stats {
                     meta = item.getItemMeta();
                     if (meta instanceof org.bukkit.inventory.meta.Damageable damageable) {
                         var dPdc = damageable.getPersistentDataContainer();
-                        dPdc.set(new NamespacedKey(Main.getInstance(), "durability"), PersistentDataType.DOUBLE, value);
-                        dPdc.set(new NamespacedKey(Main.getInstance(), "max_durability"), PersistentDataType.DOUBLE, value);
+                        dPdc.set(new NamespacedKey(Main.getInstance(), "UNBREAKING"), PersistentDataType.DOUBLE, value);
+                        dPdc.set(new NamespacedKey(Main.getInstance(), "max_UNBREAKING"), PersistentDataType.DOUBLE, value);
                         damageable.setDamage(0);
                         item.setItemMeta(damageable);
                     }
                 }
                 case "magic_damage" -> MagicDamage.set(item, value);
                 case "magic_defense" -> MagicDefense.set(item, value);
+                case "effect_resistance" -> EffectResistance.set(item, value);
                 default -> {}
             }
 
-            
+
             meta = item.getItemMeta();
             if (meta != null) {
                 NamespacedKey slotKey = new NamespacedKey(Main.getInstance(), "slot_" + type);

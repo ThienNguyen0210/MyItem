@@ -79,7 +79,7 @@ public class TeleportSkill implements ISkill {
                 victim.removeMetadata("SKILL_DAMAGE_PROCESSED", Main.getInstance());
 
                 
-                victim.getWorld().spawnParticle(Particle.CRIT_MAGIC, victim.getEyeLocation(), 10, 0.2, 0.2, 0.2, 0.05);
+                victim.getWorld().spawnParticle(Particle.ENCHANTED_HIT, victim.getEyeLocation(), 10, 0.2, 0.2, 0.2, 0.05);
             }
         }
 

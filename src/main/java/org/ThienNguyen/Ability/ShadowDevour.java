@@ -45,7 +45,7 @@ public class ShadowDevour implements IAbility {
                     double x = (Math.random() - 0.5) * 4.0;
                     double y = Math.random() * 2.5;
                     double z = (Math.random() - 0.5) * 4.0;
-                    center.getWorld().spawnParticle(Particle.REDSTONE, center.clone().add(x, y, z), 1, blackDust);
+                    center.getWorld().spawnParticle(Particle.DUST, center.clone().add(x, y, z), 1, blackDust);
                 }
 
                 

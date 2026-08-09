@@ -1,0 +1,16 @@
+# ─────────────────────────────────────────────────────────────────
+# MẪU 6: target-type: SELF — Tự gây damage lên bản thân
+# Chỉ trigger khi actor TỰ gây damage lên mình (rơi, lửa, độc, void...),
+# KHÔNG trigger khi bị người/mob khác đánh. Hồi lại 2 HP mỗi lần, cooldown 3s.
+# ─────────────────────────────────────────────────────────────────
+id: fire_resist_passive
+display-name: "§e[Da Sắt]"
+trigger: ON_TAKE_DAMAGE
+condition:
+  target-type: SELF
+chance: 100
+cooldown: 3
+actions:
+  - type: HEAL
+    target: SELF
+    amount: 2

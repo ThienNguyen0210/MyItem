@@ -44,7 +44,7 @@ public class DarkImpact implements IAbility {
 
             
             victim.playSound(victim.getLocation(), Sound.ENTITY_ZOMBIE_VILLAGER_CONVERTED, 1.0f, 0.5f);
-            victim.getWorld().spawnParticle(Particle.SMOKE_LARGE, victim.getEyeLocation(), 15, 0.2, 0.2, 0.2, 0.05);
+            victim.getWorld().spawnParticle(Particle.LARGE_SMOKE, victim.getEyeLocation(), 15, 0.2, 0.2, 0.2, 0.05);
         }
 
         

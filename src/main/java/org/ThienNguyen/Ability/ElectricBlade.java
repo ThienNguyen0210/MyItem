@@ -101,7 +101,7 @@ public class ElectricBlade implements IAbility {
             double offsetY = (Math.random() - 0.5) * 0.1;
             double offsetZ = (Math.random() - 0.5) * 0.1;
 
-            start.getWorld().spawnParticle(Particle.REDSTONE, particleLoc.add(offsetX, offsetY, offsetZ), 1, 0, 0, 0, 0,
+            start.getWorld().spawnParticle(Particle.DUST, particleLoc.add(offsetX, offsetY, offsetZ), 1, 0, 0, 0, 0,
                     new Particle.DustOptions(Color.fromRGB(255, 255, 100), 0.8f)); 
         }
     }

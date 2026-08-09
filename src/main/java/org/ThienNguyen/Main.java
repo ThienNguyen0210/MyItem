@@ -11,7 +11,7 @@ import org.ThienNguyen.EditItem.ItemFlagCommand;
 import org.ThienNguyen.EditItem.ModelAndMaterial;
 import java.util.Optional;
 import java.util.Arrays;
-import net.milkbowl.vault.economy.Economy;
+
 import org.ThienNguyen.GemSocket.GemRemover;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.ThienNguyen.Hook.MyItemExpansion;
@@ -76,6 +76,19 @@ public class Main extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
+
+        // ── Passive System ────────────────────────────────────────────
+        org.ThienNguyen.Listener.Passive.PassiveManager.init();
+        getServer().getPluginManager().registerEvents(
+                new org.bukkit.event.Listener() {
+                    @org.bukkit.event.EventHandler
+                    public void onQuit(org.bukkit.event.player.PlayerQuitEvent e) {
+                        org.ThienNguyen.Listener.Passive.PassiveManager.getInstance()
+                                .clearPlayer(e.getPlayer().getUniqueId());
+                    }
+                }, this
+        );
+        // ──────────────────────────────────────────────────────────────
         if (setupEconomy()) {
             getLogger().info("&aHook Vault Success!");
         } else {
@@ -83,7 +96,6 @@ public class Main extends JavaPlugin {
         }
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new MyItemExpansion().register();
-            getLogger().info("Đã đăng ký Placeholder thành công: %windycore_totaldamage%");
         } else {
             getLogger().warning("Không tìm thấy PlaceholderAPI! Placeholder của WindyCore sẽ không hoạt động.");
         }
@@ -123,7 +135,6 @@ public class Main extends JavaPlugin {
                         }
 
                         String typeId = args[1].toLowerCase();
-                        // Thực hiện gán loại trang sức
                         if (JewelryManager.setJewelryType(player, typeId)) {
                             player.sendMessage("§a§l✔ §7Đã gán thành công loại: §e" + typeId);
                             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1f);
@@ -233,11 +244,21 @@ public class Main extends JavaPlugin {
 
         // 6. Đăng ký toàn bộ Events
         // passive
-        getServer().getPluginManager().registerEvents(new org.ThienNguyen.Listener.Passive.Blood(), this);
-        getServer().getPluginManager().registerEvents(new org.ThienNguyen.Listener.Passive.Longshot(), this);
         new org.ThienNguyen.Listener.Expire().runTaskLater(this, 100L);
         //
         langManager = new LanguageManager(this);
+        // passive
+
+        org.ThienNguyen.Listener.Passive.PassiveManager.init();
+        getServer().getPluginManager().registerEvents(
+                new org.ThienNguyen.Listener.Passive.Trigger.PassiveBlockBreakListener(), this);
+        getServer().getPluginManager().registerEvents(
+                new org.ThienNguyen.Listener.Passive.Trigger.PassiveDeathListener(), this);
+        getServer().getPluginManager().registerEvents(
+                new org.ThienNguyen.Listener.Passive.Trigger.PassiveCacheListener(), this);
+        // passive
+        getServer().getPluginManager().registerEvents(
+                new org.ThienNguyen.Listener.EffectResistanceListener(), this);
         getServer().getPluginManager().registerEvents(new org.ThienNguyen.Listener.AbilityBlockListener(), this);
         getServer().getPluginManager().registerEvents(new org.ThienNguyen.Consume.ConsumeManager(), this);
         getServer().getPluginManager().registerEvents(new UpdateListener(this), this);
@@ -382,21 +403,15 @@ public class Main extends JavaPlugin {
             String apiKeyStatus = aiConfig.getString("api-key", "").trim().isEmpty()
                     ? "§7Sử dụng hard-coded key"
                     : "§aĐang dùng key tùy chỉnh";
-
-            getLogger().info("§a[MyItem] Đã reload AI/AIConfig.yml thành công!");
-            getLogger().info("§7   → tiny_font_enabled: " + aiConfig.getBoolean("ai.tiny_font_enabled", false));
-            getLogger().info("§7   → level_require: " + aiConfig.getBoolean("ai.level_require", false));
-            getLogger().info("§7   → unbreaking: " + aiConfig.getBoolean("ai.unbreaking", false));
-            getLogger().info("§7   → api-key: " + apiKeyStatus);
         }
 
         // ==================== Các config khác giữ nguyên ====================
         this.evolutionConfig = setupConfig("Evolution.yml");
 
         syncStatsWithWeb();
-        File readmeFile = new File(getDataFolder(), "README.yml");
+        File readmeFile = new File(getDataFolder(), "README.md");
         if (!readmeFile.exists()) {
-            saveResource("README.yml", false);
+            saveResource("README.md", false);
         }
         if (this.aiProcessor != null) {
             this.aiProcessor = new org.ThienNguyen.AI.AIProcessor();
@@ -451,9 +466,9 @@ public class Main extends JavaPlugin {
         SkillManager.loadSkills();
         org.ThienNguyen.Ability.AbilityManager.clearAbilities();
         org.ThienNguyen.Ability.AbilityManager.loadExternalAbilities();
+        org.ThienNguyen.Listener.Passive.PassiveManager.getInstance().loadAll();
         EventDamage.resetFormulaCache();
         EventDamage.reloadAbilityTriggerCache();
-        getLogger().info("§e[MyItem] Hệ thống cấu hình, Kỹ năng và Nội tại mẫu đã được nạp thành công!");
     }
 
     /**
@@ -483,8 +498,8 @@ public class Main extends JavaPlugin {
                         "\n§3■■      ■■  ■■■■■■■■";
 
         String description =
-                "\n§f> Tên plugin: §6Myitem" +
-                        "\n§f> Phiên bản: §e" + "2.1" +
+                "\n§f> Tên plugin: §3§lMyitem" +
+                        "\n§f> Phiên bản: §e" + "3.0 §f§lUltimate" +
                         "\n§f> AI: §e" + "1.0" +
                         "\n§f> Tác giả: §dThiện Dev" +
                         "\n§f> Dành cho: §a1.14.x -> 1.21.x" +
@@ -527,6 +542,15 @@ public class Main extends JavaPlugin {
                 // 3. % regen từ config.yml (global cho tất cả player)
                 if (globalRegenPercent > 0) {
                     finalRegen += (maxHp * (globalRegenPercent / 100.0));
+                }
+
+                // Vết Thương Sâu (Deep Wound): giảm health regen theo % đã ghi trong metadata,
+                // cùng cơ chế đang áp dụng cho lifesteal (EventDamage.applyLifesteal()).
+                // Áp dụng cho TOÀN BỘ finalRegen (gộp cả flat + % trang bị + % global từ config),
+                // vì deep wound mô phỏng "vết thương khó lành", không phân biệt nguồn hồi máu.
+                if (finalRegen > 0 && p.hasMetadata("DEEP_WOUND_REDUCTION")) {
+                    double reduction = p.getMetadata("DEEP_WOUND_REDUCTION").get(0).asDouble();
+                    finalRegen *= Math.max(0.0, 1.0 - (reduction / 100.0));
                 }
 
                 if (finalRegen > 0) {
@@ -723,9 +747,8 @@ public class Main extends JavaPlugin {
                         .build();
 
                 client.send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
-                getLogger().info("§a[MyItemAPI] Đã đồng bộ với web Windycraft.com của Author");
             } catch (Exception e) {
-                getLogger().warning("§c[WebAPI] Không thể kết nối tới Web để đồng bộ Stats!");
+                getLogger().warning("§c[WebAPI] Có gì đó xảy ra với WEBAPI!");
             }
         });
     }

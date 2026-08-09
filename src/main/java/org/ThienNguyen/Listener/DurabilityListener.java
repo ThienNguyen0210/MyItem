@@ -21,12 +21,12 @@ import java.util.Random;
 
 public class DurabilityListener implements Listener {
 
-    private static final NamespacedKey DUR_KEY = new NamespacedKey(Main.getInstance(), "durability");
-    private static final NamespacedKey MAX_KEY = new NamespacedKey(Main.getInstance(), "max_durability");
+    private static final NamespacedKey DUR_KEY = new NamespacedKey(Main.getInstance(), "UNBREAKING");
+    private static final NamespacedKey MAX_KEY = new NamespacedKey(Main.getInstance(), "max_UNBREAKING");
     private final Random random = new Random();
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    public void onDurabilityChange(PlayerItemDamageEvent event) {
+    public void onUNBREAKINGChange(PlayerItemDamageEvent event) {
         ItemStack item = event.getItem();
         if (item == null || !item.hasItemMeta()) return;
 
@@ -38,7 +38,7 @@ public class DurabilityListener implements Listener {
             event.setDamage(0);
 
             
-            int unbreakingLevel = meta.getEnchantLevel(Enchantment.DURABILITY);
+            int unbreakingLevel = meta.getEnchantLevel(Enchantment.UNBREAKING);
             if (unbreakingLevel > 0) {
                 
                 

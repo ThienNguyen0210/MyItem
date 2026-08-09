@@ -55,9 +55,9 @@ public class AmaterasuSkill implements ISkill {
 
                 
                 Location loc = target.getLocation().add(0, 1, 0);
-                target.getWorld().spawnParticle(Particle.REDSTONE, loc, 15, 0.3, 0.5, 0.3, 0,
+                target.getWorld().spawnParticle(Particle.DUST, loc, 15, 0.3, 0.5, 0.3, 0,
                         new Particle.DustOptions(Color.BLACK, 1.5F));
-                target.getWorld().spawnParticle(Particle.SMOKE_LARGE, loc, 3, 0.2, 0.4, 0.2, 0.02);
+                target.getWorld().spawnParticle(Particle.LARGE_SMOKE, loc, 3, 0.2, 0.4, 0.2, 0.02);
 
                 
                 if (ticks % 20 == 0) {

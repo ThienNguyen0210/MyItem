@@ -40,7 +40,7 @@ public class DestructiveLaserSkill implements ISkill {
         long damageIntervalTicks = 4L;
 
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.7f);
-        player.getWorld().spawnParticle(Particle.FIREWORKS_SPARK, player.getEyeLocation(), 20, 0.5, 0.5, 0.5, 0.05);
+        player.getWorld().spawnParticle(Particle.FIREWORK, player.getEyeLocation(), 20, 0.5, 0.5, 0.5, 0.05);
 
         new BukkitRunnable() {
             private int ticksRun = 0;
@@ -66,7 +66,7 @@ public class DestructiveLaserSkill implements ISkill {
                     Location point = playerEyeLoc.clone().add(direction.clone().multiply(d));
 
                     
-                    player.getWorld().spawnParticle(Particle.REDSTONE, point, 2, 0.1, 0.1, 0.1, 0,
+                    player.getWorld().spawnParticle(Particle.DUST, point, 2, 0.1, 0.1, 0.1, 0,
                             new Particle.DustOptions(Color.RED, 1.2F));
 
                     

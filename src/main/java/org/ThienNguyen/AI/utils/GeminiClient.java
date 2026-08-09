@@ -80,12 +80,12 @@ public class GeminiClient {
         boolean isLevelRequireEnabled = aiCfg != null && aiCfg.getBoolean("ai.level_require", false);
         boolean isUnbreaking = aiCfg != null && aiCfg.getBoolean("ai.unbreaking", false);
 
-        String validStats = "[damage, health, armor, pve_damage, pvp_damage, pve_defense, pvp_defense, critical_chance, critical_damage, lifesteal, dodge_rate, block_rate, penetration, level_require, true_damage, thorns, max_mana, mana_regen, exp_bonus, attack_speed, movement_speed, health_regen, armor_pen, all_damage, all_defense, bow_damage, knockback_resistance, death_damage, durability, magic_damage, magic_defense]";
+        String validStats = "[damage, health, armor, pve_damage, pvp_damage, pve_defense, pvp_defense, critical_chance, critical_damage, lifesteal, dodge_rate, block_rate, penetration, level_require, true_damage, thorns, max_mana, mana_regen, exp_bonus, attack_speed, movement_speed, health_regen, armor_pen, all_damage, all_defense, bow_damage, knockback_resistance, death_damage, UNBREAKING, magic_damage, magic_defense]";
         String finalStats = isLevelRequireEnabled
                 ? validStats.replace("]", ", level_require]")
                 : validStats;
 
-        String validAbilities = "[LIGHTNING, POISON, WEAK, HUNGER, TIRED, CONFUSE, WITHER, BLIND, SLOW, AIR_SHOCK, CURSE, BUBBLE, BLEED, FIRE_VORTEX, FREEZE, DISARM, EXPLODE, FLAME_PULSE, ANGEL, SHADOW_DEVOUR, SONIC_WAVE, FIRE_RAIN, STAR_RITUAL, FIRE_TRIPLE_SHOT, STAR_FALL, SUN_STRIKE_AOE, BLACK_HOLE, SHADOW_WAVE, FAIRY_CHAIN, LILAC_BLOOM_BOMB, LEAF_STORM, SPIRIT_WOLF, PLAGUE_SPREAD, WIND_TORNADO, FIRE_ORB, PLASMA_ORB, ELECTRIC_BLADE, FIRST_STRIKE, TNT_STUCK, BadLuck, Bubble_Deflector, DARK_FLAME, DARK_IMPACT, ROOTS, VAMPIRISM, VENOM_SPREAD]";
+        String validAbilities = "[LIGHTNING, POISON, WEAK, HUNGER, TIRED, CONFUSE, WITHER, BLIND, SLOWNESS, AIR_SHOCK, CURSE, BUBBLE, BLEED, FIRE_VORTEX, FREEZE, DISARM, EXPLODE, FLAME_PULSE, ANGEL, SHADOW_DEVOUR, SONIC_WAVE, FIRE_RAIN, STAR_RITUAL, FIRE_TRIPLE_SHOT, STAR_FALL, SUN_STRIKE_AOE, BLACK_HOLE, SHADOW_WAVE, FAIRY_CHAIN, LILAC_BLOOM_BOMB, LEAF_STORM, SPIRIT_WOLF, PLAGUE_SPREAD, WIND_TORNADO, FIRE_ORB, PLASMA_ORB, ELECTRIC_BLADE, FIRST_STRIKE, TNT_STUCK, BadLuck, Bubble_Deflector, DARK_FLAME, DARK_IMPACT, ROOTS, VAMPIRISM, VENOM_SPREAD]";
         String validElements = getDynamicElements();
         String validEffect = "[SPEED, FAST_DIGGING, INCREASE_DAMAGE, JUMP, REGENERATION, DAMAGE_RESISTANCE, FIRE_RESISTANCE, WATER_BREATHING, HEALTH_BOOST, ABSORPTION, NIGHT_VISION, LUCK]";
 

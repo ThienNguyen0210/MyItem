@@ -1,0 +1,18 @@
+# ─────────────────────────────────────────────────────────────────
+# MẪU 1: Execute cơ bản
+# Khi đánh trúng (ON_HIT) và HP của victim dưới 20%, có 100% tỉ lệ
+# gây 99999 true damage để kết liễu ngay.
+# ─────────────────────────────────────────────────────────────────
+id: execute_20pct
+display-name: "§c[Tử Thần]"
+trigger: ON_HIT
+condition:
+  target-type: BOTH          # áp dụng cho cả Player (PvP) và Mob (PvE)
+  target-hp-percent-below: 20
+chance: 100
+cooldown: 0                   # 0 = không cooldown
+actions:
+  - type: DAMAGE
+    target: VICTIM
+    amount: 99999
+    damage-type: TRUE

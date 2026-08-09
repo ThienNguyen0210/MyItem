@@ -59,11 +59,11 @@ public class DarkFlame implements IAbility {
                     double offsetZ = (random.nextDouble() - 0.5) * 1.2;
 
                     
-                    loc.getWorld().spawnParticle(Particle.REDSTONE, loc.clone().add(offsetX, offsetY, offsetZ), 1, blackDust);
+                    loc.getWorld().spawnParticle(Particle.DUST, loc.clone().add(offsetX, offsetY, offsetZ), 1, blackDust);
 
                     
                     if (ticks % 2 == 0) {
-                        loc.getWorld().spawnParticle(Particle.SMOKE_LARGE, loc.clone().add(offsetX, offsetY, offsetZ), 1, 0.02, 0.02, 0.02, 0.01);
+                        loc.getWorld().spawnParticle(Particle.LARGE_SMOKE, loc.clone().add(offsetX, offsetY, offsetZ), 1, 0.02, 0.02, 0.02, 0.01);
                     }
                 }
 

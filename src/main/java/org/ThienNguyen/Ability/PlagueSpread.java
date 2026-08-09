@@ -56,7 +56,7 @@ public class PlagueSpread implements IAbility {
                 
                 Location loc = victim.getLocation().add(0, 1, 0);
                 
-                victim.getWorld().spawnParticle(Particle.REDSTONE, loc, 8, 0.3, 0.5, 0.3, 0,
+                victim.getWorld().spawnParticle(Particle.DUST, loc, 8, 0.3, 0.5, 0.3, 0,
                         new Particle.DustOptions(Color.fromRGB(0, 128, 255), 1.2f));
                 victim.getWorld().spawnParticle(Particle.SNEEZE, loc, 3, 0.2, 0.2, 0.2, 0.01);
 

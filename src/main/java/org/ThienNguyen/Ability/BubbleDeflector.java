@@ -57,9 +57,9 @@ public class BubbleDeflector implements IAbility {
                 
                 for (double d = 0; d <= piercingRange; d += 0.5) {
                     Location pLoc = startLoc.clone().add(direction.clone().multiply(d));
-                    pLoc.getWorld().spawnParticle(Particle.WATER_BUBBLE, pLoc, 2, 0.1, 0.1, 0.1, 0.02);
+                    pLoc.getWorld().spawnParticle(Particle.BUBBLE, pLoc, 2, 0.1, 0.1, 0.1, 0.02);
                     if (ticks % 4 == 0) {
-                        pLoc.getWorld().spawnParticle(Particle.WATER_WAKE, pLoc, 1, 0, 0, 0, 0);
+                        pLoc.getWorld().spawnParticle(Particle.FISHING, pLoc, 1, 0, 0, 0, 0);
                     }
                 }
 

@@ -74,10 +74,10 @@ public class FairyChain implements IAbility {
                             victim.removeMetadata("IS_ABILITY", Main.getInstance());
 
                             
-                            victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 60, 100));
+                            victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 100));
 
                             
-                            victim.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, victim.getLocation().add(0, 1, 0), 1);
+                            victim.getWorld().spawnParticle(Particle.EXPLOSION, victim.getLocation().add(0, 1, 0), 1);
                             victim.getWorld().playSound(victim.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 0.8f, 1.5f);
 
                             this.cancel();
@@ -97,7 +97,7 @@ public class FairyChain implements IAbility {
         for (double d = 0; d < distance; d += 0.4) {
             Location point = start.clone().add(direction.clone().multiply(d));
             
-            point.getWorld().spawnParticle(Particle.REDSTONE, point, 1, 0, 0, 0, 0,
+            point.getWorld().spawnParticle(Particle.DUST, point, 1, 0, 0, 0, 0,
                     new Particle.DustOptions(Color.fromRGB(255, 150, 200), 1.0f));
             
             if (d % 1.2 == 0) {

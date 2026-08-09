@@ -100,10 +100,10 @@ public class EvolutionManager {
 
         
         try {
-            String p = config.getString("settings.effects.particle", "EXPLOSION_HUGE");
+            String p = config.getString("settings.effects.particle", "EXPLOSION_EMITTER");
             player.getWorld().spawnParticle(Particle.valueOf(p), player.getLocation().add(0, 1, 0), 10, 0.5, 0.5, 0.5, 0.1);
         } catch (Exception e) {
-            player.getWorld().spawnParticle(Particle.SMOKE_NORMAL, player.getLocation().add(0, 1, 0), 20);
+            player.getWorld().spawnParticle(Particle.SMOKE, player.getLocation().add(0, 1, 0), 20);
         }
     }
 

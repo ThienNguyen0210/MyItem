@@ -1,0 +1,26 @@
+# ─────────────────────────────────────────────────────────────────
+# MẪU 9: Cha-con nhiều cấp (đệ quy)
+# DAMAGE -> nếu thành công -> HEAL (con cấp 1) -> nếu HEAL thành công
+# (chưa full máu) -> BUFF_STAT (con cấp 2, "ăn mừng" sau khi heal được).
+# Minh hoạ children có thể lồng nhiều tầng, không chỉ 1 cấp.
+# ─────────────────────────────────────────────────────────────────
+id: berserker_combo
+display-name: "§c[Cuồng Chiến]"
+trigger: ON_HIT
+chance: 100
+cooldown: 12
+actions:
+  - type: DAMAGE
+    target: VICTIM
+    amount: 8
+    damage-type: TRUE
+    children:
+      - type: HEAL
+        target: SELF
+        percent: 5
+        children:
+          - type: BUFF_STAT
+            target: SELF
+            stat: movement_speed
+            amount: 10
+            duration-seconds: 4

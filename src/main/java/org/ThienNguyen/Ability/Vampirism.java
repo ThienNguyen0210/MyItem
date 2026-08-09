@@ -44,7 +44,7 @@ public class Vampirism implements IAbility {
 
         
         attacker.getWorld().spawnParticle(Particle.HEART, attacker.getLocation().add(0, 1.5, 0), 3, 0.3, 0.3, 0.3, 0.1);
-        attacker.getWorld().spawnParticle(Particle.REDSTONE, attacker.getLocation().add(0, 1, 0), 10, 0.2, 0.5, 0.2, 0.05);
+        attacker.getWorld().spawnParticle(Particle.DUST, attacker.getLocation().add(0, 1, 0), 10, 0.2, 0.5, 0.2, 0.05);
 
         
         attacker.playSound(attacker.getLocation(), Sound.ENTITY_PLAYER_BURP, 0.8f, 0.5f);

@@ -72,7 +72,7 @@ public class SpiritWolf implements IAbility {
                 
                 if (ticks >= 100 || wolf.isDead() || !wolf.isValid()) {
                     if (wolf.isValid()) {
-                        wolf.getWorld().spawnParticle(Particle.SMOKE_LARGE, wolf.getLocation().add(0, 0.5, 0), 15, 0.3, 0.3, 0.3, 0.05);
+                        wolf.getWorld().spawnParticle(Particle.LARGE_SMOKE, wolf.getLocation().add(0, 0.5, 0), 15, 0.3, 0.3, 0.3, 0.05);
                         wolf.getWorld().playSound(wolf.getLocation(), Sound.ENTITY_WOLF_WHINE, 1.0f, 0.8f);
                         wolf.remove();
                     }
@@ -93,7 +93,7 @@ public class SpiritWolf implements IAbility {
                 }
 
                 
-                wolf.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, wolf.getLocation().add(0, 0.2, 0), 2, 0.2, 0.1, 0.2, 0.01);
+                wolf.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, wolf.getLocation().add(0, 0.2, 0), 2, 0.2, 0.1, 0.2, 0.01);
             }
         }.runTaskTimer(Main.getInstance(), 0L, 5L);
     }

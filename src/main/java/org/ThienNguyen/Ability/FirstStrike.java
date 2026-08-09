@@ -26,10 +26,10 @@ public class FirstStrike implements IAbility {
 
         
         
-        target.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, 60, 0));
+        target.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 60, 0));
 
         
-        target.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 20, 99)); 
+        target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 20, 99)); 
 
         
         applyAbilityDamage(attacker, target, extraDamage);
@@ -56,7 +56,7 @@ public class FirstStrike implements IAbility {
                 
                 target.getWorld().spawnParticle(Particle.CRIT, headLoc.clone().add(x, 0, z), 1, 0, 0, 0, 0);
                 if (ticks % 5 == 0) {
-                    target.getWorld().spawnParticle(Particle.VILLAGER_ANGRY, headLoc, 1, 0.1, 0.1, 0.1, 0);
+                    target.getWorld().spawnParticle(Particle.ANGRY_VILLAGER, headLoc, 1, 0.1, 0.1, 0.1, 0);
                 }
 
                 ticks++;

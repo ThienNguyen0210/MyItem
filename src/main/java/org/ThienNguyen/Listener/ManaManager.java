@@ -20,11 +20,6 @@ public class ManaManager {
         if (Bukkit.getPluginManager().isPluginEnabled("Fabled")) {
             if (applyFabledMana(player, maxMana, manaRegen)) applied = true;
         }
-
-        if (applied && (maxMana > 5 || manaRegen > 0)) {
-            Bukkit.getLogger().info("§b[MyItem] Mana applied for " + player.getName()
-                    + " → MaxMana: +" + maxMana + " | Regen: +" + manaRegen);
-        }
     }
 
     

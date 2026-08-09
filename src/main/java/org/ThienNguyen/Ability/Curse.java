@@ -63,7 +63,7 @@ public class Curse implements IAbility {
         removeTask.runTaskLater(Main.getInstance(), 60L);
 
         
-        target.getWorld().spawnParticle(Particle.SPELL_WITCH, target.getLocation().add(0, 1.2, 0), 25, 0.3, 0.5, 0.3, 0.05);
+        target.getWorld().spawnParticle(Particle.WITCH, target.getLocation().add(0, 1.2, 0), 25, 0.3, 0.5, 0.3, 0.05);
         target.getWorld().playSound(target.getLocation(), Sound.ENTITY_ELDER_GUARDIAN_CURSE, 0.8f, 1.2f);
     }
 }

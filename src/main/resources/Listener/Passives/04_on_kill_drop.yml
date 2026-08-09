@@ -1,0 +1,14 @@
+# ─────────────────────────────────────────────────────────────────
+# MẪU 4: ON_KILL — Kết liễu đối phương
+# Khi hạ gục (kill) thành công, 35% tỉ lệ rớt kim cương tại vị trí victim.
+# ─────────────────────────────────────────────────────────────────
+id: kill_drop_diamond
+display-name: "§b[Thợ Săn]"
+trigger: ON_KILL
+chance: 35
+cooldown: 0
+actions:
+  - type: DROP_ITEM
+    target: VICTIM
+    material: DIAMOND
+    amount: 1

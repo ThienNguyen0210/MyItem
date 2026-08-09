@@ -1,4 +1,4 @@
-language: en.yml
+language: en.yml # chỉ áp dụng sendmess với những thứ tác động tới member nhé phía staff ko chỉnh dc vì author lười
 regeneration:
   enabled: true
   percent-per-second: 1.0 # Hồi 1% máu mỗi giây
@@ -7,7 +7,7 @@ text-display:
 
   # Vị trí hiển thị tổng quát
   offset:
-    y-base: 1.2                     # Nâng cao hơn một chút để không bị đè vào thanh máu mob
+    y-base: 0.8                     # Nâng cao hơn một chút để không bị đè vào thanh máu mob
     side-x: 0.8                     # Độ lệch ngang rõ ràng hơn cho Né/Chặn
     true-dmg-extra-y: 0.5           # True damage bay cao hơn sát thương thường để phân biệt
     move-up-distance: 1.2           # Khoảng cách bay lên tổng cộng trong suốt quá trình fade
@@ -20,28 +20,27 @@ text-display:
 
   # Kích thước chữ (scale)
   scale:
-    normal: 0.9                     # Sát thương thường để nhỏ vừa phải
-    critical: 1.4                   # Chí mạng to rõ rệt để tạo cảm giác "thốn"
-    true-damage: 1.2
-    element: 0.8                    # Các icon nguyên tố nhỏ xinh
-    dodge: 1.1                      # Chữ NÉ vừa đủ đọc
-    block: 1.1                      # Chữ CHẶN vừa đủ đọc
+    normal:     1.1
+    critical:   1.7
+    true-damage: 1.4
+    dodge:      1.2
+    block:      1.1
+    element: 0.8                     # Chữ CHẶN vừa đủ đọc
     merged-elements: 0.9            # Khi gộp lại thì size vừa phải để không choán màn hình
 
   # Thời gian animation (20 ticks = 1 giây)
   animation:
     appearance-ticks: 3             # Xuất hiện cực nhanh (0.15s) tạo hiệu ứng giật nảy (pop-up)
-    stay-ticks: 25                  # Giữ lại khoảng 1.25s để người chơi kịp đọc số
+    stay-ticks: 10                 # Giữ lại khoảng 1.25s để người chơi kịp đọc số
     fade-ticks: 12                  # Biến mất dần trong 0.6s tạo độ mượt
 
   # Định dạng hiển thị cơ bản
   format:
-    normal: "§f-{value}"            # Thêm dấu trừ để giống game RPG
-    critical: "§6§lCrit §c§l{value} §e⚡"
-    true-damage: "§d§l{value} ✧"
-    dodge: "§a§l✘ NÉ"
-    block: "§7§l⛨ CHẶN"
-
+    normal: "&#FF6600{value}"
+    critical: "&e&l{value}"
+    true-damage: "§f{value}"
+    dodge: "§aNÉ"
+    block: "§7CHẶN"
   # Icon mặc định cho nguyên tố
   elements:
     # Các nguyên tố bạn đã có
@@ -85,19 +84,18 @@ text-display:
 
     # Vật lý (ném + rơi) - Tạo hiệu ứng rơi nhẹ nhàng
     physics:
-      enabled: true
-      up-velocity-base: 0.18        # Nảy lên vừa phải
-      up-velocity-random: 0.05
-      side-spread: 0.1              # Không văng quá xa để người chơi dễ theo dõi
-      gravity: 0.015                # Trọng lực cực thấp giúp text "trôi" lơ lửng rất đẹp
-      air-drag: 0.92                # Giảm tốc mượt mà
+      side-spread: 0.0        # không lắc ngang
+      up-velocity-base: 0.08  # bay lên chậm
+      up-velocity-random: 0.02
+      gravity: 0.0            # TẮT rơi
+      air-drag: 1.0           # không giảm tốc
 
 # =============================================================
 #                   CẤU HÌNH TRANG SỨC (Jewelry)
 # =============================================================
 jewelry:
   enabled: true
-  enable-player-inventory: true
+  enable-player-inventory: false
 
   # Định nghĩa các slot trên người (9-12 là hàng đầu túi đồ)
   player-slots:

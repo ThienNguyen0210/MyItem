@@ -132,15 +132,15 @@ public class ElementCore {
                 double offsetZ = (Math.random() - 0.5) * 0.6;
                 Location spawnLoc = loc.clone().add(offsetX, offsetY, offsetZ);
 
-                if (particle == Particle.REDSTONE) {
+                if (particle == Particle.DUST) {
                     String colorStr = config.getString(elementId + ".color", "255,0,0");
                     String[] rgb = colorStr.split(",");
                     int r = Integer.parseInt(rgb[0].trim());
                     int g = Integer.parseInt(rgb[1].trim());
                     int b = Integer.parseInt(rgb[2].trim());
                     Particle.DustOptions dust = new Particle.DustOptions(Color.fromRGB(r, g, b), 1.0F);
-                    world.spawnParticle(Particle.REDSTONE, spawnLoc, 1, dust);
-                } else if (particle == Particle.BLOCK_DUST || particle == Particle.BLOCK_CRACK || particle == Particle.BLOCK_MARKER) {
+                    world.spawnParticle(Particle.DUST, spawnLoc, 1, dust);
+                } else if (particle == Particle.BLOCK || particle == Particle.BLOCK || particle == Particle.BLOCK_MARKER) {
                     String matStr = config.getString(elementId + ".material", "STONE");
                     Material mat = Material.matchMaterial(matStr);
                     if (mat == null) mat = Material.STONE;

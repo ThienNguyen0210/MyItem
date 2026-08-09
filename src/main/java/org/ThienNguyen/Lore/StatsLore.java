@@ -242,10 +242,10 @@ public class StatsLore {
         if (value instanceof Number) {
             double val = ((Number) value).doubleValue();
 
-            if (statType.equalsIgnoreCase("durability")) {
+            if (statType.equalsIgnoreCase("UNBREAKING")) {
                 double cur = val;
                 double maxDur = (pdc != null) ?
-                        pdc.getOrDefault(new NamespacedKey(Main.getInstance(), "max_durability"),
+                        pdc.getOrDefault(new NamespacedKey(Main.getInstance(), "max_UNBREAKING"),
                                 PersistentDataType.DOUBLE, cur) : cur;
                 return String.format("%d/%d", (long) cur, (long) maxDur);
             }

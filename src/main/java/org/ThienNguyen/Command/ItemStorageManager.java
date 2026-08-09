@@ -59,7 +59,6 @@ public class ItemStorageManager {
                 }
             }
         }
-        plugin.getLogger().info("§a[MyItem] Đã nạp thành công " + count + " items từ thư mục ManagerItem!");
     }
 
     /**

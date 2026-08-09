@@ -17,4 +17,4 @@ settings:
   # Hiệu ứng
   effects:
     sound: "ENTITY_PLAYER_LEVELUP"
-    particle: "EXPLOSION_HUGE"
+    particle: "EXPLOSION_EMITTER"

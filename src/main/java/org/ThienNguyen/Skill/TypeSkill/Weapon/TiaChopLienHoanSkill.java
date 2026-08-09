@@ -113,7 +113,7 @@ public class TiaChopLienHoanSkill implements ISkill {
         victim.damage(damage, caster);
 
         
-        victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 60, 1));
+        victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 1));
         Location loc = victim.getLocation().add(0, 1, 0);
         loc.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, loc, 15, 0.4, 0.4, 0.4, 0.15);
         loc.getWorld().playSound(loc, Sound.BLOCK_ANVIL_PLACE, 0.6f, 1.6f);

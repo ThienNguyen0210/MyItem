@@ -62,7 +62,7 @@ public class HakiBaVuongSkill implements ISkill {
                     double z = Math.sin(angle) * currentRadius;
                     Location particleLoc = center.clone().add(x, 0.5, z);
 
-                    player.getWorld().spawnParticle(Particle.REDSTONE, particleLoc, 2, 0.1, 0.2, 0.1, 0,
+                    player.getWorld().spawnParticle(Particle.DUST, particleLoc, 2, 0.1, 0.2, 0.1, 0,
                             new Particle.DustOptions(Color.WHITE, 2.0F));
 
                     if (i % 24 == 0) {
@@ -88,11 +88,11 @@ public class HakiBaVuongSkill implements ISkill {
                             victim.damage(finalSkillDamage, player);
 
                             
-                            victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 40, 255));
+                            victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 255));
                             victim.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 40, 1));
                             victim.setVelocity(new Vector(0, 0, 0));
 
-                            victim.getWorld().spawnParticle(Particle.REDSTONE, victim.getEyeLocation().add(0, 0.5, 0), 15, 0.1, 0.3, 0.1, 0,
+                            victim.getWorld().spawnParticle(Particle.DUST, victim.getEyeLocation().add(0, 0.5, 0), 15, 0.1, 0.3, 0.1, 0,
                                     new Particle.DustOptions(Color.WHITE, 1.5F));
                             victim.getWorld().playSound(victim.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.4f, 1.5f);
 

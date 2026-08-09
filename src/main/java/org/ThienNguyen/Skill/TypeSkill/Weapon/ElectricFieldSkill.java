@@ -68,7 +68,7 @@ public class ElectricFieldSkill implements ISkill {
                     Location pLoc = center.clone().add(x, y, z);
 
                     
-                    player.getWorld().spawnParticle(Particle.REDSTONE, pLoc, 1, 0, 0, 0, 0,
+                    player.getWorld().spawnParticle(Particle.DUST, pLoc, 1, 0, 0, 0, 0,
                             new Particle.DustOptions(Color.AQUA, 1.5f));
 
                     if (currentRadius % 2 == 0) {
@@ -93,8 +93,8 @@ public class ElectricFieldSkill implements ISkill {
 
                             
                             
-                            int slowLevel = Math.max(0, level - 1);
-                            victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 3 * 20, slowLevel));
+                            int SLOWNESSLevel = Math.max(0, level - 1);
+                            victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 3 * 20, SLOWNESSLevel));
 
                             
                             victim.getWorld().spawnParticle(Particle.SCRAPE, victim.getEyeLocation(), 5, 0.2, 0.2, 0.2, 0.1);

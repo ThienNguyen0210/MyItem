@@ -53,7 +53,7 @@ public class VenomSpread implements IAbility {
                     double angle = Math.random() * 2 * Math.PI;
                     double r = Math.random() * radius;
                     Location pLoc = center.clone().add(Math.cos(angle) * r, 0.2, Math.sin(angle) * r);
-                    pLoc.getWorld().spawnParticle(Particle.REDSTONE, pLoc, 1, dust);
+                    pLoc.getWorld().spawnParticle(Particle.DUST, pLoc, 1, dust);
                 }
 
                 

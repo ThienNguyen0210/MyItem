@@ -14,11 +14,11 @@ ICE:
   density: 1
   base-damage: 1.0
   damage-per: 0.4
-  extra-effect: "SLOW:2:40"
+  extra-effect: "SLOWNESS:2:40"
 
 STONE:
   display-name: "§8Đá"
-  particle: "BLOCK_CRACK"
+  particle: "BLOCK"
   material: "STONE"
   density: 1
   base-damage: 1.0
@@ -38,7 +38,7 @@ WATER:
   density: 1
   base-damage: 1.0
   damage-per: 0.4
-  extra-effect: "SLOW:1:60"
+  extra-effect: "SLOWNESS:1:60"
 
 WIND:
   display-name: "§aGió"
@@ -50,7 +50,7 @@ WIND:
 
 EARTH:
   display-name: "§6Đất"
-  particle: "BLOCK_CRACK"
+  particle: "BLOCK"
   material: "DIRT"
   density: 1
   base-damage: 1.0
@@ -58,7 +58,7 @@ EARTH:
 
 POISON:
   display-name: "§2Độc"
-  particle: "VILLAGER_HAPPY"
+  particle: "HAPPY_VILLAGER"
   density: 1
   base-damage: 1.0
   damage-per: 0.4
@@ -66,7 +66,7 @@ POISON:
 
 DARK:
   display-name: "§5Bóng Tối"
-  particle: "SMOKE_LARGE"
+  particle: "LARGE_SMOKE"
   density: 1
   base-damage: 1.0
   damage-per: 0.4
@@ -101,7 +101,7 @@ FROST:
   density: 1
   base-damage: 1.0
   damage-per: 0.4
-  extra-effect: "SLOW:3:30"
+  extra-effect: "SLOWNESS:3:30"
 
 THUNDER:
   display-name: "§3Sét"
@@ -128,7 +128,7 @@ VOID:
 
 PLASMA:
   display-name: "§dHuyết Tương"
-  particle: "REDSTONE"
+  particle: "DUST"
   density: 1
   base-damage: 1.0
   damage-per: 0.4

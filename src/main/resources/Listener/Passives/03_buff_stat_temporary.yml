@@ -1,0 +1,18 @@
+# ─────────────────────────────────────────────────────────────────
+# MẪU 3: Buff tạm thời (BUFF_STAT)
+# Khi đánh trúng, 100% cộng thêm 5 "damage" cho bản thân trong 10 giây.
+# Stat dùng đúng tên trong STAT_NAME_TO_FIELD (PlayerCombatCache) — khớp
+# với tên dùng ở lệnh /mi stats (damage, critical_chance, armor, ...).
+# Buff có TÁC DỤNG THẬT khi tính damage (EventDamage đọc qua getEffective()).
+# ─────────────────────────────────────────────────────────────────
+id: buff_damage_on_hit
+display-name: "§6[Sức Mạnh]"
+trigger: ON_HIT
+chance: 100
+cooldown: 0
+actions:
+  - type: BUFF_STAT
+    target: SELF
+    stat: damage
+    amount: 5
+    duration-seconds: 10

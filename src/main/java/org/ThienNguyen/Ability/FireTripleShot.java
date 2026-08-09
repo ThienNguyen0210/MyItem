@@ -78,7 +78,7 @@ public class FireTripleShot implements IAbility {
             Location loc = start.clone().add(direction.clone().multiply(d));
             loc.getWorld().spawnParticle(Particle.FLAME, loc, 1, 0.05, 0.05, 0.05, 0.02);
             if (d % 1.5 == 0) {
-                loc.getWorld().spawnParticle(Particle.SMOKE_NORMAL, loc, 1, 0, 0, 0, 0.01);
+                loc.getWorld().spawnParticle(Particle.SMOKE, loc, 1, 0, 0, 0, 0.01);
             }
         }
     }

@@ -31,21 +31,11 @@ public class Disarm implements IAbility {
         target.getWorld().spawnParticle(Particle.CRIT, target.getLocation().add(0, 1.5, 0), 20, 0.3, 0.3, 0.3, 0.1);
         target.getWorld().playSound(target.getLocation(), Sound.ENTITY_ITEM_BREAK, 1.0f, 0.5f);
         target.getWorld().playSound(target.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.5f, 2.0f);
-
-        
-        if (target instanceof Player victim) {
-            victim.sendActionBar("§c§l✖ BẠN ĐÃ BỊ TƯỚC VŨ KHÍ!");
-        }
-
-        
         new BukkitRunnable() {
             @Override
             public void run() {
                 if (target.hasMetadata(METADATA_DISARM)) {
                     target.removeMetadata(METADATA_DISARM, Main.getInstance());
-                    if (target instanceof Player victim) {
-                        victim.sendActionBar("§a§l✔ Bạn đã có thể tấn công lại!");
-                    }
                 }
             }
         }.runTaskLater(Main.getInstance(), durationTicks);

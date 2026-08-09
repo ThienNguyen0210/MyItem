@@ -33,7 +33,7 @@ public class EndCrystalSkill implements ISkill {
         Location spawnLoc = player.getLocation().add(player.getLocation().getDirection().multiply(2)).add(0, 1, 0);
 
         
-        EnderCrystal crystal = (EnderCrystal) spawnLoc.getWorld().spawnEntity(spawnLoc, EntityType.ENDER_CRYSTAL);
+        EnderCrystal crystal = (EnderCrystal) spawnLoc.getWorld().spawnEntity(spawnLoc, EntityType.END_CRYSTAL);
         crystal.setShowingBottom(false);
         crystal.setMetadata("UNBREAKABLE_CRYSTAL", new FixedMetadataValue(Main.getInstance(), true));
 
@@ -47,7 +47,7 @@ public class EndCrystalSkill implements ISkill {
             public void run() {
                 if (ticks >= 5 || !player.isOnline()) {
                     crystal.remove();
-                    player.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, crystal.getLocation(), 1);
+                    player.getWorld().spawnParticle(Particle.EXPLOSION, crystal.getLocation(), 1);
                     player.getWorld().playSound(crystal.getLocation(), Sound.ENTITY_ENDERMAN_DEATH, 1.0f, 0.5f);
                     this.cancel();
                     return;
@@ -56,7 +56,7 @@ public class EndCrystalSkill implements ISkill {
                 Location cLoc = crystal.getLocation().add(0, 0.5, 0);
 
                 
-                cLoc.getWorld().spawnParticle(Particle.REDSTONE, cLoc, 10, 0.5, 0.5, 0.5, 0,
+                cLoc.getWorld().spawnParticle(Particle.DUST, cLoc, 10, 0.5, 0.5, 0.5, 0,
                         new Particle.DustOptions(Color.PURPLE, 1.0f));
 
                 
@@ -90,7 +90,7 @@ public class EndCrystalSkill implements ISkill {
 
         for (double d = 0; d < distance; d += 0.4) {
             Location point = start.clone().add(direction.clone().multiply(d));
-            start.getWorld().spawnParticle(Particle.REDSTONE, point, 1, 0, 0, 0, 0,
+            start.getWorld().spawnParticle(Particle.DUST, point, 1, 0, 0, 0, 0,
                     new Particle.DustOptions(Color.fromRGB(128, 0, 128), 0.6f));
         }
     }

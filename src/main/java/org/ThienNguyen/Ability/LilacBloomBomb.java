@@ -42,7 +42,7 @@ public class LilacBloomBomb implements IAbility {
                 block.setMetadata("UNBREAKABLE_FLOWER", new FixedMetadataValue(Main.getInstance(), true));
 
                 placedFlowers.add(block);
-                flowerLoc.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, flowerLoc.clone().add(0, 1, 0), 3, 0.2, 0.5, 0.2, 0.01);
+                flowerLoc.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, flowerLoc.clone().add(0, 1, 0), 3, 0.2, 0.5, 0.2, 0.01);
             }
         }
 
@@ -63,7 +63,7 @@ public class LilacBloomBomb implements IAbility {
                 if (!target.isValid() || target.isDead()) return;
 
                 Location explosionLoc = target.getLocation().add(0, 1, 0);
-                explosionLoc.getWorld().spawnParticle(Particle.EXPLOSION_HUGE, explosionLoc, 1);
+                explosionLoc.getWorld().spawnParticle(Particle.EXPLOSION_EMITTER, explosionLoc, 1);
                 explosionLoc.getWorld().spawnParticle(Particle.CHERRY_LEAVES, explosionLoc, 30, 1, 1, 1, 0.1);
 
                 explosionLoc.getWorld().playSound(explosionLoc, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.5f);

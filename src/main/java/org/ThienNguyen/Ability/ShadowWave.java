@@ -51,9 +51,9 @@ public class ShadowWave implements IAbility {
                     Location pLoc = center.clone().add(x, 0.2, z);
 
                     
-                    pLoc.getWorld().spawnParticle(Particle.SMOKE_LARGE, pLoc, 1, 0, 0, 0, 0.02);
+                    pLoc.getWorld().spawnParticle(Particle.LARGE_SMOKE, pLoc, 1, 0, 0, 0, 0.02);
                     
-                    pLoc.getWorld().spawnParticle(Particle.REDSTONE, pLoc, 1, 0, 0, 0, 0,
+                    pLoc.getWorld().spawnParticle(Particle.DUST, pLoc, 1, 0, 0, 0, 0,
                             new Particle.DustOptions(Color.BLACK, 1.5f));
                 }
                 r += 1.5; 

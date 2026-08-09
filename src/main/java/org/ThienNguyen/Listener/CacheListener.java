@@ -49,6 +49,7 @@ public class CacheListener implements Listener {
     private static final NamespacedKey KEY_PCT_ALL_DMG         = new NamespacedKey(Main.getInstance(), "pct_all_damage");
     private static final NamespacedKey KEY_PCT_BOW_DMG         = new NamespacedKey(Main.getInstance(), "pct_bow_damage");
     private static final NamespacedKey KEY_PCT_DEATH_DMG       = new NamespacedKey(Main.getInstance(), "pct_death_damage");
+    private static final NamespacedKey KEY_PCT_EFFECT_RES      = new NamespacedKey(Main.getInstance(), "pct_effect_resistance");
     private static final NamespacedKey KEY_IS_PLACEHOLDER      = new NamespacedKey(Main.getInstance(), "is_placeholder");
     // Thiện nguyễn dev
     private static final EquipmentSlot[] ALL_SLOTS = {
@@ -60,7 +61,7 @@ public class CacheListener implements Listener {
     public void onJoin(PlayerJoinEvent e) {
         Player p = e.getPlayer();
         JewelryManager.loadDataToCache(p);
-        refreshCache(e.getPlayer());
+        delayRefresh(e.getPlayer());
     }
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerDeath(PlayerDeathEvent e) {
@@ -87,6 +88,7 @@ public class CacheListener implements Listener {
         }
     }
 
+
     @EventHandler(priority = EventPriority.MONITOR)
     public void onInventoryClose(InventoryCloseEvent e) {
         if (e.getPlayer() instanceof Player p) {
@@ -99,11 +101,11 @@ public class CacheListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onItemHold(PlayerItemHeldEvent e) {
+
         delayRefresh(e.getPlayer());
     }
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerDropItem(org.bukkit.event.player.PlayerDropItemEvent e) {
-        
         delayRefresh(e.getPlayer());
     }
 
@@ -120,12 +122,12 @@ public class CacheListener implements Listener {
                     refreshCache(player);
                 }
             }
-        }.runTaskLater(Main.getInstance(), 2L);
+        }.runTaskLater(Main.getInstance(), 5L);
     }
 
 
     private static final ConcurrentHashMap<UUID, Long> LAST_COMBO_MESSAGE_TIME = new ConcurrentHashMap<>();
-    private static final long MESSAGE_COOLDOWN_MS = 3000L; 
+    private static final long MESSAGE_COOLDOWN_MS = 3000L;
     /**
      * Hàm tính toán và nhân các chỉ số dạng phần trăm (%) độc lập hoàn toàn với chỉ số cố định
      */
@@ -141,6 +143,7 @@ public class CacheListener implements Listener {
         double pctAllDamage = 0.0;
         double pctBowDamage = 0.0;
         double pctDeathDamage = 0.0;
+        double pctEffectResistance = 0.0;
 
         for (EquipmentSlot slot : ALL_SLOTS) {
             ItemStack item = player.getInventory().getItem(slot);
@@ -181,6 +184,9 @@ public class CacheListener implements Listener {
 
             if (pdc.has(KEY_PCT_DEATH_DMG, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "death_damage", slot))
                 pctDeathDamage += pdc.get(KEY_PCT_DEATH_DMG, PersistentDataType.DOUBLE);
+
+            if (pdc.has(KEY_PCT_EFFECT_RES, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "effect_resistance", slot))
+                pctEffectResistance += pdc.get(KEY_PCT_EFFECT_RES, PersistentDataType.DOUBLE);
         }
 
         if (pctCritDmgReduction != 0.0) stats.totalCritDamageReduction *= (1.0 + (pctCritDmgReduction / 100.0));
@@ -198,6 +204,7 @@ public class CacheListener implements Listener {
         if (pctAllDamage != 0.0)   stats.totalAllDamage    *= (1.0 + (pctAllDamage / 100.0));
         if (pctBowDamage != 0.0)   stats.totalBowDamage    *= (1.0 + (pctBowDamage / 100.0));
         if (pctDeathDamage != 0.0) stats.totalDeathDamage *= (1.0 + (pctDeathDamage / 100.0));
+        if (pctEffectResistance != 0.0) stats.totalEffectResistance *= (1.0 + (pctEffectResistance / 100.0));
     }
 
     /**
@@ -345,6 +352,7 @@ public class CacheListener implements Listener {
             if (isAllowed(item, slotConfig, "death_damage", slot))    stats.totalDeathDamage  += DeathDamage.get(item);
             if (isAllowed(item, slotConfig, "magic_damage", slot))    stats.totalMagicDamage  += MagicDamage.get(item);
             if (isAllowed(item, slotConfig, "magic_defense", slot))   stats.totalMagicDefense += MagicDefense.get(item);
+            if (isAllowed(item, slotConfig, "effect_resistance", slot)) stats.totalEffectResistance += EffectResistance.get(item);
 
 
             Map<String, Integer> itemElements = ElementCore.getAllElements(item);
@@ -466,6 +474,7 @@ public class CacheListener implements Listener {
                 stats.totalPveDef              += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "pve_defense");
                 stats.totalPvpDef              += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "pvp_defense");
                 stats.totalAllDefense          += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "all_defense");
+                stats.totalEffectResistance     += org.ThienDev.Api.AttributeAPI.getBonus(uuid, "effect_resistance");
 
                 // --- PERCENT BONUS ---
                 double _p;
@@ -508,6 +517,9 @@ public class CacheListener implements Listener {
                 _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "armor_pen");
                 if (_p != 0.0) stats.totalArmorPen            *= (1 + _p / 100.0);
 
+                _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "effect_resistance");
+                if (_p != 0.0) stats.totalEffectResistance    *= (1 + _p / 100.0);
+
                 _p = org.ThienDev.Api.AttributeAPI.getPercentBonus(uuid, "penetration");
                 if (_p != 0.0) stats.totalPenetration         *= (1 + _p / 100.0);
 
@@ -549,24 +561,16 @@ public class CacheListener implements Listener {
                 if (_p != 0.0) stats.totalDeepWound           *= (1 + _p / 100.0);
             }
         } catch (Throwable ignored) {}
-
-
-
-
         applyPercentStats(player, stats, slotConfig);
-
-
-
-
         PlayerRefreshStatsEvent apiEvent = new PlayerRefreshStatsEvent(player, stats);
         org.bukkit.Bukkit.getPluginManager().callEvent(apiEvent);
         StatsListener.getInstance().updatePlayerStats(player);
         PlayerCombatCache.updateCache(player.getUniqueId(), stats);
     }
 
-    
+
     private static void updateStat(PlayerCombatCache.CombatStats stats, String type, double val) {
-        if (val == 0) return; 
+        if (val == 0) return;
 
         switch (type.toLowerCase()) {
             case "exp_bonus", "exp" -> stats.totalExpBonus += val;
@@ -583,14 +587,14 @@ public class CacheListener implements Listener {
             case "true_damage" -> stats.totalTrueDamage += val;
             case "death_damage" -> stats.totalDeathDamage += val;
 
-            
+
             case "critical_chance", "crit_chance" -> stats.totalCritChance += val;
             case "critical_damage", "crit_damage" -> stats.totalCritDamage += val;
             case "penetration" -> stats.totalPenetration += val;
             case "armor_pen" -> stats.totalArmorPen += val;
             case "lifesteal" -> stats.totalLifesteal += val;
-            case "accuracy" -> stats.totalAccuracy += val; 
-            
+            case "accuracy" -> stats.totalAccuracy += val;
+
             case "armor" -> stats.totalArmor += val;
             case "pve_defense", "pve_def" -> stats.totalPveDef += val;
             case "pvp_defense", "pvp_def" -> stats.totalPvpDef += val;
@@ -600,9 +604,10 @@ public class CacheListener implements Listener {
             case "block_rate" -> stats.totalBlock += val;
             case "thorns" -> stats.totalThorns += val;
             case "knockback_resistance" -> stats.totalKnockbackResist += val;
+            case "effect_resistance" -> stats.totalEffectResistance += val;
 
-            
-            
+
+
         }
     }
     @EventHandler(priority = EventPriority.MONITOR)
@@ -655,8 +660,9 @@ public class CacheListener implements Listener {
         stats.totalDeathDamage  += DeathDamage.get(jItem);
         stats.totalMagicDamage  += MagicDamage.get(jItem);
         stats.totalMagicDefense += MagicDefense.get(jItem);
+        stats.totalEffectResistance += EffectResistance.get(jItem);
 
-        
+
         Map<String, Integer> jElements = ElementCore.getAllElements(jItem);
         for (Map.Entry<String, Integer> entry : jElements.entrySet()) {
             String eId = entry.getKey().toUpperCase();
@@ -669,7 +675,7 @@ public class CacheListener implements Listener {
             }
         }
 
-        
+
         List<String> jGemIds = GemLogic.getGemsOnItem(jItem);
         for (String gemId : jGemIds) {
             if (gemConfig.contains(gemId + ".apply.stats")) {
@@ -755,6 +761,7 @@ public class CacheListener implements Listener {
         }
         return false;
     }
+
     private static boolean isMMOCoreAvailable() {
         return Bukkit.getPluginManager().isPluginEnabled("MMOCore");
     }

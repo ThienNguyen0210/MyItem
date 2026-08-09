@@ -15,9 +15,9 @@ display-names:
   LUCK:             "§a🍀 May Mắn"
 
   # Debuffs
-  SLOW:             "§8⛓ Chậm Chạp"
-  SLOW_DIGGING:     "§7⛏ Đào Chậm"
-  CONFUSION:        "§d🌀 Hỗn Loạn"
+  SLOWNESS:             "§8⛓ Chậm Chạp"
+  SLOWNESS_DIGGING:     "§7⛏ Đào Chậm"
+  NAUSEA:        "§d🌀 Hỗn Loạn"
   BLINDNESS:        "§0🌑 Mù Lòa"
   HUNGER:           "§6🍗 Đói Khát"
   WEAKNESS:         "§c💪 Yếu Đuối"

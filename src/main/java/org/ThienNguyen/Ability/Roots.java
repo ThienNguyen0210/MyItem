@@ -67,7 +67,7 @@ public class Roots implements IAbility {
                         double z = Math.sin(angle) * 0.5;
 
                         
-                        rootLoc.getWorld().spawnParticle(Particle.BLOCK_CRACK, rootLoc.clone().add(x, 0.1, z), 2, 0.1, 0.2, 0.1, 0.05,
+                        rootLoc.getWorld().spawnParticle(Particle.BLOCK, rootLoc.clone().add(x, 0.1, z), 2, 0.1, 0.2, 0.1, 0.05,
                                 org.bukkit.Material.OAK_LOG.createBlockData());
 
                         

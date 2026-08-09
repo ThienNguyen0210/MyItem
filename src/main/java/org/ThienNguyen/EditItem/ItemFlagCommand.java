@@ -75,7 +75,7 @@ public class ItemFlagCommand implements CommandExecutor, TabCompleter {
             case "UNBREAKABLE" -> ItemFlag.HIDE_UNBREAKABLE;
             case "DESTROYS" -> ItemFlag.HIDE_DESTROYS;
             case "PLACED_ON" -> ItemFlag.HIDE_PLACED_ON;
-            case "POTION", "EFFECTS" -> ItemFlag.HIDE_POTION_EFFECTS;
+            case "POTION", "EFFECTS" -> ItemFlag.HIDE_ADDITIONAL_TOOLTIP;
             case "DYE" -> ItemFlag.HIDE_DYE;
             default -> ItemFlag.valueOf("HIDE_" + input);
         };

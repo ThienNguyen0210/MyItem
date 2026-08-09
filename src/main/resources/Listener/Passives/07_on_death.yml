@@ -1,0 +1,16 @@
+# ─────────────────────────────────────────────────────────────────
+# MẪU 7: ON_DEATH — Hành động khi chính actor chết
+# Khi player sở hữu passive này chết, gây 20 true damage lên kẻ giết
+# (nếu chết do PvP). Nếu chết do môi trường (fall/void...), VICTIM sẽ là
+# null và mechanic DAMAGE tự bỏ qua (không lỗi, không có gì xảy ra).
+# ─────────────────────────────────────────────────────────────────
+id: explode_on_death
+display-name: "§4[Tự Sát]"
+trigger: ON_DEATH
+chance: 100
+cooldown: 0
+actions:
+  - type: DAMAGE
+    target: VICTIM            # = kẻ giết actor (PvP), null nếu chết do môi trường
+    amount: 20
+    damage-type: TRUE

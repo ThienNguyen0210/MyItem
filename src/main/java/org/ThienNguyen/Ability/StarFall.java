@@ -72,7 +72,7 @@ public class StarFall implements IAbility {
             double z = radius * Math.sin(angle);
 
             Location particleLoc = loc.clone().add(x, 0.1, z);
-            particleLoc.getWorld().spawnParticle(Particle.REDSTONE, particleLoc, 1, 0, 0, 0, 0,
+            particleLoc.getWorld().spawnParticle(Particle.DUST, particleLoc, 1, 0, 0, 0, 0,
                     new Particle.DustOptions(color, 1.2f));
         }
     }
@@ -82,7 +82,7 @@ public class StarFall implements IAbility {
         Vector direction = end.toVector().subtract(start.toVector()).normalize();
         for (double d = 0; d < distance; d += 0.25) {
             Location point = start.clone().add(direction.clone().multiply(d));
-            point.getWorld().spawnParticle(Particle.REDSTONE, point, 2, 0.05, 0.05, 0.05, 0,
+            point.getWorld().spawnParticle(Particle.DUST, point, 2, 0.05, 0.05, 0.05, 0,
                     new Particle.DustOptions(Color.AQUA, 1.5f));
         }
     }

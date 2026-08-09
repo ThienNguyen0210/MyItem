@@ -105,8 +105,8 @@ public class DiaBocThienTinhSkill implements ISkill {
     }
 
     private void explodeStone(Player player, Location loc, double damage) {
-        loc.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, loc, 3, 0.5, 0.5, 0.5, 0.1);
-        loc.getWorld().spawnParticle(Particle.BLOCK_DUST, loc, 40, 0.5, 0.5, 0.5, 0.2, Bukkit.createBlockData(Material.STONE));
+        loc.getWorld().spawnParticle(Particle.EXPLOSION, loc, 3, 0.5, 0.5, 0.5, 0.1);
+        loc.getWorld().spawnParticle(Particle.BLOCK, loc, 40, 0.5, 0.5, 0.5, 0.2, Bukkit.createBlockData(Material.STONE));
         loc.getWorld().playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 0.8f, 0.6f);
 
         for (Entity entity : loc.getWorld().getNearbyEntities(loc, 4.5, 4.5, 4.5)) {

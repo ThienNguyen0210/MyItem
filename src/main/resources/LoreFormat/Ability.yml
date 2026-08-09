@@ -29,7 +29,7 @@ abilities:
   BLIND:
     lore:
       - "&fᎉ &a{chance}% Kích Hoạt Manh Cấp {level}"
-  SLOW:
+  SLOWNESS:
     lore:
       - "&fᎉ &a{chance}% Kích Hoạt Trì Hoãn Cấp {level}"
   AIR_SHOCK:

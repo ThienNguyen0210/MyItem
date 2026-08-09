@@ -75,7 +75,7 @@ public class WindBladeSkill implements ISkill {
                             Vector knockup = direction.clone().multiply(0.3).setY(0.6);
                             victim.setVelocity(knockup);
 
-                            victim.getWorld().spawnParticle(Particle.EXPLOSION_NORMAL, victim.getLocation(), 5, 0.2, 0.2, 0.2, 0.1);
+                            victim.getWorld().spawnParticle(Particle.POOF, victim.getLocation(), 5, 0.2, 0.2, 0.2, 0.1);
 
                             new BukkitRunnable() {
                                 @Override
@@ -99,7 +99,7 @@ public class WindBladeSkill implements ISkill {
             Location pLoc = loc.clone().add(right.clone().multiply(i * 0.3)).add(0, i, 0);
 
             
-            loc.getWorld().spawnParticle(Particle.FIREWORKS_SPARK, pLoc, 1, 0.02, 0.02, 0.02, 0.01);
+            loc.getWorld().spawnParticle(Particle.FIREWORK, pLoc, 1, 0.02, 0.02, 0.02, 0.01);
             loc.getWorld().spawnParticle(Particle.CLOUD, pLoc, 1, 0, 0, 0, 0.01);
         }
     }

@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.ThienNguyen</groupId>
   <artifactId>MyItem</artifactId>
-  <version>2.1</version>
+  <version>Ultimate</version>
   <build>
     <plugins>
       <plugin>
@@ -98,7 +98,7 @@
     <dependency>
       <groupId>io.papermc.paper</groupId>
       <artifactId>paper-api</artifactId>
-      <version>1.20.1-R0.1-SNAPSHOT</version>
+      <version>1.21-R0.1-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
     <dependency>

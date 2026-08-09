@@ -76,9 +76,15 @@ public class Bleed implements IAbility {
                     }
                 }.runTaskLater(Main.getInstance(), 1L);
 
-                
-                target.getWorld().spawnParticle(Particle.BLOCK_CRACK, target.getLocation().add(0, 1, 0), 10, 0.1, 0.2, 0.1,
-                        Material.REDSTONE_BLOCK.createBlockData());
+                org.bukkit.block.data.BlockData blockData = org.bukkit.Material.REDSTONE_BLOCK.createBlockData();
+                target.getWorld().spawnParticle(
+                        org.bukkit.Particle.BLOCK,
+                        target.getLocation().add(0, 1, 0),
+                        10,   // Số lượng hạt
+                        0.1, 0.2, 0.1, // Độ lan tỏa (offset) X, Y, Z
+                        0.0,  // Tốc độ hạt (speed) - nên để 0.0 hoặc rất nhỏ với hạt BLOCK để không bị bay quá xa
+                        blockData // Tham số data bắt buộc cho Particle.BLOCK
+                );
                 target.getWorld().playSound(target.getLocation(), Sound.BLOCK_CANDLE_EXTINGUISH, 0.5f, 0.8f);
 
                 count++;

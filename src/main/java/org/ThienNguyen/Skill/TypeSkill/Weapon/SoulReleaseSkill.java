@@ -82,7 +82,7 @@ public class SoulReleaseSkill implements ISkill {
                     Location currentLoc = player.getLocation();
 
                     
-                    currentLoc.getWorld().spawnParticle(Particle.EXPLOSION_HUGE, currentLoc, 2);
+                    currentLoc.getWorld().spawnParticle(Particle.EXPLOSION_EMITTER, currentLoc, 2);
                     currentLoc.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, currentLoc, 50, 1.5, 1.5, 1.5, 0.1);
                     currentLoc.getWorld().playSound(currentLoc, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 0.8f);
 

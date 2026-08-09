@@ -8,12 +8,12 @@ import org.bukkit.potion.PotionEffectType;
 public class Slow implements IAbility {
     @Override
     public String getName() {
-        return "SLOW";
+        return "SLOWNESS";
     }
 
     @Override
     public void execute(Player attacker, LivingEntity target, int level, double baseDamage) {
         if (target == null || target.isDead()) return;
-        target.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, level * 20 * 2, level));
+        target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, level * 20 * 2, level));
     }
 }

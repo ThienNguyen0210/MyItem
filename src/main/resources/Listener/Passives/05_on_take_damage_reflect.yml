@@ -1,0 +1,18 @@
+# ─────────────────────────────────────────────────────────────────
+# MẪU 5: ON_TAKE_DAMAGE — Phản đòn khi bị đánh
+# Khi bị đánh (cả bởi Player hay Mob — đã mở rộng ngoài PvP), 20% tỉ lệ
+# phản lại 10 damage true lên kẻ tấn công.
+# Lưu ý: "VICTIM" ở đây là kẻ ĐÃ ĐÁNH actor (vai trò đảo ngược so với ON_HIT).
+# ─────────────────────────────────────────────────────────────────
+id: thorn_reflect
+display-name: "§a[Gai Độc]"
+trigger: ON_TAKE_DAMAGE
+condition:
+  target-type: BOTH           # BOTH ở đây = kẻ đánh actor có thể là Player hoặc Mob
+chance: 20
+cooldown: 2
+actions:
+  - type: DAMAGE
+    target: VICTIM             # = kẻ tấn công actor
+    amount: 10
+    damage-type: TRUE

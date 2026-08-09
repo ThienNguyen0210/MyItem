@@ -96,7 +96,7 @@ public class FireOrb implements IAbility {
 
                     center.getWorld().spawnParticle(Particle.FLAME, particleLoc, 1, 0, 0, 0, 0.05);
                     if (currentRadius > 5) { 
-                        center.getWorld().spawnParticle(Particle.SMOKE_NORMAL, particleLoc, 1, 0, 0, 0, 0.02);
+                        center.getWorld().spawnParticle(Particle.SMOKE, particleLoc, 1, 0, 0, 0, 0.02);
                     }
                 }
 

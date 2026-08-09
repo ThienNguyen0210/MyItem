@@ -98,9 +98,6 @@ public class AbilityManager {
                 Bukkit.getLogger().severe("[MyItem] Khong the nap ability tu file: " + file.getName());
             }
         }
-        if (count > 0) {
-            Bukkit.getLogger().info("[MyItem] Da nap thanh cong " + count + " ky nang tu Skript/Ability!");
-        }
     }
 
     public static void register(IAbility ability) {

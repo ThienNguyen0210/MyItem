@@ -1,7 +1,113 @@
+# ============================================================
+#                       GEM.YML
+#         Cấu hình Đá Cường Hóa (Upgrade Gem)
+# ============================================================
+# khuyến khích xài percent-chance
+#
+# Mỗi entry là một loại đá, key là ID số nguyên (1, 2, 3...).
+# ID này được lưu vào PersistentDataContainer của vật phẩm
+# với key "gem_id" → dùng để nhận diện đá hợp lệ trong GUI.
+#
+# Lệnh tạo đá (ví dụ): /upgrade gem give <player> <id> [amount]
+# (tuỳ lệnh bạn đã đăng ký trong plugin)
+#
+# ── CÔNG THỨC TÍNH TỈ LỆ CUỐI ──────────────────────────────
+#
+#   base_chance      = giá trị trong upgrade.yml → levels.<cấp_sắp_đạt>
+#   bonus_percent    = base_chance × (percent-chance / 100)
+#   bonus_per_level  = chance-per-level × cấp_hiện_tại
+#
+#   final_chance = base_chance + bonus_percent + bonus_per_level
+#   (tối đa 100%)
+#
+# Ví dụ: vật phẩm cấp +4, lên +5, base_chance = 50%
+#   Dùng đá ID 2 (percent-chance: 20, chance-per-level: 1.0)
+#   → bonus_percent   = 50 × 0.20 = 10%
+#   → bonus_per_level = 1.0 × 4   = 4%
+#   → final_chance    = 50 + 10 + 4 = 64%
+#
+# ────────────────────────────────────────────────────────────
+
+
+# ── ĐÁ CẤP 1 : Đá Thường ────────────────────────────────────
 1:
-  material: EMERALD
-  display-name: "&a&lĐá Cường Hóa Cấp 1"
-  chance-per-level: 5.0
-  custom-model-data: 101
+  # Tên hiển thị trong game (hỗ trợ mã màu &)
+  display-name: "&7Đá Cường Hóa Thường"
+
+  # Lore (mô tả) hiển thị khi hover vào đá
   lore:
-    - "&7Mỗi cấp của trang bị cộng thêm 5% tỉ lệ"
+    - "&8▶ Đá cường hóa cơ bản"
+    - "&7Tăng nhẹ tỉ lệ thành công"
+    - ""
+    - "&f+Tỉ lệ: &a+0% &7(base) &f| &aBonus/cấp: &a+0.5%"
+
+  # Vật liệu Minecraft (tên Material chính xác, viết hoa)
+  material: EMERALD
+
+  # Số lượng item khi tạo bằng lệnh (mặc định 1)
+  amount: 1
+
+  # Custom Model Data (tuỳ chọn – dùng cho resource pack)
+  # Bỏ dòng này nếu không dùng resource pack
+  # custom-model-data: 1001
+
+  # Phần trăm CỘNG THÊM so với base_chance (tính theo % của base)
+  # 0 = không cộng thêm gì từ percent
+  percent-chance: 0.0
+
+  # Tỉ lệ cộng thêm cho MỖI CẤP hiện tại của vật phẩm (đơn vị %)
+  # 0.5 = mỗi cấp hiện tại cộng thêm 0.5% tỉ lệ
+  chance-per-level: 0.5
+
+
+# ── ĐÁ CẤP 2 : Đá Nâng Cao ──────────────────────────────────
+2:
+  display-name: "&bĐá Cường Hóa Nâng Cao"
+  lore:
+    - "&8▶ Đá cường hóa cấp 2"
+    - "&7Tăng đáng kể tỉ lệ thành công"
+    - ""
+    - "&f+Tỉ lệ: &a+20% &7(của base) &f| &aBonus/cấp: &a+1.0%"
+  material: DIAMOND
+  amount: 1
+  # custom-model-data: 1002
+
+  # Cộng thêm 20% CỦA base_chance (không phải cộng thẳng 20%)
+  # Ví dụ base 50% → bonus = 50 × 0.20 = 10% → thành 60%
+  percent-chance: 20.0 # khuyến khích xài hơn nhé
+
+  # Mỗi cấp hiện tại của vật phẩm cộng thêm 1% tỉ lệ
+  chance-per-level: 1.0
+
+
+# ── ĐÁ CẤP 3 : Đá Huyền Thoại ───────────────────────────────
+3:
+  display-name: "&6&lĐá Cường Hóa Huyền Thoại"
+  lore:
+    - "&8▶ Đá cường hóa cao cấp nhất"
+    - "&7Tỉ lệ thành công cực cao"
+    - ""
+    - "&f+Tỉ lệ: &a+50% &7(của base) &f| &aBonus/cấp: &a+2.0%"
+  material: NETHERITE_INGOT
+  amount: 1
+  # custom-model-data: 1003
+
+  # Cộng thêm 50% CỦA base_chance
+  # Ví dụ base 30% → bonus = 30 × 0.50 = 15% → thành 45% (+ bonus cấp)
+  percent-chance: 50.0
+
+  # Mỗi cấp hiện tại cộng thêm 2% tỉ lệ
+  chance-per-level: 2.0
+
+
+# ============================================================
+# THÊM ĐÁ MỚI: copy một block trên, đổi key thành số tiếp theo
+#
+# Lưu ý quan trọng:
+#   - Key phải là số nguyên dương, không được trùng
+#   - material phải là tên Material hợp lệ của Bukkit
+#     (xem: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html)
+#   - percent-chance và chance-per-level đều tính cộng VÀO base_chance,
+#     không phải thay thế
+#   - Tổng final_chance bị giới hạn tối đa 100% trong code
+# ============================================================

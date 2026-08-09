@@ -29,7 +29,7 @@ public class Angel implements IAbility {
 
         
         player.getWorld().spawnParticle(
-                Particle.VILLAGER_HAPPY,
+                Particle.HAPPY_VILLAGER,
                 player.getLocation().add(0, 1, 0),
                 15,
                 0.4, 0.5, 0.4,

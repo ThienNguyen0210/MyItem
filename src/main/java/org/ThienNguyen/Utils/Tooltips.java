@@ -124,7 +124,7 @@ public class Tooltips {
         meta.addItemFlags(ItemFlag.HIDE_PLACED_ON);
         meta.addItemFlags(ItemFlag.HIDE_DYE);
         meta.addItemFlags(ItemFlag.HIDE_ARMOR_TRIM);
-        meta.addItemFlags(ItemFlag.HIDE_POTION_EFFECTS);
+        meta.addItemFlags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
 
         
         try {
@@ -191,7 +191,7 @@ public class Tooltips {
                 ItemFlag.HIDE_PLACED_ON,
                 ItemFlag.HIDE_DYE,
                 ItemFlag.HIDE_ARMOR_TRIM,
-                ItemFlag.HIDE_POTION_EFFECTS
+                ItemFlag.HIDE_ADDITIONAL_TOOLTIP
         );
 
         try {

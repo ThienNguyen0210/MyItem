@@ -72,7 +72,7 @@ public class Bubble implements IAbility {
 
                 
                 Location loc = target.getLocation().add(0, 1, 0);
-                target.getWorld().spawnParticle(Particle.WATER_BUBBLE, loc, 12, 0.4, 0.5, 0.4, 0.02);
+                target.getWorld().spawnParticle(Particle.BUBBLE, loc, 12, 0.4, 0.5, 0.4, 0.02);
 
                 if (ticks % 5 == 0) {
                     target.getWorld().playSound(target.getLocation(), Sound.BLOCK_BUBBLE_COLUMN_UPWARDS_INSIDE, 0.5f, 1.2f);

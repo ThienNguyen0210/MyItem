@@ -51,7 +51,7 @@ public class LeafStorm implements IAbility {
                     leafLoc.getWorld().spawnParticle(Particle.CHERRY_LEAVES, leafLoc, 1, 0.1, 0.1, 0.1, 0.01);
 
                     if (i == 0) { 
-                        leafLoc.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, leafLoc, 1, 0, 0, 0, 0);
+                        leafLoc.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, leafLoc, 1, 0, 0, 0, 0);
                     }
                 }
 
@@ -62,7 +62,7 @@ public class LeafStorm implements IAbility {
                     for (Entity entity : nearby) {
                         if (entity instanceof LivingEntity victim && !entity.equals(attacker) && !(entity instanceof org.bukkit.entity.ArmorStand)) {
 
-                            victim.getWorld().spawnParticle(Particle.BLOCK_DUST, victim.getLocation().add(0, 1, 0), 5, 0.1, 0.1, 0.1, 0.05, Material.OAK_LEAVES.createBlockData());
+                            victim.getWorld().spawnParticle(Particle.BLOCK, victim.getLocation().add(0, 1, 0), 5, 0.1, 0.1, 0.1, 0.05, Material.OAK_LEAVES.createBlockData());
                             victim.getWorld().playSound(victim.getLocation(), Sound.BLOCK_GRASS_BREAK, 0.6f, 1.2f);
 
                             victim.setNoDamageTicks(0);

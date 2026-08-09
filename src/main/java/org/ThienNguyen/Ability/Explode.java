@@ -31,7 +31,7 @@ public class Explode implements IAbility {
         loc.getWorld().createExplosion(loc, 1.5f, false, false);
 
         
-        loc.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, loc.clone().add(0, 1, 0), 3, 0.2, 0.2, 0.2, 0.1);
+        loc.getWorld().spawnParticle(Particle.EXPLOSION, loc.clone().add(0, 1, 0), 3, 0.2, 0.2, 0.2, 0.1);
         loc.getWorld().spawnParticle(Particle.FLAME, loc, 25, 0.5, 0.5, 0.5, 0.15);
         loc.getWorld().playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.2f);
 

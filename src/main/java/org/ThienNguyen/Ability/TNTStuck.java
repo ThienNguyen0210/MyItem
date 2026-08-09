@@ -55,7 +55,7 @@ public class TNTStuck implements IAbility {
                 
                 if (ticks % 10 == 0 || (ticks > 40 && ticks % 5 == 0)) {
                     target.getWorld().playSound(target.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.6f, 2.0f);
-                    target.getWorld().spawnParticle(Particle.VILLAGER_ANGRY, target.getEyeLocation().add(0, 0.5, 0), 1);
+                    target.getWorld().spawnParticle(Particle.ANGRY_VILLAGER, target.getEyeLocation().add(0, 0.5, 0), 1);
                 }
 
                 if (ticks >= fuseTicks) {
@@ -72,7 +72,7 @@ public class TNTStuck implements IAbility {
 
     private void explode(Player attacker, Location loc, double damage) {
         
-        loc.getWorld().spawnParticle(Particle.EXPLOSION_HUGE, loc, 1);
+        loc.getWorld().spawnParticle(Particle.EXPLOSION_EMITTER, loc, 1);
         loc.getWorld().playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.0f);
 
         

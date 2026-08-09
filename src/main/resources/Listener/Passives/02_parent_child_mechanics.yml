@@ -1,0 +1,24 @@
+# ─────────────────────────────────────────────────────────────────
+# MẪU 2: Quan hệ cha-con (children)
+# Gây damage lên victim; NẾU thành công (victim còn sống lúc gây damage),
+# tự động chạy tiếp 2 mechanic con: heal cho bản thân + rớt vàng tại vị trí victim.
+# children chạy độc lập với nhau (không phụ thuộc lẫn nhau), chỉ phụ thuộc cha.
+# ─────────────────────────────────────────────────────────────────
+id: vampiric_strike
+display-name: "§5[Đòn Hút Máu]"
+trigger: ON_HIT
+chance: 25                    # 25% tỉ lệ proc mỗi đòn đánh
+cooldown: 8                   # giây
+actions:
+  - type: DAMAGE
+    target: VICTIM
+    amount: 15
+    damage-type: TRUE
+    children:
+      - type: HEAL
+        target: SELF
+        percent: 10            # hồi 10% maxHP cho actor
+      - type: DROP_ITEM
+        target: VICTIM
+        material: GOLD_NUGGET
+        amount: 1-3

@@ -27,7 +27,7 @@ public class Tab implements TabCompleter {
             "gemstone", "enchant", "unskill", "upgrade", "givegem", "giveamulet", "trans",
             "connect", "editor", "stats", "update", "version", "particle", "unparticle",
             "tiers", "consume", "tooltip", "loreformat",
-            "ic", "evo", "ai", "getai", "expire", "storage", "checkitem"
+            "ic", "evo", "ai", "getai", "expire", "storage", "checkitem", "passive"
     );
 
     private static final List<String> IC_SUBCOMMANDS = Arrays.asList("add", "unadd");
@@ -61,7 +61,6 @@ public class Tab implements TabCompleter {
         else if (args.length == 2 && args[0].equalsIgnoreCase("ic")) {
             suggestions.addAll(IC_SUBCOMMANDS);
         }
-
         else if (args.length >= 3 && args[0].equalsIgnoreCase("ic")) {
             String icSub = args[1].toLowerCase();
 
@@ -103,6 +102,7 @@ public class Tab implements TabCompleter {
         else if (args.length == 2) {
             String sub = args[0].toLowerCase();
             switch (sub) {
+                case "passive" -> suggestions.addAll(Arrays.asList("bind", "unbind")); // Gợi ý hành động cho passive
                 case "evo" -> {
                     suggestions.add("ALL");
                     suggestions.add("mm_");
@@ -142,11 +142,11 @@ public class Tab implements TabCompleter {
                         "critical_chance", "critical_damage", "lifesteal", "dodge_rate", "block_rate", "penetration",
                         "level_require", "true_damage", "thorns", "class_require", "max_mana", "mana_regen",
                         "exp_bonus", "attack_speed", "movement_speed", "health_regen", "armor_pen", "all_damage", "all_defense", "bow_damage", "knockback_resistance", "death_damage", "durability",
-                        "magic_damage", "magic_defense", "Accuracy", "critical_damage_reduction", "damage_reduction"
+                        "magic_damage", "magic_defense", "Accuracy", "critical_damage_reduction", "damage_reduction", "effect_resistance"
                 ));
                 case "sync" -> suggestions.addAll(Arrays.asList("clear", "addcode", "update", "check"));
                 case "ability" -> suggestions.addAll(Arrays.asList(
-                        "LIGHTNING", "POISON", "WEAK", "HUNGER", "TIRED", "CONFUSE", "WITHER", "BLIND", "SLOW",
+                        "LIGHTNING", "POISON", "WEAK", "HUNGER", "TIRED", "CONFUSE", "WITHER", "BLIND", "SLOWNESS",
                         "AIR_SHOCK", "CURSE", "BUBBLE", "BLEED", "FIRE_VORTEX", "FREEZE", "DISARM", "EXPLODE",
                         "FLAME_PULSE", "ANGEL", "SHADOW_DEVOUR", "SONIC_WAVE", "FIRE_RAIN", "STAR_RITUAL",
                         "FIRE_TRIPLE_SHOT", "STAR_FALL", "SUN_STRIKE_AOE", "BLACK_HOLE", "SHADOW_WAVE", "FAIRY_CHAIN", "LILAC_BLOOM_BOMB", "LEAF_STORM",
@@ -158,7 +158,7 @@ public class Tab implements TabCompleter {
                         "FIRE_RESISTANCE", "WATER_BREATHING", "HEALTH_BOOST", "ABSORPTION", "NIGHT_VISION", "LUCK"
                 ));
                 case "debuff" -> suggestions.addAll(Arrays.asList(
-                        "SLOW", "SLOW_DIGGING", "CONFUSION", "BLINDNESS", "HUNGER", "WEAKNESS", "POISON",
+                        "SLOWNESS", "SLOWNESS_DIGGING", "NAUSEA", "BLINDNESS", "HUNGER", "WEAKNESS", "POISON",
                         "WITHER", "GLOWING", "LEVITATION", "UNLUCK", "DARKNESS"
                 ));
                 case "gemstone" -> suggestions.add("give");
@@ -173,6 +173,9 @@ public class Tab implements TabCompleter {
         else if (args.length == 3) {
             String sub = args[0].toLowerCase();
             switch (sub) {
+                case "passive" -> {
+                    suggestions.add("<ID_Passive>");
+                }
                 case "consume" -> {
                     FileConfiguration consumeConfig = Main.getInstance().getConsumeConfig();
                     if (consumeConfig != null) suggestions.addAll(consumeConfig.getKeys(false));
@@ -260,7 +263,23 @@ public class Tab implements TabCompleter {
         allSkills.addAll(SkillManager.getSkillNamesByType("Mythicmob"));
         return allSkills;
     }
+    private List<String> getPassiveIds() {
+        List<String> ids = new ArrayList<>();
+        // Lấy chính xác thư mục plugins/MyItem/Listener/Passives
+        java.io.File passiveFolder = new java.io.File(Main.getInstance().getDataFolder(), "Listener/Passives");
 
+        if (passiveFolder.exists() && passiveFolder.isDirectory()) {
+            java.io.File[] files = passiveFolder.listFiles((dir, name) -> name.toLowerCase().endsWith(".yml"));
+            if (files != null) {
+                for (java.io.File file : files) {
+                    String name = file.getName();
+                    // Loại bỏ đuôi ".yml" (4 ký tự) để lấy tên ID
+                    ids.add(name.substring(0, name.length() - 4));
+                }
+            }
+        }
+        return ids;
+    }
     private List<String> getItemDatabaseIds() {
         if (Main.getInstance().getItemDatabase() != null) {
             return Main.getInstance().getItemDatabase().getAllIds();

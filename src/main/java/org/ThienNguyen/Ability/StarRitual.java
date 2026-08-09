@@ -54,7 +54,7 @@ public class StarRitual implements IAbility {
                         victim.damage(damageToDeal, attacker);
 
                         
-                        victim.getWorld().spawnParticle(Particle.CRIT_MAGIC, victim.getLocation().add(0, 1, 0), 3);
+                        victim.getWorld().spawnParticle(Particle.ENCHANTED_HIT, victim.getLocation().add(0, 1, 0), 3);
 
                         
                         new BukkitRunnable() {
@@ -92,7 +92,7 @@ public class StarRitual implements IAbility {
         Vector direction = end.toVector().subtract(start.toVector()).normalize();
         for (double d = 0; d < distance; d += 0.3) {
             Location loc = start.clone().add(direction.clone().multiply(d));
-            loc.getWorld().spawnParticle(Particle.REDSTONE, loc, 1, 0, 0, 0, 0,
+            loc.getWorld().spawnParticle(Particle.DUST, loc, 1, 0, 0, 0, 0,
                     new Particle.DustOptions(Color.fromRGB(255, 215, 0), 1.0f));
         }
     }

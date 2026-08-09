@@ -107,7 +107,7 @@ public class ThousandSwordsSkill implements ISkill {
                         victim.setMetadata("IS_ABILITY", new FixedMetadataValue(Main.getInstance(), true));
                         victim.damage(damage, player);
 
-                        victim.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, victim.getLocation(), 1);
+                        victim.getWorld().spawnParticle(Particle.EXPLOSION, victim.getLocation(), 1);
                         victim.getWorld().playSound(victim.getLocation(), Sound.ENTITY_ITEM_BREAK, 1.0f, 0.8f);
 
                         new BukkitRunnable() {

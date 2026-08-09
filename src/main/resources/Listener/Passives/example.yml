@@ -1,0 +1,75 @@
+# ─────────────────────────────────────────────────────────────────
+# Đòn đánh chí tử: NORMAL damage (qua armor/dodge/block như đòn thật),
+# nếu trúng (target còn sống lúc gây damage) thì heal cho actor + buff tốc
+# độ di chuyển — cha-con 1 cấp.
+# ─────────────────────────────────────────────────────────────────
+id: heavy_strike_combo
+display-name: "§6[Đòn Chí Tử]"
+trigger: ON_HIT
+chance: 20
+cooldown: 5
+actions:
+  - type: DAMAGE
+    target: VICTIM
+    amount: 30
+    damage-type: NORMAL       # qua armor/dodge/block/defense% của victim, cộng bonus của actor
+    children:
+      - type: HEAL
+        target: SELF
+        percent: 8
+      - type: BUFF_STAT
+        target: SELF
+        stat: movement_speed
+        amount: 15
+        duration-seconds: 4
+# ─────────────────────────────────────────────────────────────────
+# Xử trảm: TRUE damage xuyên giáp (execute), nếu kết liễu thành công
+# (con 1) thì drop vàng; con của con (cấp 2) buff critical_damage để
+# "ăn mừng" chuỗi kill liên tiếp.
+# ─────────────────────────────────────────────────────────────────
+id: execute_then_celebrate
+display-name: "§c[Xử Trảm]"
+trigger: ON_HIT
+condition:
+  target-hp-percent-below: 15
+chance: 100
+cooldown: 8
+actions:
+  - type: DAMAGE
+    target: VICTIM
+    amount: 99999
+    damage-type: TRUE          # xuyên giáp tuyệt đối, không qua armor
+    children:
+      - type: DROP_ITEM
+        target: VICTIM
+        material: GOLD_NUGGET
+        amount: 2-5
+        children:
+          - type: BUFF_STAT
+            target: SELF
+            stat: critical_damage
+            amount: 25
+            duration-seconds: 6
+# ─────────────────────────────────────────────────────────────────
+# Phản đòn 2 lớp: khi bị đánh (mọi nguồn), phản NORMAL damage lên
+# kẻ tấn công; nếu phản trúng (con 1) thì TỰ HỒI máu cho actor.
+# Minh hoạ DAMAGE lồng trong DAMAGE — cha là NORMAL, con là TRUE.
+# ─────────────────────────────────────────────────────────────────
+id: thorn_counter
+display-name: "§a[Phản Đòn]"
+trigger: ON_TAKE_DAMAGE
+chance: 30
+cooldown: 4
+actions:
+  - type: DAMAGE
+    target: VICTIM              # = kẻ vừa đánh actor
+    amount: 12
+    damage-type: NORMAL
+    children:
+      - type: DAMAGE
+        target: SELF
+        amount: -5               # lưu ý: amount âm sẽ bị chặn (xem ghi chú dưới)
+        damage-type: TRUE
+      - type: HEAL
+        target: SELF
+        amount: 5

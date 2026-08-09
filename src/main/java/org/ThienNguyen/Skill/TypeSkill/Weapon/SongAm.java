@@ -66,7 +66,7 @@ public class SongAm implements ISkill {
                             victim.damage(finalSkillDamage, player);
 
                             
-                            victim.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, victim.getLocation(), 1);
+                            victim.getWorld().spawnParticle(Particle.EXPLOSION, victim.getLocation(), 1);
                             victim.getWorld().playSound(victim.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 0.5f, 1.5f);
 
                             

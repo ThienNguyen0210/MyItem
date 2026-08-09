@@ -48,7 +48,6 @@ public class LanguageManager {
                 cache.put(key, ChatColor.translateAlternateColorCodes('&', langConfig.getString(key)));
             }
         }
-        plugin.getLogger().info("§a[Language] Đã nạp ngôn ngữ: " + fileName);
     }
 
     public String getMessage(String key) {
