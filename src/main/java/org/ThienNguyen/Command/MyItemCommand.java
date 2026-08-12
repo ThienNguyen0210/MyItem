@@ -1461,7 +1461,5 @@ public class MyItemCommand implements CommandExecutor {
 
 
         sender.sendMessage("§7[§b◀§7]§8§m ----------------------------§7 [§b▶§7]");
-        sender.sendMessage("§bDiscord:§f cache1236799");
-
     }
 }
