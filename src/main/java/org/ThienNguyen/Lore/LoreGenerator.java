@@ -4,6 +4,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.ThienNguyen.Main;
+import org.ThienNguyen.Utils.Tooltips;
 import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -17,10 +18,7 @@ import java.util.regex.Pattern;
 public class LoreGenerator {
 
     private static final MiniMessage mm = MiniMessage.miniMessage();
-
-
     private static final Pattern LEGACY_CLEANER = Pattern.compile("§[0-9a-fk-orx]|§x(§[0-9a-f]){6}", Pattern.CASE_INSENSITIVE);
-
 
     private static final LegacyComponentSerializer paperHexSerializer = LegacyComponentSerializer.builder()
             .hexColors()
@@ -29,20 +27,14 @@ public class LoreGenerator {
 
     private static final LegacyComponentSerializer sectionSerializer = LegacyComponentSerializer.legacySection();
 
-    /**
-     * Thêm hỗ trợ & codes (rất quan trọng)
-     */
     public static String colorize(String text) {
         if (text == null || text.isEmpty()) return "";
 
-
         String processed = ChatColor.translateAlternateColorCodes('&', text);
-
 
         Component component;
         if (processed.contains("<")) {
             try {
-
                 String cleanText = LEGACY_CLEANER.matcher(processed).replaceAll("");
                 component = mm.deserialize(cleanText);
             } catch (Exception e) {
@@ -50,10 +42,8 @@ public class LoreGenerator {
                 component = sectionSerializer.deserialize(processed);
             }
         } else {
-
             component = sectionSerializer.deserialize(processed);
         }
-
 
         return paperHexSerializer.serialize(component);
     }
@@ -69,8 +59,6 @@ public class LoreGenerator {
         List<String> formatLines = Main.getInstance().getLoreFormatConfig().getStringList(formatId);
         if (formatLines.isEmpty()) return;
 
-        // Manually-specified {stats:xxx} keys are excluded from the {stats} catch-all list
-        // so a stat doesn't get printed twice (once by name, once in the generic dump).
         List<String> excludedKeys = new ArrayList<>();
         Pattern manualStatPattern = Pattern.compile("\\{stats:([a-zA-Z0-9_]+)\\}");
         for (String line : formatLines) {
@@ -83,20 +71,24 @@ public class LoreGenerator {
         LoreRenderer.PlaceholderResolver resolver =
                 (token, argument, rawLine) -> resolvePlaceholder(item, token, argument, excludedKeys);
 
-        // Xử lý loại bỏ {bar} và {sbar}, thay thế bằng chuỗi rỗng để giữ lại toàn bộ các ký tự trang trí khác trong dòng
         LoreRenderer renderer = new LoreRenderer(resolver, tok -> "");
 
         List<String> newLore = renderer.render(formatLines);
-
         meta.setLore(newLore);
+
+        // --- TÍCH HỢP TOOLTIPS ---
+        // Sau khi có Lore thuần 100%, kiểm tra xem item có đang áp dụng Tooltip không
+        // Nếu có, gọi hàm bọc trực tiếp lên Meta này trước khi lưu cuối cùng
+        NamespacedKey tooltipKey = new NamespacedKey(Main.getInstance(), "tooltip_type");
+        String tooltipType = meta.getPersistentDataContainer().get(tooltipKey, PersistentDataType.STRING);
+        if (tooltipType != null && !tooltipType.isEmpty()) {
+            Tooltips.wrapMetaWithTooltip(meta, tooltipType);
+        }
+        // ---------------------------
+
         item.setItemMeta(meta);
     }
 
-    /**
-     * Central dispatch for every placeholder LoreRenderer encounters.
-     * Returns RAW (un-colorized) text/lines - LoreRenderer calls colorize() itself.
-     * Return null or an empty list to signal "nothing to show" (drops the line / group).
-     */
     private static List<String> resolvePlaceholder(ItemStack item, String token, String argument, List<String> excludedStatKeys) {
         switch (token) {
             case "stats":
@@ -110,16 +102,12 @@ public class LoreGenerator {
                 if (argument == null) {
                     return org.ThienNguyen.Lore.AbilityLore.getAbilityList(item);
                 }
-                // TODO: needs a single-ability lookup (e.g. AbilityLore.getSingleAbility(item, argument))
-                // to support {ability:xxx} the same way {stats:xxx} works. Not wired yet.
                 return null;
 
             case "effect":
                 if (argument == null) {
                     return org.ThienNguyen.Lore.EffectLore.getEffectList(item);
                 }
-                // TODO: needs a single-effect lookup (e.g. EffectLore.getSingleEffect(item, argument)).
-                // Not wired yet.
                 return null;
 
             case "skill":
@@ -136,15 +124,10 @@ public class LoreGenerator {
                 return (tierLine == null || tierLine.isEmpty()) ? null : List.of(tierLine);
 
             default:
-                // #hash# style MMOItems placeholders: item-type, required-level, profession-*, etc.
-                // TODO: not implemented yet - plug in whatever already computes these values
-                // (item type name, level requirement, profession requirement, etc.) here.
                 return null;
         }
     }
-    /**
-     * Lấy lore của phần Ngọc/Khảm (sockets)
-     */
+
     private static List<String> getSocketLore(ItemStack item) {
         List<String> socketLore = new ArrayList<>();
 
