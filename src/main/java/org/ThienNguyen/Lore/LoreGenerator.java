@@ -83,8 +83,7 @@ public class LoreGenerator {
         LoreRenderer.PlaceholderResolver resolver =
                 (token, argument, rawLine) -> resolvePlaceholder(item, token, argument, excludedKeys);
 
-        // {bar}/{sbar} are just stripped for now - swap in a real divider string here if you have one,
-        // e.g. tok -> tok.equals("sbar") ? "&8&m--------------------------------" : "&8&m--------"
+        // Xử lý loại bỏ {bar} và {sbar}, thay thế bằng chuỗi rỗng để giữ lại toàn bộ các ký tự trang trí khác trong dòng
         LoreRenderer renderer = new LoreRenderer(resolver, tok -> "");
 
         List<String> newLore = renderer.render(formatLines);

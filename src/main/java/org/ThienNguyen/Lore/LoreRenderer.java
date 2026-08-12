@@ -87,21 +87,36 @@ public class LoreRenderer {
         List<String> result = new ArrayList<>();
 
         for (Group group : parseGroups(formatLines)) {
+
+            // Decorative line ({bar}/{sbar}) luôn được render
+            for (String header : group.headerLines) {
+                if (containsDecorativeToken(header)) {
+                    result.add(renderStaticLine(header));
+                }
+            }
+
             List<String> body = new ArrayList<>();
 
             for (String line : group.placeholderLines) {
                 List<String> rendered = renderPlaceholderLine(line);
+
                 if (rendered != null && !rendered.isEmpty()) {
                     body.addAll(rendered);
                 }
             }
 
-            // Rule 5: nothing in this group rendered -> drop header + body entirely.
-            if (body.isEmpty()) continue;
+            // Nếu không có placeholder nào render được
+            // thì chỉ giữ lại các dòng decorative
+            if (body.isEmpty()) {
+                continue;
+            }
 
             for (String header : group.headerLines) {
-                result.add(renderStaticLine(header));
+                if (!containsDecorativeToken(header)) {
+                    result.add(renderStaticLine(header));
+                }
             }
+
             result.addAll(body);
         }
 
@@ -143,18 +158,36 @@ public class LoreRenderer {
 
         return groups;
     }
+    private boolean containsDecorativeToken(String line) {
+        Matcher matcher = BRACE_PLACEHOLDER.matcher(line);
 
+        while (matcher.find()) {
+            String token = matcher.group(1).toLowerCase();
+
+            if (DECORATIVE_TOKENS.contains(token)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
     /**
      * A line "gates" a group (i.e. counts as dynamic) only if it contains a
      * real data placeholder: any {@code #xxx#} token, or a {@code {xxx}}/
      * {@code {xxx:yyy}} token that is NOT decorative (bar/sbar).
      */
+
     private boolean isDynamicPlaceholderLine(String line) {
         if (HASH_PLACEHOLDER.matcher(line).find()) return true;
 
         Matcher brace = BRACE_PLACEHOLDER.matcher(line);
         while (brace.find()) {
-            if (!DECORATIVE_TOKENS.contains(brace.group(1).toLowerCase())) return true;
+            String token = brace.group(1).toLowerCase();
+            // NẾU TOKEN LÀ bar HOẶC sbar, TA BỎ QUA KHÔNG TÍNH LÀ DÒNG ĐỘNG
+            if (DECORATIVE_TOKENS.contains(token)) {
+                continue;
+            }
+            return true;
         }
         return false;
     }
@@ -175,7 +208,7 @@ public class LoreRenderer {
             if (DECORATIVE_TOKENS.contains(token)) {
                 sb.append(decorativeRenderer != null ? decorativeRenderer.apply(token) : "");
             } else {
-                sb.append(brace.group()); // not decorative here, leave untouched (shouldn't normally happen)
+                sb.append(brace.group());
             }
             last = brace.end();
         }

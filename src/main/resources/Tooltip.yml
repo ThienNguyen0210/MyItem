@@ -1,7 +1,7 @@
 # Phần settings này không đụng nha có time thì tìm hiểu nó sau rồi đụng:v
 settings:
   fill-character: ""
-  fill-count-right: 39
+  fill-count-right: 53
   fill-count-left: 1
 
 # Định nghĩa các loại Tooltip
@@ -16,27 +16,41 @@ types:
     top: "§f"
     mid: "§f뀁"
     bottom: "§f"
+    custom-lines:
+      1: "뀔"
   common:
     top: "§f뀍"
     mid: "§f뀁"
     bottom: "§f뀎"
+    custom-lines:
+      1: "뀔"
   rare:
     top: "§f뀊"
     mid: "§f뀁"
     bottom: "§f뀋"
+    custom-lines:
+      1: "뀔"
   epic:
     top: "§f뀇"
     mid: "§f뀁"
     bottom: "§f뀈"
+    custom-lines:
+      1: "뀔"
   legendary:
     top: "§f뀄"
     mid: "§f뀁"
     bottom: "§f뀅"
+    custom-lines:
+      1: "뀔"
   mythic:
     top: "§f뀀"
     mid: "§f뀁"
     bottom: "§f뀂"
+    custom-lines:
+      1: "뀔"
   godlike:
     top: "§f뀐"
     mid: "§f뀁"
     bottom: "§f뀑"
+    custom-lines:
+      1: "뀔"

@@ -18,18 +18,30 @@ import org.bukkit.persistence.PersistentDataType;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ItemStorageManager {
 
     private final Main plugin;
     private final File folder;
-    // Cache để lưu trữ item giúp load nhanh không cần đọc file nhiều lần
     private final Map<String, ItemStack> itemCache = new HashMap<>();
+
+    // Namespace mặc định dùng cho PDC (theo ví dụ của bạn)
+    private static final String PDC_NAMESPACE = "myitem";
+
+    // Danh sách stat (lấy từ Tab + các key phổ biến)
+    private static final Set<String> STAT_KEYS = new HashSet<>(Arrays.asList(
+            "damage", "health", "armor", "pve_damage", "pvp_damage",
+            "pve_defense", "pvp_defense", "critical_chance", "critical_damage",
+            "lifesteal", "dodge_rate", "block_rate", "penetration", "level_require",
+            "true_damage", "thorns", "class_require", "max_mana", "mana_regen",
+            "exp_bonus", "attack_speed", "movement_speed", "health_regen",
+            "armor_pen", "all_damage", "all_defense", "bow_damage",
+            "knockback_resistance", "death_damage", "durability",
+            "magic_damage", "magic_defense", "Accuracy",
+            "critical_damage_reduction", "damage_reduction", "effect_resistance"
+    ));
 
     public ItemStorageManager(Main plugin) {
         this.plugin = plugin;
@@ -37,41 +49,30 @@ public class ItemStorageManager {
         if (!this.folder.exists()) {
             this.folder.mkdirs();
         }
-        loadAllItems(); // Tự động nạp item khi khởi tạo
+        loadAllItems();
     }
 
-    /**
-     * Quét sạch cache và nạp lại toàn bộ item từ tất cả file .yml trong ManagerItem
-     */
     public void loadAllItems() {
         itemCache.clear();
         File[] files = folder.listFiles((dir, name) -> name.endsWith(".yml"));
         if (files == null) return;
 
-        int count = 0;
         for (File file : files) {
             FileConfiguration config = YamlConfiguration.loadConfiguration(file);
             for (String id : config.getKeys(false)) {
                 ItemStack item = buildItemFromConfig(config, id);
                 if (item != null) {
                     itemCache.put(id.toLowerCase(), item);
-                    count++;
                 }
             }
         }
     }
 
-    /**
-     * Lấy item từ bộ nhớ tạm (Cache)
-     */
     public ItemStack getItem(String id) {
         ItemStack item = itemCache.get(id.toLowerCase());
         return (item != null) ? item.clone() : null;
     }
 
-    /**
-     * Tạo file .yml mới
-     */
     public boolean createTypeFile(String type) {
         File file = new File(folder, type + ".yml");
         if (file.exists()) return false;
@@ -84,7 +85,9 @@ public class ItemStorageManager {
     }
 
     /**
-     * Lưu ItemStack vào file yml và cập nhật lại cache
+     * Lưu ItemStack vào file yml + cập nhật cache
+     * Lore: § → &
+     * PDC được tách thành: stats / element / effect / ability
      */
     public boolean saveItemToType(String type, String id, ItemStack item) {
         File file = new File(folder, type + ".yml");
@@ -96,11 +99,24 @@ public class ItemStorageManager {
 
         String path = id + ".";
 
-        // Lưu thông tin
+        // ── Cơ bản ────────────────────────────────────────────────
         config.set(path + "material", item.getType().name());
-        if (meta.hasDisplayName()) config.set(path + "name", meta.getDisplayName());
-        if (meta.hasCustomModelData()) config.set(path + "model-id", meta.getCustomModelData());
-        if (meta.hasLore()) config.set(path + "lore", meta.getLore());
+
+        if (meta.hasDisplayName()) {
+            config.set(path + "name", meta.getDisplayName());
+        }
+
+        if (meta.hasCustomModelData()) {
+            config.set(path + "model-id", meta.getCustomModelData());
+        }
+
+        // Lore: § → &
+        if (meta.hasLore()) {
+            List<String> lore = meta.getLore().stream()
+                    .map(line -> line.replace("§", "&"))
+                    .collect(Collectors.toList());
+            config.set(path + "lore", lore);
+        }
 
         // Enchantments
         if (!item.getEnchantments().isEmpty()) {
@@ -118,7 +134,16 @@ public class ItemStorageManager {
                     config.set(attrPath + ".name", mod.getName());
                     config.set(attrPath + ".amount", mod.getAmount());
                     config.set(attrPath + ".operation", mod.getOperation().name());
-                    config.set(attrPath + ".slot", mod.getSlot() != null ? mod.getSlot().name() : "ALL");
+
+                    // Chỉ lưu slot khi không phải null / ALL / ANY
+                    EquipmentSlot slot = mod.getSlot();
+                    if (slot != null) {
+                        String slotName = slot.name();
+                        if (!slotName.equalsIgnoreCase("ALL") && !slotName.equalsIgnoreCase("ANY")) {
+                            config.set(attrPath + ".slot", slotName);
+                        }
+                    }
+                    // nếu slot == null hoặc ALL/ANY → không ghi key .slot
                 }
             }
         }
@@ -130,26 +155,87 @@ public class ItemStorageManager {
             config.set(path + "flags", flags);
         }
 
-        // PDC
+        // ── PDC → stats / element / effect / ability ──────────────
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
         if (!pdc.getKeys().isEmpty()) {
-            ConfigurationSection pdcSection = config.createSection(path + "pdc");
+
+            // Xóa section cũ nếu có (để tránh trùng)
+            config.set(path + "stats", null);
+            config.set(path + "element", null);
+            config.set(path + "effect", null);
+            config.set(path + "ability", null);
+            config.set(path + "pdc", null);
+
             for (NamespacedKey key : pdc.getKeys()) {
+                String fullKey = key.getKey();
+
+                Object value = null;
                 if (pdc.has(key, PersistentDataType.STRING)) {
-                    pdcSection.set(key.toString(), pdc.get(key, PersistentDataType.STRING));
+                    value = pdc.get(key, PersistentDataType.STRING);
                 } else if (pdc.has(key, PersistentDataType.INTEGER)) {
-                    pdcSection.set(key.toString(), pdc.get(key, PersistentDataType.INTEGER));
+                    value = pdc.get(key, PersistentDataType.INTEGER);
                 } else if (pdc.has(key, PersistentDataType.DOUBLE)) {
-                    pdcSection.set(key.toString(), pdc.get(key, PersistentDataType.DOUBLE));
+                    value = pdc.get(key, PersistentDataType.DOUBLE);
                 } else if (pdc.has(key, PersistentDataType.BYTE)) {
-                    pdcSection.set(key.toString(), pdc.get(key, PersistentDataType.BYTE));
+                    value = pdc.get(key, PersistentDataType.BYTE);
+                } else if (pdc.has(key, PersistentDataType.FLOAT)) {
+                    value = pdc.get(key, PersistentDataType.FLOAT);
+                }
+
+                if (value == null) continue;
+
+                // ★ Nếu value là "any" → bỏ qua, không lưu vào yml
+                if (value instanceof String && ((String) value).equalsIgnoreCase("any")) {
+                    continue;
+                }
+
+                // 1. Ability
+                if (fullKey.equalsIgnoreCase("item_abilities")) {
+                    String raw = value.toString();
+                    if (!raw.isEmpty()) {
+                        for (String part : raw.split(",")) {
+                            String[] bits = part.trim().split(":", 2);
+                            if (bits.length >= 2) {
+                                config.set(path + "ability." + bits[0].trim(), bits[1].trim());
+                            }
+                        }
+                    }
+                }
+                // 2. Effect
+                else if (fullKey.equalsIgnoreCase("item_effects_map")) {
+                    String raw = value.toString();
+                    if (!raw.isEmpty()) {
+                        for (String part : raw.split(";")) {
+                            if (part.trim().isEmpty()) continue;
+                            String[] bits = part.trim().split(":", 2);
+                            if (bits.length >= 2) {
+                                try {
+                                    config.set(path + "effect." + bits[0].trim(), Integer.parseInt(bits[1].trim()));
+                                } catch (NumberFormatException e) {
+                                    config.set(path + "effect." + bits[0].trim(), bits[1].trim());
+                                }
+                            }
+                        }
+                    }
+                }
+                // 3. Element (elem_xxx)
+                else if (fullKey.toLowerCase().startsWith("elem_")) {
+                    String elemName = fullKey.substring(5);
+                    config.set(path + "element." + elemName, value);
+                }
+                // 4. Stats (theo danh sách)
+                else if (STAT_KEYS.contains(fullKey.toLowerCase()) || STAT_KEYS.contains(fullKey)) {
+                    config.set(path + "stats." + fullKey, value);
+                }
+                // 5. Các key khác → đưa vào stats
+                else {
+                    config.set(path + "stats." + fullKey, value);
                 }
             }
         }
 
         try {
             config.save(file);
-            // Sau khi lưu thành công, cập nhật luôn vào cache để dùng ngay không cần reload
             itemCache.put(id.toLowerCase(), item.clone());
             return true;
         } catch (IOException e) {
@@ -159,7 +245,7 @@ public class ItemStorageManager {
     }
 
     /**
-     * Xử lý chuyển đổi từ config sang ItemStack (Dùng cho cả load lẻ và load all)
+     * Dựng ItemStack từ config (hỗ trợ cả format cũ pdc: lẫn format mới stats/element/effect/ability)
      */
     private ItemStack buildItemFromConfig(FileConfiguration config, String id) {
         String path = id + ".";
@@ -174,8 +260,12 @@ public class ItemStorageManager {
         if (meta == null) return item;
 
         // Cơ bản
-        if (config.contains(path + "name")) meta.setDisplayName(config.getString(path + "name").replace("&", "§"));
-        if (config.contains(path + "model-id")) meta.setCustomModelData(config.getInt(path + "model-id"));
+        if (config.contains(path + "name")) {
+            meta.setDisplayName(config.getString(path + "name").replace("&", "§"));
+        }
+        if (config.contains(path + "model-id")) {
+            meta.setCustomModelData(config.getInt(path + "model-id"));
+        }
         if (config.contains(path + "lore")) {
             List<String> lore = config.getStringList(path + "lore");
             lore.replaceAll(line -> line.replace("&", "§"));
@@ -188,7 +278,9 @@ public class ItemStorageManager {
             if (enchantSection != null) {
                 for (String key : enchantSection.getKeys(false)) {
                     Enchantment enchant = Enchantment.getByKey(NamespacedKey.minecraft(key.toLowerCase()));
-                    if (enchant != null) meta.addEnchant(enchant, enchantSection.getInt(key), true);
+                    if (enchant != null) {
+                        meta.addEnchant(enchant, enchantSection.getInt(key), true);
+                    }
                 }
             }
         }
@@ -198,19 +290,26 @@ public class ItemStorageManager {
             ConfigurationSection attrSection = config.getConfigurationSection(path + "attributes");
             if (attrSection != null) {
                 for (String attrKey : attrSection.getKeys(false)) {
-                    Attribute attribute = Attribute.valueOf(attrKey);
-                    ConfigurationSection modSection = attrSection.getConfigurationSection(attrKey);
-                    if (modSection != null) {
-                        for (String modKey : modSection.getKeys(false)) {
-                            String name = modSection.getString(modKey + ".name");
-                            double amount = modSection.getDouble(modKey + ".amount");
-                            AttributeModifier.Operation op = AttributeModifier.Operation.valueOf(modSection.getString(modKey + ".operation"));
-                            String slotStr = modSection.getString(modKey + ".slot");
-                            EquipmentSlot slot = (slotStr == null || slotStr.equals("ALL")) ? null : EquipmentSlot.valueOf(slotStr);
-                            AttributeModifier modifier = new AttributeModifier(UUID.randomUUID(), name != null ? name : "attr", amount, op, slot);
-                            meta.addAttributeModifier(attribute, modifier);
+                    try {
+                        Attribute attribute = Attribute.valueOf(attrKey);
+                        ConfigurationSection modSection = attrSection.getConfigurationSection(attrKey);
+                        if (modSection != null) {
+                            for (String modKey : modSection.getKeys(false)) {
+                                String name = modSection.getString(modKey + ".name");
+                                double amount = modSection.getDouble(modKey + ".amount");
+                                AttributeModifier.Operation op = AttributeModifier.Operation.valueOf(
+                                        modSection.getString(modKey + ".operation"));
+                                String slotStr = modSection.getString(modKey + ".slot");
+                                EquipmentSlot slot = (slotStr == null || slotStr.equalsIgnoreCase("ALL"))
+                                        ? null : EquipmentSlot.valueOf(slotStr);
+                                AttributeModifier modifier = new AttributeModifier(
+                                        UUID.randomUUID(),
+                                        name != null ? name : "attr",
+                                        amount, op, slot);
+                                meta.addAttributeModifier(attribute, modifier);
+                            }
                         }
-                    }
+                    } catch (IllegalArgumentException ignored) {}
                 }
             }
         }
@@ -218,23 +317,79 @@ public class ItemStorageManager {
         // Flags
         if (config.contains(path + "flags")) {
             for (String flagName : config.getStringList(path + "flags")) {
-                meta.addItemFlags(ItemFlag.valueOf(flagName));
+                try {
+                    meta.addItemFlags(ItemFlag.valueOf(flagName));
+                } catch (IllegalArgumentException ignored) {}
             }
         }
 
-        // PDC
+        // ── PDC (hỗ trợ cả format mới + format cũ) ────────────────
+        PersistentDataContainer pdc = meta.getPersistentDataContainer();
+
+        // 1. Format mới: stats
+        if (config.contains(path + "stats")) {
+            ConfigurationSection sec = config.getConfigurationSection(path + "stats");
+            if (sec != null) {
+                for (String key : sec.getKeys(false)) {
+                    setPdcValue(pdc, key, sec.get(key));
+                }
+            }
+        }
+
+        // 2. Format mới: element → lưu thành elem_<name>
+        if (config.contains(path + "element")) {
+            ConfigurationSection sec = config.getConfigurationSection(path + "element");
+            if (sec != null) {
+                for (String key : sec.getKeys(false)) {
+                    setPdcValue(pdc, "elem_" + key, sec.get(key));
+                }
+            }
+        }
+
+        // 3. Format mới: effect → ghép lại thành item_effects_map
+        if (config.contains(path + "effect")) {
+            ConfigurationSection sec = config.getConfigurationSection(path + "effect");
+            if (sec != null) {
+                StringBuilder sb = new StringBuilder();
+                for (String key : sec.getKeys(false)) {
+                    sb.append(key).append(":").append(sec.get(key)).append(";");
+                }
+                if (sb.length() > 0) {
+                    setPdcValue(pdc, "item_effects_map", sb.toString());
+                }
+            }
+        }
+
+        // 4. Format mới: ability → ghép lại thành item_abilities
+        if (config.contains(path + "ability")) {
+            ConfigurationSection sec = config.getConfigurationSection(path + "ability");
+            if (sec != null) {
+                StringBuilder sb = new StringBuilder();
+                for (String key : sec.getKeys(false)) {
+                    if (sb.length() > 0) sb.append(",");
+                    sb.append(key).append(":").append(sec.get(key));
+                }
+                if (sb.length() > 0) {
+                    setPdcValue(pdc, "item_abilities", sb.toString());
+                }
+            }
+        }
+
+        // 5. Format cũ (pdc:) – vẫn hỗ trợ để tương thích ngược
         if (config.contains(path + "pdc")) {
             ConfigurationSection pdcSection = config.getConfigurationSection(path + "pdc");
             if (pdcSection != null) {
-                PersistentDataContainer pdc = meta.getPersistentDataContainer();
                 for (String keyStr : pdcSection.getKeys(false)) {
                     String[] parts = keyStr.split(":");
-                    NamespacedKey key = (parts.length > 1) ? new NamespacedKey(parts[0], parts[1]) : NamespacedKey.minecraft(parts[0]);
+                    NamespacedKey key = (parts.length > 1)
+                            ? new NamespacedKey(parts[0], parts[1])
+                            : new NamespacedKey(PDC_NAMESPACE, parts[0]);
                     Object value = pdcSection.get(keyStr);
                     if (value instanceof String) pdc.set(key, PersistentDataType.STRING, (String) value);
                     else if (value instanceof Integer) pdc.set(key, PersistentDataType.INTEGER, (Integer) value);
                     else if (value instanceof Double) pdc.set(key, PersistentDataType.DOUBLE, (Double) value);
                     else if (value instanceof Byte) pdc.set(key, PersistentDataType.BYTE, (Byte) value);
+                    else if (value instanceof Float) pdc.set(key, PersistentDataType.FLOAT, (Float) value);
                 }
             }
         }
@@ -243,10 +398,25 @@ public class ItemStorageManager {
         return item;
     }
 
-    /**
-     * Trả về danh sách tên tất cả file type (không kèm .yml) trong ManagerItem
-     * Dùng cho tab complete args[2] của "mi save/load"
-     */
+    /** Helper: set giá trị vào PDC với namespace myitem */
+    private void setPdcValue(PersistentDataContainer pdc, String key, Object value) {
+        NamespacedKey nsKey = new NamespacedKey(PDC_NAMESPACE, key);
+        if (value instanceof String) {
+            pdc.set(nsKey, PersistentDataType.STRING, (String) value);
+        } else if (value instanceof Integer) {
+            pdc.set(nsKey, PersistentDataType.INTEGER, (Integer) value);
+        } else if (value instanceof Double) {
+            pdc.set(nsKey, PersistentDataType.DOUBLE, (Double) value);
+        } else if (value instanceof Float) {
+            pdc.set(nsKey, PersistentDataType.FLOAT, (Float) value);
+        } else if (value instanceof Byte) {
+            pdc.set(nsKey, PersistentDataType.BYTE, (Byte) value);
+        } else if (value instanceof Number) {
+            // fallback
+            pdc.set(nsKey, PersistentDataType.DOUBLE, ((Number) value).doubleValue());
+        }
+    }
+
     public List<String> getTypeNames() {
         List<String> types = new ArrayList<>();
         File[] files = folder.listFiles((dir, name) -> name.endsWith(".yml"));
@@ -257,10 +427,6 @@ public class ItemStorageManager {
         return types;
     }
 
-    /**
-     * Trả về danh sách ID thuộc về một type file cụ thể
-     * Dùng cho tab complete args[3] của "mi save/load"
-     */
     public List<String> getIdsByType(String type) {
         List<String> ids = new ArrayList<>();
         File file = new File(folder, type + ".yml");
@@ -270,9 +436,6 @@ public class ItemStorageManager {
         return ids;
     }
 
-    /**
-     * Trả về tất cả ID trong cache (dùng cho /mi load khi không cần lọc theo type)
-     */
     public List<String> getAllIds() {
         return new ArrayList<>(itemCache.keySet());
     }
