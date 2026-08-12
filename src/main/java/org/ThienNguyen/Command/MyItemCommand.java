@@ -1458,6 +1458,7 @@ public class MyItemCommand implements CommandExecutor {
         for (int i = start; i < end; i++) {
             sender.sendMessage(helpLines.get(i));
         }
+        
         sender.sendMessage("§7[§b◀§7]§8§m ----------------------------§7 [§b▶§7]");
     }
 }
