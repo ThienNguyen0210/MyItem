@@ -1086,6 +1086,13 @@ public class MyItemCommand implements CommandExecutor {
 
                 ItemMeta meta = item.getItemMeta();
                 if (meta != null) {
+                    // Kiểm tra màu nếu là trang bị da (Leather Armor)
+                    if (meta instanceof org.bukkit.inventory.meta.LeatherArmorMeta leatherMeta) {
+                        org.bukkit.Color color = leatherMeta.getColor();
+                        String hexColor = String.format("#%06X", (0xFFFFFF & color.asRGB()));
+                        player.sendMessage("§7Leather Color §8: §fRGB(" + color.getRed() + ", " + color.getGreen() + ", " + color.getBlue() + ") §8[" + hexColor + "]");
+                    }
+
                     if (meta.hasCustomModelData()) {
                         player.sendMessage("§7Custom Model  §8: §e" + meta.getCustomModelData());
                     } else {
@@ -1123,7 +1130,47 @@ public class MyItemCommand implements CommandExecutor {
                 }
                 player.sendMessage("§8§m────────────────────────────────────");
             }
+            case "dye-color" -> {
+                if (!(sender instanceof Player player)) return true;
 
+                if (args.length < 4) {
+                    player.sendMessage(PFX_ERR + "Usage: /myitem dye-color <red> <green> <blue>");
+                    return true;
+                }
+
+                ItemStack item = player.getInventory().getItemInMainHand();
+                if (item == null || item.getType().isAir()) {
+                    player.sendMessage(PFX_ERR + "You must be holding an item in your main hand.");
+                    return true;
+                }
+
+                ItemMeta meta = item.getItemMeta();
+                if (!(meta instanceof org.bukkit.inventory.meta.LeatherArmorMeta leatherMeta)) {
+                    player.sendMessage(PFX_ERR + "The item in your main hand must be leather armor.");
+                    return true;
+                }
+
+                try {
+                    int red = Integer.parseInt(args[1]);
+                    int green = Integer.parseInt(args[2]);
+                    int blue = Integer.parseInt(args[3]);
+
+                    // Giới hạn giá trị màu từ 0 đến 255
+                    red = Math.clamp(red, 0, 255);
+                    green = Math.clamp(green, 0, 255);
+                    blue = Math.clamp(blue, 0, 255);
+
+                    org.bukkit.Color color = org.bukkit.Color.fromRGB(red, green, blue);
+                    leatherMeta.setColor(color);
+                    item.setItemMeta(leatherMeta);
+
+                    String hexColor = String.format("#%06X", (0xFFFFFF & color.asRGB()));
+                    player.sendMessage("§aSuccessfully updated leather color to RGB(" + red + ", " + green + ", " + blue + ") §8[" + hexColor + "]");
+                } catch (NumberFormatException e) {
+                    player.sendMessage(PFX_ERR + "RGB values must be valid integers between 0 and 255.");
+                }
+                return true;
+            }
             case "passive" -> {
                 if (!(sender instanceof Player player)) return true;
                 if (!checkAdmin(player)) return true;
@@ -1397,7 +1444,7 @@ public class MyItemCommand implements CommandExecutor {
         helpLines.add(miPrefix + "storage <create/save/load/browse> §7- Quản lí item (ManagerItem)");
         helpLines.add(miPrefix + "checkitem §7- Kiểm tra data vật phẩm §c§lNEW");
         helpLines.add(miPrefix + "passive <bind/unbind> <id> §7- Thêm nội tại cho item §c§lNEW");
-
+        helpLines.add(miPrefix + "dye-color <r> <g> <b> §7- Đổi mã màu RGB cho áo da §c§lNEW");
         int itemsPerPage = 5;
         int maxPages = (int) Math.ceil((double) helpLines.size() / itemsPerPage);
 

@@ -22,11 +22,10 @@ public class SummonVanillaMechanic extends AbstractSummonMechanic {
         } catch (IllegalArgumentException e) {
             Main.getInstance().getLogger()
                     .warning("[Passive] SUMMON_VANILLA: EntityType không hợp lệ: '"
-                            + rawType + "'. Xem https:
+                            + rawType + "'. Vui lòng kiểm tra lại cấu hình.");
         }
         this.entityType = parsed;
     }
-
     @Override
     protected LivingEntity spawnMob(PassiveContext ctx) {
         if (entityType == null) return null;

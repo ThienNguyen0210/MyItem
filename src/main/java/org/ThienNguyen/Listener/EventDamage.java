@@ -34,7 +34,7 @@ public class EventDamage implements Listener {
     private final String METADATA_CURSE = "CURSED_REDUCTION";
     private static final String METADATA_EXTRA_DAMAGE = "ABILITY_EXTRA_DAMAGE";
 
-    
+    // ===== Config value caches (avoid re-reading FileConfiguration on every hit) =====
     private Double cachedCritMultiplierBase = null;
     private Double cachedCritDamageReductionCap = null;
     private Integer cachedDeepWoundDurationTicks = null;
@@ -42,6 +42,8 @@ public class EventDamage implements Listener {
     private Double cachedDeathDamageThreshold = null;
     private final Map<String, double[]> elementBaseConfigCache = new HashMap<>();
     private Boolean mmoCoreEnabledCache = null;
+
+    // Periodic sweep counter for hitTriggerCooldown to prevent unbounded growth
     private int cooldownCleanupCounter = 0;
     private static final int COOLDOWN_CLEANUP_INTERVAL = 200;
     private static final long COOLDOWN_ENTRY_TTL_MS = 5000L;
@@ -49,15 +51,23 @@ public class EventDamage implements Listener {
     public void onDamage(EntityDamageByEntityEvent event) {
 
         if (!(event.getEntity() instanceof LivingEntity target)) return;
+
+        // Captured up-front, before any of our own damage math or Bukkit's own damage
+        // modifiers (ARMOR, RESISTANCE, ABSORPTION, ...) run. event.setDamage(...) below
+        // only overrides the BASE modifier — vanilla still layers its own modifiers on top
+        // when the final damage is applied to health, so a victim in full armor can end up
+        // taking noticeably less than our theoretical combat-math total. Comparing health
+        // before vs. after the hit (further down) gives us the number that was truly dealt.
         final double healthAtHitStart = target.getHealth();
+
         if (event.getDamager().hasMetadata("THORNS_REFLECT")) {
             return;
         }
         if (event.getEntity().hasMetadata("passive_damage_skip")) {
             return;
         }
-        
-        
+        // INVINCIBLE_STATUS: bất tử tạm thời — cancel toàn bộ damage kể cả script/ability.
+        // Set bởi StatusMechanic (type: STATUS, status: INVINCIBLE).
         if (target.hasMetadata("INVINCIBLE_STATUS")) {
             event.setCancelled(true);
             return;
@@ -74,31 +84,35 @@ public class EventDamage implements Listener {
 
         if (target.hasMetadata("IS_ABILITY") || target.hasMetadata("IS_SKILL_PROCESS")) {
             isFromAbility = true;
-            
-            
-            
-            
-            
+            // Consume immediately (mirrors SKILL_DAMAGE_VALUE below). These flags mark a single
+            // in-flight ability hit; if left in place, an unrelated attack landing on the same
+            // target while a DoT/channeled ability is still "in progress" would also be
+            // misclassified as ability damage and bail out before event.setDamage() runs,
+            // making that attack deal 0 damage.
             if (target.hasMetadata("IS_ABILITY")) target.removeMetadata("IS_ABILITY", Main.getInstance());
             if (target.hasMetadata("IS_SKILL_PROCESS")) target.removeMetadata("IS_SKILL_PROCESS", Main.getInstance());
         }
 
-        
+        // ========== XỬ LÝ HIỂN THỊ CHO SKILL/ABILITY ==========
         if (isFromAbility) {
             double damageToDisplay = isFromScript ? scriptDamage : event.getDamage();
 
-            
+            // Set damage vào metadata Normal Damage
             TextDisplayManager.setNormalDamage(target, damageToDisplay);
+
+            // Gọi hiển thị damage
             org.ThienNguyen.Listener.TextDisplayManager.displayAll(target);
         }
+
+        // Return sớm cho Ability (sau khi đã hiển thị)
         if (!isFromScript && isFromAbility) {
             return;
         }
 
-        
-        
-        
-        
+        // Already checked at the top of this method and we would have returned there if
+        // true (nothing sets THORNS_REFLECT in between), so this is provably false here.
+        // Kept as a named boolean so the `!isFromThorns` check further down stays readable
+        // without a second Bukkit metadata lookup for information we already have.
         boolean isFromThorns = false;
 
         boolean isSkillDamage = target.hasMetadata("SKILL_DAMAGE_PROCESSED");
@@ -118,20 +132,20 @@ public class EventDamage implements Listener {
             return;
         }
 
-        
-        
-        
+        // STUNNED_STATUS: kẻ bị stun không thể tấn công (khác ROOTED_STATUS — chỉ khoá
+        // di chuyển, vẫn tấn công bình thường nên KHÔNG có check tương ứng ở đây).
+        // Set bởi StatusMechanic (type: STATUS, status: STUN).
         if (!isFromScript && event.getDamager().hasMetadata("STUNNED_STATUS") && !isFromAbility) {
             event.setCancelled(true);
             if (attacker != null) attacker.sendActionBar("§c§l✖ Bạn đang bị choáng!");
             return;
         }
 
-        
-        
-        
-        
-        
+        // A "basic attack" is a raw melee hit or bow shot coming straight from a player's
+        // weapon — no skill, ability, or script damage involved. All damage modification
+        // (stat bonuses, crit, elemental/magic/true/death damage, dodge/block/armor
+        // mitigation) below is applied ONLY when this is true; skill/ability/script damage
+        // now passes straight through to event.setDamage() unmodified.
         boolean isBasicAttack = attacker != null && !isFromScript && !isFromAbility && !isSkillDamage;
 
         if (isBasicAttack && isMmoCoreEnabled()) {
@@ -153,9 +167,9 @@ public class EventDamage implements Listener {
 
         double currentDamage = isFromScript ? scriptDamage : event.getDamage();
 
-        
-        
-        
+        // Skills report their base damage via SKILL_DAMAGE_VALUE; add the caster's
+        // magic_damage stat on top of it here, the same way melee/bow add their "damage"
+        // stat below. magic_defense (further down) then mitigates this for the victim.
         if (isFromScript && attacker != null) {
             PlayerCombatCache.CombatStats casterStats = PlayerCombatCache.getStats(attacker.getUniqueId());
             double effCasterMagicDamage = PlayerCombatCache.getEffective(
@@ -166,29 +180,29 @@ public class EventDamage implements Listener {
         double damageBeforeReduction = currentDamage;
 
         PlayerCombatCache.CombatStats attackerStats = null;
-        
-        
+        // Fetched once upfront (instead of separately inside the crit-reduction check and
+        // again later) and reused everywhere the victim's stats are needed for this hit.
         PlayerCombatCache.CombatStats victimStats = (target instanceof Player targetAsPlayer)
                 ? PlayerCombatCache.getStats(targetAsPlayer.getUniqueId()) : null;
         double weaponElementTotalDmg = 0.0;
         StringBuilder elementDisplayBuilder = new StringBuilder();
 
-        
-        
-        
+        // These are computed once below (when an attacker exists) and reused later for the
+        // STAT_ATTACKER_* display metadata, instead of calling PlayerCombatCache.getEffective()
+        // a second time for the exact same UUID+key.
         double effAttackerCritChance = 0.0;
         double effAttackerCritDamage = 0.0;
-        
-        
-        
+        // Tracks whether this hit crit, mirroring the setLastHitCrit() call below, so
+        // later code in this same method can check the flag locally instead of asking Bukkit
+        // to hand back a value we just set ourselves a few lines earlier.
         boolean isCritHit = false;
-        
+        // Same idea for the victim's dodge rate, reused for STAT_VICTIM_DODGE later.
         double effVictimDodgeRate = 0.0;
-        
-        
+        // Same idea for the attacker's magic_damage stat, reused between the ability-power
+        // calc and the final magic-damage calc instead of being fetched twice.
         double effAttackerMagicDamage = 0.0;
 
-        
+        // Xóa metadata hiển thị cũ
         TextDisplayManager.clearDisplayData(target);
 
         if (isBasicAttack) {
@@ -229,12 +243,12 @@ public class EventDamage implements Listener {
 
             effAttackerCritChance = PlayerCombatCache.getEffective(attackerUuid, "critical_chance", attackerStats.totalCritChance);
             effAttackerCritDamage = PlayerCombatCache.getEffective(attackerUuid, "critical_damage", attackerStats.totalCritDamage);
-            
+            // logic critical
             if (random.nextDouble() * 100 <= effAttackerCritChance) {
                 double baseCritMult = getCritMultiplierBase();
                 double critMultiplier = baseCritMult + (effAttackerCritDamage / 100.0);
 
-                
+                // Áp dụng giảm sát thương chí mạng của nạn nhân (nếu có)
                 if (target instanceof Player victimForCrit) {
                     double effectiveCritDmgReduction = PlayerCombatCache.getEffective(
                             victimForCrit.getUniqueId(), "crit_damage_reduction",
@@ -259,7 +273,7 @@ public class EventDamage implements Listener {
                 double newVal = Math.max(existing, Math.min(effectiveDeepWound, 100.0));
                 target.setMetadata("DEEP_WOUND_REDUCTION", new FixedMetadataValue(Main.getInstance(), newVal));
 
-                
+                // FIX: cancel task cũ trước khi tạo mới
                 if (target.hasMetadata("DEEP_WOUND_TASK")) {
                     Bukkit.getScheduler().cancelTask(target.getMetadata("DEEP_WOUND_TASK").get(0).asInt());
                     target.removeMetadata("DEEP_WOUND_TASK", Main.getInstance());
@@ -272,8 +286,8 @@ public class EventDamage implements Listener {
             }
             damageBeforeReduction = currentDamage;
 
-            
-            
+            // Dùng getEffective() thay vì đọc field gốc trực tiếp, để buff tạm (magic_damage)
+            // cũng ảnh hưởng tới ngưỡng proc ability — khớp với cách finalMagicDmg tính bên dưới.
             effAttackerMagicDamage = PlayerCombatCache.getEffective(
                     attackerUuid, "magic_damage", attackerStats.totalMagicDamage);
             double magicDmgForAbility = effAttackerMagicDamage * curseMultiplier;
@@ -285,13 +299,13 @@ public class EventDamage implements Listener {
             damageBeforeReduction = currentDamage;
         }
 
-        
-        
-        
-        
+        // Damage from anything other than a standard melee/bow/mob attack — i.e. skills,
+        // abilities, and scripted damage — is mitigated by the victim's magic_defense stat.
+        // (isFromAbility is only ever true here alongside isFromScript, since a pure
+        // ability hit with no script damage already returned early above.)
         boolean isSkillLikeDamage = isFromScript || isFromAbility || isSkillDamage;
 
-        
+        // ĐIỀU KIỆN MỚI: Cho phép cả Player đánh Player lẫn Mob (LivingEntity) đánh Player được tính phòng thủ
         boolean isMobOrBasicAttack = (isBasicAttack || (event.getDamager() instanceof LivingEntity && attacker == null))
                 && !isFromScript && !isFromAbility && !isSkillDamage;
 
@@ -320,7 +334,7 @@ public class EventDamage implements Listener {
                 return;
             }
 
-            
+            // Phân biệt chính xác pvp_defense (nếu đánh bởi Player) hay pve_defense (nếu đánh bởi Mob)
             boolean isAttackerAPlayer = (attacker != null);
             double defMultiplier = isAttackerAPlayer
                     ? PlayerCombatCache.getEffective(victimUuid, "pvp_defense", victimStats != null ? victimStats.totalPvpDef : 0.0)
@@ -328,7 +342,7 @@ public class EventDamage implements Listener {
 
             currentDamage *= Math.max(0, 1 - defMultiplier / 100.0);
 
-            
+            // Kháng toàn phần (all_defense)
             double allDefPercent = victimStats != null ? PlayerCombatCache.getEffective(victimUuid, "all_defense", victimStats.totalAllDefense) : 0.0;
             if (allDefPercent >= 100.0) {
                 currentDamage = 0;
@@ -407,7 +421,7 @@ public class EventDamage implements Listener {
 
         event.setDamage(theoreticalTotal);
 
-        
+        // ── Passive Triggers ──────────────────────────────────────────────────────────
         final Player attackerFinal = attacker;
         final boolean isCritForPassive = isCritHit;
         boolean isFatalBlows = target instanceof org.bukkit.entity.LivingEntity livingTarget
@@ -461,7 +475,7 @@ public class EventDamage implements Listener {
             );
         }
 
-        
+        // ──────────────────────────────────────────────────────────────
         if (isBasicAttack && !isFromThorns && damageBeforeReduction > 0) {
             double effectiveThorns = (victimStats != null && target instanceof Player thornsVictim)
                     ? PlayerCombatCache.getEffective(thornsVictim.getUniqueId(), "thorns", victimStats.totalThorns) : 0.0;
@@ -482,7 +496,7 @@ public class EventDamage implements Listener {
             }
         }
 
-        
+        // ====================== FINAL DISPLAY LOGIC ======================
         double displayPhysicalFinal = finalPhysicalDmg;
         if (finalDeathDmg > 0) {
             displayPhysicalFinal += finalDeathDmg;
@@ -501,9 +515,9 @@ public class EventDamage implements Listener {
 
         boolean hadPendingDisplay = TextDisplayManager.isPending(target);
 
-        
-        
-        
+        // Only snapshot health on the first hit of a display batch — later hits merged
+        // into the same batch (hadPendingDisplay == true) must keep comparing against the
+        // health from *before the first hit*, not their own intermediate health.
         if (!hadPendingDisplay) {
             TextDisplayManager.setHealthBeforeHit(target, healthAtHitStart);
         }
@@ -519,12 +533,12 @@ public class EventDamage implements Listener {
         TextDisplayManager.setMagicDamage(target, displayMagic);
 
         if (isFatalBlow) {
-            
-            
-            
-            
-            
-            
+            // Fatal/overkill blows show the raw theoretical damage (old logic), not a
+            // health-delta correction: a killing blow can legitimately be far larger than
+            // the victim's remaining HP (e.g. 100,000 raw damage on a 350 HP mob), and
+            // capping/rescaling to remaining health would wrongly shrink that down to 350.
+            // The health-delta correction only makes sense for non-fatal hits, where the
+            // victim survives and we can measure exactly what came off their health bar.
             org.ThienNguyen.Listener.TextDisplayManager.displayAll(target);
         } else {
             if (!hadPendingDisplay) {
@@ -534,11 +548,11 @@ public class EventDamage implements Listener {
             Bukkit.getScheduler().runTask(Main.getInstance(), () -> {
                 if (target == null || !target.isValid() || target.isDead()) return;
 
-                
-                
-                
-                
-                
+                // Rescale the displayed normal/true/magic values so their sum matches the
+                // damage that was truly subtracted from health, instead of our theoretical
+                // combat-math total — e.g. a target in full armor may have taken noticeably
+                // less than what we calculated, since vanilla applies its own ARMOR/
+                // RESISTANCE/etc. modifiers on top of the base damage we set.
                 Double healthBeforeHit = TextDisplayManager.getHealthBeforeHit(target);
                 if (healthBeforeHit != null) {
                     double actualDamage = Math.max(0, healthBeforeHit - target.getHealth());
@@ -551,22 +565,25 @@ public class EventDamage implements Listener {
         }
     }
 
-    
+    /**
+     * Xử lý sát thương từ nguồn không rõ (poison, fall, void, burn, custom skill,...)
+     * Áp dụng cho cả Player và Mob
+     */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onUnknownDamage(EntityDamageEvent event) {
-        if (event instanceof EntityDamageByEntityEvent) return; 
+        if (event instanceof EntityDamageByEntityEvent) return; // Đã xử lý ở event chính
         if (!(event.getEntity() instanceof LivingEntity target)) return;
         if (event.getFinalDamage() <= 0) return;
-        
+        // INVINCIBLE_STATUS: bất tử tạm thời — cancel cả damage môi trường (fall/fire/poison/void).
         if (target.hasMetadata("INVINCIBLE_STATUS")) {
             event.setCancelled(true);
             return;
         }
 
-        
-        
-        
-        
+        // ── Passive Trigger: ON_TAKE_DAMAGE cho damage tự gây (fall/fire/poison/void/lava...) ──
+        // victim = target chính nó (actor) -> cho phép condition "target-type: SELF" hoạt động
+        // (passive chỉ áp dụng khi nạn nhân tự gây damage lên bản thân, không phải bị ai đánh).
+        // Chỉ trigger khi target là Player, vì PassiveManager đọc passive_ids từ equipment player.
         if (target instanceof Player selfDamagedPlayer) {
             org.ThienNguyen.Listener.Passive.PassiveManager.getInstance().trigger(
                     org.ThienNguyen.Listener.Passive.Trigger.PassiveTrigger.ON_TAKE_DAMAGE,
@@ -574,24 +591,24 @@ public class EventDamage implements Listener {
             );
         }
 
-        
+        // Xóa metadata cũ để tránh hiển thị lẫn lộn
         clearDisplayMetadata(target);
 
         double damage = event.getFinalDamage();
 
-        
+        // Set metadata cho hiển thị Normal Damage
         TextDisplayManager.setNormalDamage(target, damage);
         TextDisplayManager.setTrueDamage(target, 0);
         TextDisplayManager.setMagicDamage(target, 0);
 
-        
+        // Kiểm tra có phải đòn kết liễu không
         boolean isFatal = (target.getHealth() - damage) <= 0;
 
         if (isFatal) {
-            
+            // Nếu là đòn giết → hiển thị ngay
             org.ThienNguyen.Listener.TextDisplayManager.displayAll(target);
         } else {
-            
+            // Damage thường → delay 1 tick để gộp nếu có nhiều damage cùng lúc
             Bukkit.getScheduler().runTask(Main.getInstance(), () -> {
                 if (target.isValid() && !target.isDead()) {
                     org.ThienNguyen.Listener.TextDisplayManager.displayAll(target);
@@ -601,7 +618,21 @@ public class EventDamage implements Listener {
 
     }
 
-    
+    /**
+     * REVIVE_ARMED: chặn đòn chí mạng lên Player đang được "vũ khí hộ mệnh" bảo vệ
+     * (StatusMechanic... không, cụ thể là RevivalMechanic — type: REVIVE) và hồi sinh
+     * thay vì để họ chết thật.
+     *
+     * Đăng ký trên EntityDamageEvent (KHÔNG phải EntityDamageByEntityEvent) ở priority
+     * MONITOR để bắt được CẢ 2 nguồn damage — entity tấn công lẫn môi trường (fall/fire/
+     * poison/void/...) — giống cách onUnknownDamage() ở trên đã làm, nhưng KHÔNG cần guard
+     * "instanceof EntityDamageByEntityEvent" vì logic revive ở đây độc lập hoàn toàn với
+     * logic hiển thị/tính damage của 2 handler kia — không có gì để double-xử lý cả.
+     *
+     * MONITOR chạy sau khi onDamage()/onUnknownDamage() đã tính xong final damage (kể cả
+     * damage đã bị custom combat system ở trên ghi đè qua event.setDamage()), nên
+     * event.getFinalDamage() ở đây phản ánh đúng số damage THẬT SẼ trừ vào máu.
+     */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onFatalDamageRevive(EntityDamageEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
@@ -612,7 +643,7 @@ public class EventDamage implements Listener {
 
         event.setCancelled(true);
 
-        if (!player.hasMetadata("REVIVE_MECHANIC_REF")) return; 
+        if (!player.hasMetadata("REVIVE_MECHANIC_REF")) return; // an toàn — không nên xảy ra
         Object ref = player.getMetadata("REVIVE_MECHANIC_REF").get(0).value();
         if (ref instanceof org.ThienNguyen.Listener.Passive.Mechanics.RevivalMechanic mechanic) {
             mechanic.onRevive(player);
@@ -622,15 +653,17 @@ public class EventDamage implements Listener {
     private void clearDisplayMetadata(LivingEntity target) {
         TextDisplayManager.clearDisplayData(target);
     }
-    
+    /**
+     * HÀM QUAN TRỌNG: Cung cấp dữ liệu cho PlaceholderAPI (Sửa lỗi BUILD FAILURE)
+     */
     public static Map<String, Double> calculateFullStaticStats(Player player) {
         Map<String, Double> stats = new HashMap<>();
         PlayerCombatCache.CombatStats cached = PlayerCombatCache.getStats(player.getUniqueId());
         java.util.UUID uuid = player.getUniqueId();
 
-        
-        
-        
+        // Dùng getEffective() thay vì đọc field gốc trực tiếp, để placeholder hiển thị đúng
+        // số liệu thật (đã cộng buff tạm từ passive BUFF_STAT) — khớp với cách onDamage() tính
+        // damage thật, tránh trường hợp combat tính 1 số nhưng UI/placeholder hiện số khác.
         double effBonusDmg   = PlayerCombatCache.getEffective(uuid, "damage", cached.totalBonusDmg);
         double effTrueDmg    = PlayerCombatCache.getEffective(uuid, "true_damage", cached.totalTrueDamage);
         double effCritChance = PlayerCombatCache.getEffective(uuid, "critical_chance", cached.totalCritChance);
@@ -687,7 +720,7 @@ public class EventDamage implements Listener {
     private void applyLifesteal(Player player, double damage, double percent) {
         double heal = damage * (percent / 100.0);
 
-        
+        // Áp dụng vết thương sâu nếu player đang bị debuff
         if (player.hasMetadata("DEEP_WOUND_REDUCTION")) {
             double reduction = player.getMetadata("DEEP_WOUND_REDUCTION").get(0).asDouble();
             heal *= Math.max(0.0, 1.0 - (reduction / 100.0));
@@ -739,7 +772,7 @@ public class EventDamage implements Listener {
         return cachedDeathDamageThreshold;
     }
 
-    
+    /** base-damage / damage-per for an element id, cached per id since these rarely change at runtime. */
     private double[] getElementBaseConfig(String eId) {
         return elementBaseConfigCache.computeIfAbsent(eId, id -> new double[]{
                 Main.getInstance().getElementConfig().getDouble(id + ".base-damage", 2.0),

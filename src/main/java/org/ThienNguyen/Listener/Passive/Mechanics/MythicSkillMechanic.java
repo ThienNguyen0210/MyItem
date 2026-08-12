@@ -79,8 +79,6 @@ public class MythicSkillMechanic extends AbstractMechanic {
             return false;
         }
     }
-
-    
     private Location resolveLocation(PassiveContext ctx) {
         
         return switch (targetKey) {
