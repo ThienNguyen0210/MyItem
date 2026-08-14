@@ -35,12 +35,11 @@ import java.io.File;
 import java.io.IOException;
 
 public class Main extends JavaPlugin {
-    private static Economy econ = null; // Thêm dòng này
+    private static Economy econ = null;
     private FileConfiguration evolutionConfig;
     private static Main instance;
     private FileConfiguration aiConfig;
     private FileConfiguration tooltipConfig;
-    // --- Các biến FileConfiguration ---
     private FileConfiguration skillConfig;
     private FileConfiguration customListenerConfig;
     private StationDatabase stationDatabase;
@@ -271,6 +270,11 @@ public class Main extends JavaPlugin {
         ExpLogic expLogic = new ExpLogic();
         getServer().getPluginManager().registerEvents(expLogic, this);
         getServer().getPluginManager().registerEvents(new EventDamage(), this);
+
+        // cooldown_reduction stat hook (MMOCore / Fabled) - must run after
+        // MMOCore/Fabled have already loaded, which is guaranteed by listing
+        // them as depend/softdepend in plugin.yml.
+        org.ThienNguyen.Listener.CooldownReductionListener.register();
 //
 //        // 7. Hooks
 //        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {

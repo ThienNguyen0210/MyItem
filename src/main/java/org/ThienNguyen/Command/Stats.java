@@ -160,6 +160,7 @@ public class Stats {
                 case "magic_damage" -> MagicDamage.set(item, value);
                 case "magic_defense" -> MagicDefense.set(item, value);
                 case "effect_resistance" -> EffectResistance.set(item, value);
+                case "cooldown_reduction" -> CooldownReduction.set(item, value);
                 default -> {}
             }
 

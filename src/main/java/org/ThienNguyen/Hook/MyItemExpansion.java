@@ -124,7 +124,7 @@ public class MyItemExpansion extends PlaceholderExpansion {
         // ==========================================
         // 3. CHỈ SỐ TỪ CACHE CUSTOM (TẤN CÔNG & PHÒNG THỦ - CÓ TÍNH TEMPFETCH HIỆU LỰC)
         // ==========================================
-
+        double totalCooldownReduction = PlayerCombatCache.getEffective(uuid, "cooldown_reduction", stats.totalCooldownReduction);
         double totalBonusDmg = PlayerCombatCache.getEffective(uuid, "damage", stats.totalBonusDmg);
         double totalMagicDamage = PlayerCombatCache.getEffective(uuid, "magic_damage", stats.totalMagicDamage);
         double totalBowDamage = PlayerCombatCache.getEffective(uuid, "bow_damage", stats.totalBowDamage);
@@ -200,7 +200,8 @@ public class MyItemExpansion extends PlaceholderExpansion {
                 + (totalManaRegen * 5.00)
                 + (totalMovementSpeed * 3.89)
                 + (totalKnockbackResist * 45.00)
-                + (totalExpBonus * 1.50);
+                + (totalExpBonus * 1.50)
+                + (totalCooldownReduction * 10.00);;
 
         double bonusLucChien = attackStats
                 + specialAttackStats
@@ -343,7 +344,7 @@ public class MyItemExpansion extends PlaceholderExpansion {
             case "max_mana" -> PlayerCombatCache.getEffective(uuid, "max_mana", stats.totalMaxMana);
             case "mana_regen" -> PlayerCombatCache.getEffective(uuid, "mana_regen", stats.totalManaRegen);
             case "health_regen" -> PlayerCombatCache.getEffective(uuid, "health_regen", stats.totalHealthRegen);
-
+            case "cooldown_reduction", "cooldown", "cd_reduction" -> PlayerCombatCache.getEffective(uuid, "cooldown_reduction", stats.totalCooldownReduction);
             default -> 0.0;
         };
     }

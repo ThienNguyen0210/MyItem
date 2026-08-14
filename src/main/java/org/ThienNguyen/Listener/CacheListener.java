@@ -36,7 +36,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CacheListener implements Listener {
-    
+
     private static final NamespacedKey KEY_PCT_DAMAGE          = new NamespacedKey(Main.getInstance(), "pct_damage");
     private static final NamespacedKey KEY_PCT_CRIT_DMG_RED    = new NamespacedKey(Main.getInstance(), "pct_critical_damage_reduction");
     private static final NamespacedKey KEY_PCT_ARMOR           = new NamespacedKey(Main.getInstance(), "pct_armor");
@@ -50,23 +50,23 @@ public class CacheListener implements Listener {
     private static final NamespacedKey KEY_PCT_DEATH_DMG       = new NamespacedKey(Main.getInstance(), "pct_death_damage");
     private static final NamespacedKey KEY_PCT_EFFECT_RES      = new NamespacedKey(Main.getInstance(), "pct_effect_resistance");
     private static final NamespacedKey KEY_IS_PLACEHOLDER      = new NamespacedKey(Main.getInstance(), "is_placeholder");
-    
+
     private static final EquipmentSlot[] ALL_SLOTS = {
             EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET,
             EquipmentSlot.HAND, EquipmentSlot.OFF_HAND
     };
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
+
+
+
+
     private static final org.bukkit.attribute.Attribute KNOCKBACK_RESISTANCE_ATTRIBUTE =
             resolveAttribute("knockback_resistance", "KNOCKBACK_RESISTANCE", "GENERIC_KNOCKBACK_RESISTANCE");
 
@@ -76,8 +76,8 @@ public class CacheListener implements Listener {
                     org.bukkit.Registry.ATTRIBUTE.get(org.bukkit.NamespacedKey.minecraft(registryKey));
             if (attr != null) return attr;
         } catch (Throwable ignored) {
-            
-            
+
+
         }
 
         for (String name : legacyFieldNames) {
@@ -88,7 +88,7 @@ public class CacheListener implements Listener {
                     return attribute;
                 }
             } catch (Exception ignored) {
-                
+
             }
         }
         Bukkit.getLogger().warning("[" + Main.getInstance().getName() +
@@ -169,7 +169,7 @@ public class CacheListener implements Listener {
 
     private static final ConcurrentHashMap<UUID, Long> LAST_COMBO_MESSAGE_TIME = new ConcurrentHashMap<>();
     private static final long MESSAGE_COOLDOWN_MS = 3000L;
-    
+
 
 
 
@@ -197,7 +197,7 @@ public class CacheListener implements Listener {
         if (pctEffectResistance != 0.0) stats.totalEffectResistance *= (1.0 + (pctEffectResistance / 100.0));
     }
 
-    
+
     private static boolean isAllowedPercent(ItemStack item, FileConfiguration config, String stat, EquipmentSlot currentSlot) {
         if (item == null || !item.hasItemMeta()) return true;
 
@@ -233,11 +233,11 @@ public class CacheListener implements Listener {
     public static void refreshCache(Player player) {
         if (player == null || !player.isOnline()) return;
 
-        
-        
-        
-        
-        
+
+
+
+
+
         PlayerCombatCache.CombatStats stats = PlayerCombatCache.getStats(player.getUniqueId());
         stats.clear();
         FileConfiguration slotConfig   = Main.getInstance().getStatsSettingsConfig();
@@ -297,8 +297,8 @@ public class CacheListener implements Listener {
         stats.clearWeaponElements();
         stats.bestAbilities.clear();
 
-        
-        
+
+
         double pctBonusDmg = 0.0;
         double pctArmor = 0.0;
         double pctTrueDmg = 0.0;
@@ -398,6 +398,7 @@ public class CacheListener implements Listener {
             if (isAllowed(item, slotConfig, "magic_damage", slot))    stats.totalMagicDamage  += MagicDamage.get(item);
             if (isAllowed(item, slotConfig, "magic_defense", slot))   stats.totalMagicDefense += MagicDefense.get(item);
             if (isAllowed(item, slotConfig, "effect_resistance", slot)) stats.totalEffectResistance += EffectResistance.get(item);
+            if (isAllowed(item, slotConfig, "cooldown_reduction", slot)) stats.totalCooldownReduction += CooldownReduction.get(item);
 
 
             Map<String, Integer> itemElements = ElementCore.getAllElements(item);
@@ -492,15 +493,15 @@ public class CacheListener implements Listener {
                 pctMagicDmg, pctMagicDef, pctPveBonus, pctPvpBonus, pctAllDamage,
                 pctBowDamage, pctDeathDamage, pctEffectResistance);
 
-        
-        
-        
-        
+
+
+
+
         org.ThienNguyen.API.StatBoostAPI.apply(player.getUniqueId(), stats);
         StatsListener.getInstance().updatePlayerStats(player);
-        
-        
-        
+
+
+
         PlayerCombatCache.updateCache(player.getUniqueId(), stats);
     }
 
@@ -541,6 +542,7 @@ public class CacheListener implements Listener {
             case "thorns" -> stats.totalThorns += val;
             case "knockback_resistance" -> stats.totalKnockbackResist += val;
             case "effect_resistance" -> stats.totalEffectResistance += val;
+            case "cooldown_reduction" -> stats.totalCooldownReduction += val;
 
 
 
@@ -597,6 +599,7 @@ public class CacheListener implements Listener {
         stats.totalMagicDamage  += MagicDamage.get(jItem);
         stats.totalMagicDefense += MagicDefense.get(jItem);
         stats.totalEffectResistance += EffectResistance.get(jItem);
+        stats.totalCooldownReduction += CooldownReduction.get(jItem);
 
 
         Map<String, Integer> jElements = ElementCore.getAllElements(jItem);
@@ -649,7 +652,7 @@ public class CacheListener implements Listener {
         } catch (Exception ignored) {}
     }
 
-    
+
     private static String normalizeSlot(EquipmentSlot slot) {
         if (slot == null) return "";
         String name = slot.name().toLowerCase().replace("_", "");
@@ -658,11 +661,11 @@ public class CacheListener implements Listener {
         return name;
     }
 
-    
+
     private static boolean isAllowed(ItemStack item, FileConfiguration config, String stat, EquipmentSlot currentSlot) {
         if (item == null || !item.hasItemMeta()) return true;
 
-        
+
         NamespacedKey key = new NamespacedKey(Main.getInstance(), "slot_" + stat.toLowerCase());
         String requiredSlot = item.getItemMeta().getPersistentDataContainer().get(key, PersistentDataType.STRING);
 
@@ -677,7 +680,7 @@ public class CacheListener implements Listener {
             return false;
         }
 
-        
+
         if (config == null) return true;
         List<String> list = config.getStringList("stats-slots." + stat);
         if (list == null || list.isEmpty()) return true;

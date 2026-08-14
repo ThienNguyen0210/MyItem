@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PlayerCombatCache {
     private static final Map<UUID, CombatStats> cache = new ConcurrentHashMap<>();
 
-    
+
     private static final Map<String, String> STAT_NAME_TO_FIELD = new HashMap<>();
     static {
         STAT_NAME_TO_FIELD.put("damage", "totalBonusDmg");
@@ -48,20 +48,21 @@ public class PlayerCombatCache {
         STAT_NAME_TO_FIELD.put("effect_resistance", "totalEffectResistance");
         STAT_NAME_TO_FIELD.put("health", "totalHealth");
         STAT_NAME_TO_FIELD.put("attack_speed", "totalAttackSpeed");
+        STAT_NAME_TO_FIELD.put("cooldown_reduction", "totalCooldownReduction");
 
     }
 
-    
+
     public static boolean isKnownStat(String statKey) {
         return STAT_NAME_TO_FIELD.containsKey(statKey);
     }
 
-    
+
     public static java.util.Set<String> getKnownStatKeys() {
         return STAT_NAME_TO_FIELD.keySet();
     }
 
-    
+
     private static final Map<String, Field> FIELD_CACHE = new ConcurrentHashMap<>();
 
     private static Field resolveField(String javaFieldName) {
@@ -75,7 +76,7 @@ public class PlayerCombatCache {
             }
         });
     }
-    
+
     public static boolean addToField(CombatStats stats, String statKey, double amount) {
         String javaField = STAT_NAME_TO_FIELD.get(statKey);
         if (javaField == null) return false;
@@ -87,7 +88,7 @@ public class PlayerCombatCache {
         } catch (IllegalAccessException e) { return false; }
     }
 
-    
+
     public static boolean multiplyField(CombatStats stats, String statKey, double percent) {
         String javaField = STAT_NAME_TO_FIELD.get(statKey);
         if (javaField == null) return false;
@@ -98,7 +99,7 @@ public class PlayerCombatCache {
             return true;
         } catch (IllegalAccessException e) { return false; }
     }
-    
+
     public static double getEffective(UUID uuid, String statKey, double baseValue) {
         CombatStats stats = cache.get(uuid);
         if (stats == null || stats.tempBuffs.isEmpty()) return baseValue;
@@ -106,7 +107,7 @@ public class PlayerCombatCache {
         double bonus = 0.0;
         long now = System.currentTimeMillis();
         for (org.ThienNguyen.Listener.Passive.TempBuff buff : stats.tempBuffs.values()) {
-            if (buff.expireAtMillis <= now) continue; 
+            if (buff.expireAtMillis <= now) continue;
             if (buff.statKey.equals(statKey)) {
                 bonus += buff.amount;
             }
@@ -114,7 +115,7 @@ public class PlayerCombatCache {
         return baseValue + bonus;
     }
 
-    
+
     public static double getEffectiveByStatName(UUID uuid, String statKey) {
         CombatStats stats = cache.get(uuid);
         if (stats == null) return 0.0;
@@ -169,16 +170,17 @@ public class PlayerCombatCache {
         public double totalDamageReduction = 0.0;
         public double totalEffectResistance = 0.0;
         public double totalAttackSpeed = 0;
+        public double totalCooldownReduction = 0;
 
 
         public Map<String, double[]> bestAbilities = new HashMap<>();
         public Map<String, Double> weaponElementDamage = new HashMap<>();
         public Map<String, Integer> weaponElementLevels = new HashMap<>();
 
-        
+
         public Map<String, org.ThienNguyen.Listener.Passive.TempBuff> tempBuffs = new ConcurrentHashMap<>();
 
-        
+
         public void clear() {
             totalAccuracy = 0;
             totalDeepWound = 0.0;
@@ -203,13 +205,14 @@ public class PlayerCombatCache {
             totalMagicDamage = 1.0;
             totalMagicDefense = 0.0;
             totalAttackSpeed = 0;
+            totalCooldownReduction = 0;
 
             bestAbilities.clear();
             weaponElementDamage.clear();
             weaponElementLevels.clear();
         }
 
-        
+
         public void clearWeaponElements() {
             weaponElementDamage.clear();
             weaponElementLevels.clear();

@@ -148,7 +148,8 @@ public class Tab implements TabCompleter {
                         "critical_chance", "critical_damage", "lifesteal", "dodge_rate", "block_rate", "penetration",
                         "level_require", "true_damage", "thorns", "class_require", "max_mana", "mana_regen",
                         "exp_bonus", "attack_speed", "movement_speed", "health_regen", "armor_pen", "all_damage", "all_defense", "bow_damage", "knockback_resistance", "death_damage", "durability",
-                        "magic_damage", "magic_defense", "Accuracy", "critical_damage_reduction", "damage_reduction", "effect_resistance"
+                        "magic_damage", "magic_defense", "Accuracy", "critical_damage_reduction", "damage_reduction", "effect_resistance",
+                        "cooldown_reduction"
                 ));
                 case "sync" -> suggestions.addAll(Arrays.asList("clear", "addcode", "update", "check"));
                 case "ability" -> suggestions.addAll(Arrays.asList(

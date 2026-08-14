@@ -14,3 +14,6 @@ crit-damage-reduction-cap: 90.0
 damage-reduction-min: 1.0
 # Thời gian hiệu lực vết thương sâu (ticks, 20 ticks = 1 giây, mặc định 60 = 3 giây)
 deep-wound-duration-ticks: 60
+## tính % giảm hồi chiêu với value là số điểm stats cooldown ví dụ bạn mặc item có 50 điểm giảm hồi chiêu thì sẽ là
+# 100% giảm hồi chiêu
+cooldown-reduction-formula: "90 * (1 - exp(-value / 108.7))" # công thức tính như LOL
