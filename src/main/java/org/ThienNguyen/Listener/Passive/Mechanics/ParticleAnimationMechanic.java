@@ -12,9 +12,9 @@ import org.bukkit.World;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
-
 
 public class ParticleAnimationMechanic extends AbstractMechanic {
 
@@ -30,7 +30,6 @@ public class ParticleAnimationMechanic extends AbstractMechanic {
     private final String rawSideOffset;
     private final boolean rotate;
 
-    
     private final Color dustColor;
     private final Material blockMaterial;
 
@@ -56,7 +55,6 @@ public class ParticleAnimationMechanic extends AbstractMechanic {
         this.rawSideOffset          = cfg.getString("side-offset",          "0.0");
         this.rotate                 = cfg.getBoolean("rotate", true);
 
-        
         this.dustColor = parseColor(cfg.getString("dust-color", "#FF5500"));
         this.blockMaterial = parseMaterial(cfg.getString("block-material", "OAK_LEAVES"));
     }
@@ -82,33 +80,69 @@ public class ParticleAnimationMechanic extends AbstractMechanic {
     @Override
     protected boolean doExecute(PassiveContext ctx) {
         LivingEntity center = resolveTarget(ctx);
-        if (center == null || !center.isValid()) return false;
 
-        World world = center.getWorld();
-        if (world == null) return false;
+        // 1. Lấy vị trí xuất phát an toàn (kể cả khi center đã chết hoặc null)
+        Location initialLoc = null;
+        if (center != null) {
+            try {
+                initialLoc = center.getLocation();
+            } catch (Exception ignored) {}
+        }
+        if (initialLoc == null) {
+            initialLoc = ctx.getActorLocation();
+        }
 
-        double radius           = ExpressionResolver.resolve(rawRadius,           ctx.getActor(), 1.0);
-        int    pointsPerTick    = Math.max(1, ExpressionResolver.resolveInt(rawPointsPerTick,    ctx.getActor(), 12));
-        int    particlePerPoint = Math.max(1, ExpressionResolver.resolveInt(rawParticlePerPoint, ctx.getActor(), 1));
-        int    durationTicks    = Math.max(1, ExpressionResolver.resolveInt(rawDurationSeconds,  ctx.getActor(), 3) * 20);
-        int    updateInterval   = Math.max(1, ExpressionResolver.resolveInt(rawUpdateIntervalTicks, ctx.getActor(), 4));
-        double height           = ExpressionResolver.resolve(rawHeight,        ctx.getActor(), 1.0);
-        double forwardOffset    = ExpressionResolver.resolve(rawForwardOffset, ctx.getActor(), 0.0);
-        double sideOffset       = ExpressionResolver.resolve(rawSideOffset,    ctx.getActor(), 0.0);
+        if (initialLoc == null || initialLoc.getWorld() == null) return false;
 
+        World world = initialLoc.getWorld();
+        Player actor = ctx.getActor();
+        Player safeActor = (actor != null && actor.isValid()) ? actor : null;
+
+        // 2. Resolve các thông số kỹ thuật an toàn
+        double radius           = ExpressionResolver.resolve(rawRadius,           safeActor, 1.0);
+        int    pointsPerTick    = Math.max(1, ExpressionResolver.resolveInt(rawPointsPerTick,    safeActor, 12));
+        int    particlePerPoint = Math.max(1, ExpressionResolver.resolveInt(rawParticlePerPoint, safeActor, 1));
+        int    durationTicks    = Math.max(1, ExpressionResolver.resolveInt(rawDurationSeconds,  safeActor, 3) * 20);
+        int    updateInterval   = Math.max(1, ExpressionResolver.resolveInt(rawUpdateIntervalTicks, safeActor, 4));
+        double height           = ExpressionResolver.resolve(rawHeight,        safeActor, 1.0);
+        double forwardOffset    = ExpressionResolver.resolve(rawForwardOffset, safeActor, 0.0);
+        double sideOffset       = ExpressionResolver.resolve(rawSideOffset,    safeActor, 0.0);
+
+        // Tạo biến lưu vị trí tĩnh làm Fallback khi target chết/bị xóa
+        final Location lastKnownOrigin = computeOrigin(initialLoc, height, forwardOffset, sideOffset);
+
+        // 3. Chạy Task hiển thị hiệu ứng
         new BukkitRunnable() {
             int elapsedTicks = 0;
             double rotationOffset = 0.0;
 
             @Override
             public void run() {
-                if (elapsedTicks >= durationTicks || center.isDead() || !center.isValid()) {
+                if (elapsedTicks >= durationTicks) {
                     cancel();
                     return;
                 }
-                Location origin = computeOrigin(center, height, forwardOffset, sideOffset);
+
+                Location origin;
+                // Nếu mục tiêu còn tồn tại và sống -> Bám theo mục tiêu
+                if (center != null && center.isValid() && !center.isDead()) {
+                    origin = computeOrigin(center.getLocation(), height, forwardOffset, sideOffset);
+                    lastKnownOrigin.setX(origin.getX());
+                    lastKnownOrigin.setY(origin.getY());
+                    lastKnownOrigin.setZ(origin.getZ());
+                    lastKnownOrigin.setYaw(origin.getYaw());
+                    lastKnownOrigin.setPitch(origin.getPitch());
+                } else {
+                    // Mục tiêu đã gục/biến mất -> Dùng tọa độ cuối cùng recorded
+                    origin = lastKnownOrigin;
+                }
+
                 drawShape(world, origin, rotationOffset, radius, pointsPerTick, particlePerPoint);
-                if (rotate) rotationOffset += Math.PI / 8;
+
+                if (rotate) {
+                    rotationOffset += Math.PI / 8;
+                }
+
                 elapsedTicks += updateInterval;
             }
         }.runTaskTimer(Main.getInstance(), 0L, updateInterval);
@@ -116,22 +150,18 @@ public class ParticleAnimationMechanic extends AbstractMechanic {
         return true;
     }
 
-    
-    private Location computeOrigin(LivingEntity center, double height, double forwardOffset, double sideOffset) {
-        Location base = center.getLocation();
+    private Location computeOrigin(Location base, double height, double forwardOffset, double sideOffset) {
         Location origin = base.clone().add(0, height, 0);
 
         if (forwardOffset == 0.0 && sideOffset == 0.0) return origin;
 
         Vector direction = base.getDirection().setY(0);
         if (direction.lengthSquared() < 1.0E-6) {
-            
-            
             direction = new Vector(0, 0, 1);
         } else {
             direction = direction.normalize();
         }
-        
+
         Vector right = new Vector(-direction.getZ(), 0, direction.getX());
 
         if (forwardOffset != 0.0) origin.add(direction.clone().multiply(forwardOffset));
@@ -151,10 +181,10 @@ public class ParticleAnimationMechanic extends AbstractMechanic {
 
     private void spawnParticleSafe(World world, Location point, int count) {
         try {
-            if (particle == Particle.DUST || particle == Particle.DUST) {
+            if (particle == Particle.DUST) {
                 Particle.DustOptions options = new Particle.DustOptions(dustColor, 1.5f);
                 world.spawnParticle(particle, point, count, 0, 0, 0, 0, options);
-            } else if (particle == Particle.BLOCK || particle == Particle.BLOCK || particle == Particle.FALLING_DUST) {
+            } else if (particle == Particle.BLOCK || particle == Particle.FALLING_DUST) {
                 BlockData data = blockMaterial.createBlockData();
                 world.spawnParticle(particle, point, count, 0, 0, 0, 0, data);
             } else {

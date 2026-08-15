@@ -136,28 +136,40 @@ public class ParticleProjectileMechanic extends AbstractMechanic {
     @Override
     protected boolean doExecute(PassiveContext ctx) {
         Player actor = ctx.getActor();
-        if (actor == null || !actor.isValid()) return false;
 
-        World world = actor.getWorld();
-        if (world == null) return false;
+        // 1. Xác định location gốc
+        Location rawStart = ctx.getActorLocation();
+        if (rawStart == null && actor != null) {
+            try {
+                rawStart = actor.getLocation();
+            } catch (Exception ignored) {}
+        }
 
-        int    particlePerStep = Math.max(1, ExpressionResolver.resolveInt(rawParticlePerStep, actor, 1));
-        double speed           = ExpressionResolver.resolve(rawSpeed, actor, 1.0);
-        double projectileDamage= ExpressionResolver.resolve(rawAmount, actor, 0);
-        double hitRadius       = Math.max(0.3, ExpressionResolver.resolve(rawHitRadius, actor, 1.0));
+        if (rawStart == null || rawStart.getWorld() == null) return false;
 
-        double impactRadius    = ExpressionResolver.resolve(rawImpactRadius, actor, 3.0);
-        int    impactDuration  = Math.max(1, ExpressionResolver.resolveInt(rawImpactDurationTicks, actor, 15));
-        int    impactPoints    = Math.max(1, ExpressionResolver.resolveInt(rawImpactPoints, actor, 30));
-        int    impactPPP       = Math.max(1, ExpressionResolver.resolveInt(rawImpactParticlePerPoint, actor, 2));
-        double impactDamage    = ExpressionResolver.resolve(rawImpactDamage, actor, 0);
+        // Tạo biến final cho start location
+        final Location start = rawStart.clone().add(0, 1.2, 0);
+        final World world = start.getWorld();
 
-        double flightRadius        = Math.max(0.05, ExpressionResolver.resolve(rawFlightRadius, actor, 0.45));
-        double flightRotationSpeed = ExpressionResolver.resolve(rawFlightRotationSpeed, actor, 0.55);
-        int    flightGrowSteps     = Math.max(1, ExpressionResolver.resolveInt(rawFlightGrowSteps, actor, 20));
+        // 2. Tính toán tham số an toàn
+        Player safeActor = (actor != null && actor.isValid()) ? actor : null;
 
-        Location start = actor.getEyeLocation().clone().add(0, 0.8, 0);
+        int    particlePerStep = Math.max(1, ExpressionResolver.resolveInt(rawParticlePerStep, safeActor, 1));
+        double speed           = ExpressionResolver.resolve(rawSpeed, safeActor, 1.0);
+        double projectileDamage= ExpressionResolver.resolve(rawAmount, safeActor, 0);
+        double hitRadius       = Math.max(0.3, ExpressionResolver.resolve(rawHitRadius, safeActor, 1.0));
 
+        double impactRadius    = ExpressionResolver.resolve(rawImpactRadius, safeActor, 3.0);
+        int    impactDuration  = Math.max(1, ExpressionResolver.resolveInt(rawImpactDurationTicks, safeActor, 15));
+        int    impactPoints    = Math.max(1, ExpressionResolver.resolveInt(rawImpactPoints, safeActor, 30));
+        int    impactPPP       = Math.max(1, ExpressionResolver.resolveInt(rawImpactParticlePerPoint, safeActor, 2));
+        double impactDamage    = ExpressionResolver.resolve(rawImpactDamage, safeActor, 0);
+
+        double flightRadius        = Math.max(0.05, ExpressionResolver.resolve(rawFlightRadius, safeActor, 0.45));
+        double flightRotationSpeed = ExpressionResolver.resolve(rawFlightRotationSpeed, safeActor, 0.55);
+        int    flightGrowSteps     = Math.max(1, ExpressionResolver.resolveInt(rawFlightGrowSteps, safeActor, 20));
+
+        // 3. Tác động tức thì
         if (immediateImpact || speed <= 0.05) {
             if (!"NONE".equals(impactShape) || impactDamage > 0) {
                 doImpact(world, start, impactRadius, impactDuration, impactPoints, impactPPP, impactDamage, actor);
@@ -165,19 +177,35 @@ public class ParticleProjectileMechanic extends AbstractMechanic {
             return true;
         }
 
-        
+        // 4. Tính toán hướng đạn qua biến tạm
         LivingEntity originalVictim = ctx.getVictim();
-        Vector direction;
+        Vector calculatedDir = null;
+
         if (originalVictim != null && originalVictim.isValid()) {
             Location targetBody = originalVictim.getLocation().add(0, originalVictim.getHeight() / 2.0, 0);
-            direction = targetBody.toVector().subtract(start.toVector()).normalize();
-        } else {
-            direction = actor.getEyeLocation().getDirection();
+            calculatedDir = targetBody.toVector().subtract(start.toVector());
+        } else if (actor != null) {
+            try {
+                calculatedDir = actor.getEyeLocation().getDirection();
+            } catch (Exception ignored) {
+                try {
+                    calculatedDir = actor.getLocation().getDirection();
+                } catch (Exception ignored2) {}
+            }
         }
 
-        Vector stepVec = direction.multiply(Math.max(0.1, speed));
-        int maxSteps = 200;
+        if (calculatedDir == null || calculatedDir.lengthSquared() == 0) {
+            calculatedDir = start.getDirection();
+            if (calculatedDir.lengthSquared() == 0) {
+                calculatedDir = new Vector(0, 0.5, 0);
+            }
+        }
 
+        // Tạo biến final cho stepVec
+        final Vector stepVec = calculatedDir.normalize().multiply(Math.max(0.1, speed));
+        final int maxSteps = 200;
+
+        // 5. Run Task đạn bay
         new BukkitRunnable() {
             int step = 0;
             final Location pos = start.clone();
@@ -204,7 +232,7 @@ public class ParticleProjectileMechanic extends AbstractMechanic {
                 for (Entity nearby : world.getNearbyEntities(pos, hitRadius, hitRadius, hitRadius)) {
                     if (!(nearby instanceof LivingEntity target)) continue;
                     if (target.isDead() || !target.isValid()) continue;
-                    if (target.equals(actor) && !hitActorSelf) continue;
+                    if (actor != null && target.equals(actor) && !hitActorSelf) continue;
 
                     Location targetCenter = target.getLocation().add(0, target.getHeight() / 2.0, 0);
                     if (pos.distance(targetCenter) > hitRadius) continue;

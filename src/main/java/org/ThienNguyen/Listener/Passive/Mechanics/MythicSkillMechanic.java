@@ -16,16 +16,19 @@ import java.util.Collections;
 
 public class MythicSkillMechanic extends AbstractMechanic {
 
-    
+
     private static volatile boolean warnedMissingMythicMobs = false;
 
     private final String skillName;
     private final String rawDamageMultiplier;
+    private final String targetKey;
 
     public MythicSkillMechanic(ConfigurationSection cfg) {
         super(cfg);
         this.skillName           = cfg.getString("skill", "").trim();
         this.rawDamageMultiplier = cfg.getString("damage-multiplier", "1.0");
+
+        this.targetKey           = cfg.getString("target", "VICTIM").toUpperCase();
 
         if (skillName.isEmpty()) {
             Bukkit.getLogger().warning(
@@ -48,16 +51,16 @@ public class MythicSkillMechanic extends AbstractMechanic {
         LivingEntity caster = ctx.getActor();
         if (caster == null) return false;
 
-        
+
         LivingEntity target = resolveTarget(ctx);
 
-        
+
         Location origin = resolveLocation(ctx);
         if (origin == null) return false;
 
         double multiplier = ExpressionResolver.resolve(rawDamageMultiplier, ctx.getActor(), 1.0);
 
-        
+
         LivingEntity triggerEntity = (target != null) ? target : caster;
 
         try {
@@ -65,11 +68,11 @@ public class MythicSkillMechanic extends AbstractMechanic {
             return helper.castSkill(
                     caster,
                     skillName,
-                    triggerEntity,                                                       
-                    origin,                                                              
-                    target != null ? Collections.singletonList(target) : Collections.emptyList(), 
-                    Collections.singletonList(origin),                                  
-                    (float) multiplier,                                                 
+                    triggerEntity,
+                    origin,
+                    target != null ? Collections.singletonList(target) : Collections.emptyList(),
+                    Collections.singletonList(origin),
+                    (float) multiplier,
                     meta -> {}
             );
         } catch (Throwable e) {
@@ -79,8 +82,19 @@ public class MythicSkillMechanic extends AbstractMechanic {
             return false;
         }
     }
+
+    protected LivingEntity resolveTarget(PassiveContext ctx) {
+        return switch (targetKey) {
+            case "ACTOR", "SELF" -> ctx.getActor();
+            case "VICTIM"        -> ctx.getVictim();
+            default               -> ctx.getActor();
+        };
+    }
+
+
+
+
     private Location resolveLocation(PassiveContext ctx) {
-        
         return switch (targetKey) {
             case "ACTOR", "SELF" -> ctx.getActorLocation();
             case "VICTIM"        -> ctx.getVictimLocation();

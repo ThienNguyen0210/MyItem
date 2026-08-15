@@ -8,7 +8,7 @@ public final class MechanicRegistry {
 
     private MechanicRegistry() {}
 
-    
+
     public static org.ThienNguyen.Listener.Passive.PassiveMechanic create(ConfigurationSection section) {
         if (section == null) return null;
         String type = section.getString("type", "").toUpperCase();
@@ -20,6 +20,7 @@ public final class MechanicRegistry {
             case "BUFF_STAT" -> new BuffStatMechanic(section);
             case "EFFECT"    -> new EffectMechanic(section);
             case "EXPLODE"   -> new ExplodeMechanic(section);
+            case "SUMMON_TNT" -> new SummonTNTMechanic(section);
             case "SOUND"     -> new SoundMechanic(section);
             case "COMMAND"   -> new CommandMechanic(section);
             case "MESSAGE"   -> new MessageMechanic(section);
@@ -40,6 +41,8 @@ public final class MechanicRegistry {
             case "LIGHTNING" -> new LightningMechanic(section);
             case "TARGET_FILTER" -> new TargetFilterMechanic(section);
             case "REVIVE" -> new RevivalMechanic(section);
+            case "ADD_VALUE"   -> new AddValueMechanic(section);
+            case "CHECK_VALUE" -> new CheckValueMechanic(section);
 
             default -> {
                 org.ThienNguyen.Main.getInstance().getLogger()
