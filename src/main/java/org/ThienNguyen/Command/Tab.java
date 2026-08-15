@@ -196,7 +196,7 @@ public class Tab implements TabCompleter {
                         }
                     }
                 }
-                case "gemstone" -> suggestions.addAll(Arrays.asList("Gem", "Drill", "Remover"));
+                case "gemstone" -> suggestions.addAll(Arrays.asList("Gem", "Drill", "Remover", "Socket_Remover"));
                 case "element" -> {
 
                     FileConfiguration eConfig = Main.getInstance().getElementConfig();
@@ -230,7 +230,15 @@ public class Tab implements TabCompleter {
                         suggestions.addAll(org.ThienNguyen.GemSocket.GemType.getAllDrillIds());
                     }
                     else if (type.equals("remover")) {
-                        FileConfiguration config = Main.getInstance().getGemConfig();
+                        // Removers now live in Tools.yml (split out of the old Gem.yml).
+                        FileConfiguration config = Main.getInstance().getGemToolsConfig();
+
+                        if (config != null) suggestions.addAll(config.getKeys(false));
+                    }
+                    else if (type.equals("socket_remover")) {
+                        // Socket removers (GemThaoLo) are configured in Tools.yml the
+                        // same way "remover" entries are — same source of ids.
+                        FileConfiguration config = Main.getInstance().getGemToolsConfig();
 
                         if (config != null) suggestions.addAll(config.getKeys(false));
                     }

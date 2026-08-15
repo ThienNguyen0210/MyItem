@@ -44,6 +44,8 @@ public class Main extends JavaPlugin {
     private FileConfiguration customListenerConfig;
     private StationDatabase stationDatabase;
     private FileConfiguration gemConfig;
+    private FileConfiguration gemToolsConfig;
+    private FileConfiguration gemDebugConfig;
     private org.ThienNguyen.AI.AIProcessor aiProcessor;
     private FileConfiguration consumeConfig;
     private FileConfiguration gemTypeConfig;
@@ -430,8 +432,23 @@ public class Main extends JavaPlugin {
         this.upgradeGemConfig = setupConfig("Upgrade/upgrade.yml");
         this.chuyenHoaConfig = setupConfig("Upgrade/chuyenhoa.yml");
         this.protectionConfig = setupConfig("Upgrade/protection.yml");
-        this.gemConfig = setupConfig("GemStone/Gem.yml");
+        // GemStone/Gem.yml was split into three files for easier maintenance:
+        //  - Gems.yml   : actual gemstone definitions (GEMSTONE items)
+        //  - Tools.yml  : remover / socket_remover tool item definitions
+        //  - Debug.yml  : toggles the admin diagnostic warnings in the gem-socket code
+        // type.yml keeps its own file for the socketing system (drills, socket limits, formats).
+        this.gemConfig = loadOrCreateYaml("GemStone/Gems.yml");
+        this.gemToolsConfig = loadOrCreateYaml("GemStone/Tools.yml");
         this.gemTypeConfig = setupConfig("GemStone/type.yml");
+        this.gemDebugConfig = loadOrCreateYaml("GemStone/Debug.yml");
+        if (!this.gemDebugConfig.isSet("enabled")) {
+            this.gemDebugConfig.set("enabled", false);
+            try {
+                this.gemDebugConfig.save(new File(getDataFolder(), "GemStone/Debug.yml"));
+            } catch (IOException e) {
+                getLogger().warning("[MyItem] Could not write default GemStone/Debug.yml: " + e.getMessage());
+            }
+        }
         this.UpgradeGem = setupConfig("Upgrade/Gem.yml");
 
         this.enchantConfig = setupConfig("Enchant.yml");
@@ -615,6 +632,30 @@ public class Main extends JavaPlugin {
         return YamlConfiguration.loadConfiguration(file);
     }
 
+    /**
+     * Same as setupConfig(), but safe for files that don't (yet) exist as a
+     * bundled resource in the jar — falls back to creating an empty file
+     * instead of crashing on saveResource(). Used for the new gem-socket
+     * split files (Gems.yml / Tools.yml / Debug.yml) so the plugin still
+     * boots even if you haven't dropped a default template into resources.
+     */
+    private FileConfiguration loadOrCreateYaml(String path) {
+        File file = new File(getDataFolder(), path);
+        if (!file.exists()) {
+            file.getParentFile().mkdirs();
+            if (getResource(path) != null) {
+                saveResource(path, false);
+            } else {
+                try {
+                    file.createNewFile();
+                } catch (IOException e) {
+                    getLogger().warning("[MyItem] Could not create " + path + ": " + e.getMessage());
+                }
+            }
+        }
+        return YamlConfiguration.loadConfiguration(file);
+    }
+
     public void loadAbilityTargetConfig() {
         File folder = new File(getDataFolder(), "Listener");
         if (!folder.exists()) folder.mkdirs();
@@ -658,6 +699,17 @@ public class Main extends JavaPlugin {
     }
     public FileConfiguration getGemConfig() {
         return gemConfig;
+    }
+    /** Tools.yml — remover / socket_remover item definitions. */
+    public FileConfiguration getGemToolsConfig() {
+        return gemToolsConfig;
+    }
+    /** Debug.yml — toggles for gem-socket admin diagnostic logging. */
+    public FileConfiguration getGemDebugConfig() {
+        return gemDebugConfig;
+    }
+    public boolean isGemDebugEnabled() {
+        return gemDebugConfig != null && gemDebugConfig.getBoolean("enabled", false);
     }
     public FileConfiguration upgradeGemConfig() {
         return UpgradeGem;

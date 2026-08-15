@@ -62,9 +62,11 @@ public class GemDucLo implements Listener {
         // ".type" field that could go missing and silently default to "common".
         String socketType = GemType.resolveSocketTypeForDrill(drillId);
         if (socketType == null) {
-            Main.getInstance().getLogger().warning(
-                    "[GemDucLo] Mũi khoan '" + drillId + "' không có trong type.yml (thiếu <type>.drills." + drillId
-                            + "). Hủy đục lỗ để tránh gán nhầm loại 'common'.");
+            if (Main.getInstance().isGemDebugEnabled()) {
+                Main.getInstance().getLogger().warning(
+                        "[GemDucLo] Mũi khoan '" + drillId + "' không có trong type.yml (thiếu <type>.drills." + drillId
+                                + "). Hủy đục lỗ để tránh gán nhầm loại 'common'.");
+            }
             player.sendMessage("§8[§bMyItem§8] §cThis drill is not configured! Please contact an Admin to check type.yml.");
             return;
         }

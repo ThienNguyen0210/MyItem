@@ -1,0 +1,13 @@
+# =====================================================================
+#  GemStone/Debug.yml
+#  Controls the admin-facing diagnostic warnings logged by the gem-socket
+#  code (GemRemover, GemThaoLo, GemDucLo) — things like "this remover is
+#  missing a 'type' field" or "lore line for gem X could not be found to
+#  restore/remove". These are console-only troubleshooting messages; the
+#  player-facing chat messages for the same situations are unaffected by
+#  this toggle and always show.
+#
+#  Set to true while debugging a config issue, false for normal play to
+#  keep the console quiet.
+# =====================================================================
+enabled: false

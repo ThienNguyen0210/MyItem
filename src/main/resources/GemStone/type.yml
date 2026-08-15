@@ -1,46 +1,55 @@
-# ==================================================================
-# GemStone/type.yml
-# DucLo.yml đã bị xóa — toàn bộ dữ liệu mũi khoan (cost, success, model-id)
-# giờ nằm lồng trong từng loại lỗ, ở mục "drills".
+# =====================================================================
+#  GemStone/type.yml
+#  The SOCKETING file — one section per socket RARITY (e.g. common, rare,
+#  legendary). Each rarity defines:
+#    - format         : lore line shown for an EMPTY socket of this rarity
+#    - limit          : max sockets of THIS rarity allowed on one item
+#    - drills         : the DRILL items that create an empty socket of
+#                        this rarity (given via /mi gemstone give drill ...)
 #
-# Cấu trúc mỗi loại lỗ (vd: common, rare, legendary...):
-#   format:  dòng lore hiển thị khi lỗ còn trống
-#   limit:   số lượng lỗ CỦA RIÊNG LOẠI NÀY được phép trên 1 item
-#   drills:  danh sách các mũi khoan (gem_item_id) tạo ra loại lỗ này
-#     <drillId>:
-#       cost:      giá tiền đục lỗ (0 = miễn phí)
-#       success:   tỉ lệ thành công khi đục (0-100)
-#       model-id:  custom-model-data mới gán cho item sau khi đục (bỏ qua nếu không cần)
-# ==================================================================
+#  "general" is a special top-level section (skipped when resolving a
+#  drill's rarity) that holds settings shared across every rarity.
+# =====================================================================
 
 general:
-  # Tổng số lỗ TỐI ĐA trên 1 item, áp dụng chung cho MỌI loại ngọc.
-  # Chỉ cần chỉnh 1 giá trị này để tăng/giảm số lỗ tối đa toàn item.
+  # Total socket cap on a single item, regardless of rarity mix.
   max-sockets: 4
 
 common:
-  format: "&7[ ○ ] Lỗ trống"
-  limit: 2
+  format: "&7[ ○ ] Lỗ Trống"      # empty-socket lore line for this rarity
+  limit: 4                        # max "common" sockets on one item
   drills:
     DRILL_COMMON:
-      cost: 100
-      success: 100
-      model-id: 10001
+      display-name: "&f[ Khoan ] Cơ Bản"
+      material: IRON_PICKAXE
+      model-id: 300001
+      cost: 100                   # money withdrawn on use (Vault); 0 = free
+      success: 100                # % chance the drilling succeeds
+      lore:
+        - "&7Đục 1 lỗ trống loại thường."
 
 rare:
-  format: "&9[ ◇ ] Lỗ trống Hiếm"
+  format: "&9[ ○ ] Lỗ Trống"
   limit: 2
   drills:
     DRILL_RARE:
+      display-name: "&9[ Khoan ] Hiếm"
+      material: DIAMOND_PICKAXE
+      model-id: 300002
       cost: 500
-      success: 90
-      model-id: 10002
+      success: 80
+      lore:
+        - "&7Đục 1 lỗ trống loại hiếm."
 
 legendary:
-  format: "&6[ ★ ] Lỗ trống Huyền Thoại"
+  format: "&6[ ○ ] Lỗ Trống"
   limit: 1
   drills:
     DRILL_LEGENDARY:
-      cost: 5000
-      success: 60
-      model-id: 10003
+      display-name: "&6[ Khoan ] Huyền Thoại"
+      material: NETHERITE_PICKAXE
+      model-id: 300003
+      cost: 2000
+      success: 50
+      lore:
+        - "&7Đục 1 lỗ trống loại huyền thoại."

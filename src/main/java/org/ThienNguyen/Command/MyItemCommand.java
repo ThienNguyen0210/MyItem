@@ -693,6 +693,12 @@ public class MyItemCommand implements CommandExecutor {
                 }
             }
 
+// Updated block for the "gemstone" case in your command handler.
+// Only two things changed from your version:
+//   1. Usage text / examples now mention "socket_remover" as a valid type.
+//   2. A new switch branch reads SOCKET_REMOVER items out of Gem.yml,
+//      the same way "remover" already does.
+
             case "gemstone" -> {
                 if (!sender.hasPermission("myitem.admin")) {
                     sender.sendMessage(PFX_ERR + "You do not have permission.");
@@ -700,11 +706,12 @@ public class MyItemCommand implements CommandExecutor {
                 }
 
                 if (args.length < 5 || !args[1].equalsIgnoreCase("give")) {
-                    sender.sendMessage(PFX_ERR + "Usage: §f/mi gemstone give <gem|drill|remover> <id> <player> <amount>");
+                    sender.sendMessage(PFX_ERR + "Usage: §f/mi gemstone give <gem|drill|remover|socket_remover> <id> <player> <amount>");
                     sender.sendMessage(PFX + "Examples:");
                     sender.sendMessage("  §f/mi gemstone give gem ruby1 Steve 1");
                     sender.sendMessage("  §f/mi gemstone give drill drill_common Steve 5");
                     sender.sendMessage("  §f/mi gemstone give remover remover_basic Steve 10");
+                    sender.sendMessage("  §f/mi gemstone give socket_remover socket_remover_legendary Steve 3");
                     return true;
                 }
 
@@ -746,7 +753,7 @@ public class MyItemCommand implements CommandExecutor {
                             itemResult = createGemItem(id, drillPath, typeConfig, "DRILL");
                             itemTag = "DRILL";
                         } else {
-                            sender.sendMessage(PFX_ERR + "Không tìm thấy mũi khoan '" + id + "' trong type.yml.");
+                            sender.sendMessage(PFX_ERR + "Drill '" + id + "' was not found in type.yml.");
                         }
                     }
                     case "remover" -> {
@@ -756,8 +763,18 @@ public class MyItemCommand implements CommandExecutor {
                             itemTag = "REMOVER";
                         }
                     }
+                    case "socket_remover" -> {
+                        // Configured in Gem.yml exactly like "remover" — each entry needs
+                        // a "type" field (a rarity, or "ANY") that GemThaoLo reads to
+                        // decide which empty sockets this item is allowed to remove.
+                        FileConfiguration socketRemoverConfig = Main.getInstance().getGemConfig();
+                        if (socketRemoverConfig.contains(id)) {
+                            itemResult = createGemItem(id, socketRemoverConfig, "SOCKET_REMOVER");
+                            itemTag = "SOCKET_REMOVER";
+                        }
+                    }
                     default -> {
-                        sender.sendMessage(PFX_ERR + "Invalid type. Use: §egem §7| §edrill §7| §eremover");
+                        sender.sendMessage(PFX_ERR + "Invalid type. Use: §egem §7| §edrill §7| §eremover §7| §esocket_remover");
                         return true;
                     }
                 }

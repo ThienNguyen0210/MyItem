@@ -2,6 +2,12 @@ item:
   receive-msg: "&a[MyItem] You received item &f{id} &afrom Admin!"
   no-mana: "&cNot enough Mana! (&f{mana}&7/&b{cost}&c)"
   # Socket & Gem messages
+  socket-remover-misconfigured: "&8[&bMyItem&8] &cThis socket remover is not configured correctly! Please contact an Admin."
+  no-sockets-found: "&8[&bMyItem&8] &cThis item has no drilled sockets!"
+  no-empty-socket-remove-any: "&8[&bMyItem&8] &cThis item has no empty sockets to remove!"
+  no-empty-socket-remove-type: "&8[&bMyItem&8] &cThis item has no empty &f{type} &csocket to remove!"
+  socket-remove-success: "&8[&bMyItem&8] &aSuccessfully removed the empty &f{type} &asocket!"
+  socket-remove-failed: "&8[&bMyItem&8] &cCould not remove this socket!"
   socket-limit: "&c[!] This item has reached the limit for &f{type} &csockets!"
   drill-success: "&a✔ [Upgrade] Socket added successfully!"
   drill-failed: "&c✘ [Upgrade] Socketing failed! The drill has been destroyed."
@@ -16,11 +22,13 @@ item:
   min-level: "&c&l✘ &7Both items must be at least level &e{level} &7to transfer!"
   success: "&a&l✔ &7Transfer successful!"
   failed: "&c&l✘ &7Transfer failed! Both items have been downgraded by 1 level."
+
 expire:
-  expired: "§c[!] Vật phẩm {item} của bạn đã hết hạn sử dụng và bị hủy!"
-  success-applied: "§a[✓] Đã gắn hạn sử dụng cho vật phẩm: §e{time}"
-  invalid-format: "§c[!] Định dạng thời gian không hợp lệ! Ví dụ: 1mo 2d 5h"
-  no-item: "§c[!] Bạn phải cầm một vật phẩm trên tay!"
+  expired: "&c[!] Your item {item} has expired and was destroyed!"
+  success-applied: "&a[✓] Expiration time set on the item: &e{time}"
+  invalid-format: "&c[!] Invalid time format! Example: 1mo 2d 5h"
+  no-item: "&c[!] You must be holding an item!"
+
 upgrade:
   # Chat messages
   max-level: "&cEquipment has reached the maximum level!"
@@ -37,6 +45,6 @@ upgrade:
   take-result-first: "&cPlease take the previous result first!"
   amulet-sent: "&a&l✔ &7Sent &b{amount} Protection Amulet(s) &ato &f{player}"
   amulet-received: "&a&l✔ &7You received &b{amount} Protection Amulet(s) &afrom Admin!"
-  gem-received: "&a&l✔ &7Bạn đã nhận được: {gem}"
-  gem-fullinventory: "full inventory drop item {gem}"
-consume-cooldown: "&f Bạn chờ &a%time%s&f nữa để xài nha ^^"
+  gem-received: "&a&l✔ &7You received: {gem}"
+  gem-fullinventory: "&cYour inventory is full, item {gem} was dropped on the ground!"
+  consume-cooldown: "&fPlease wait &a%time%s&f before using this again ^^"

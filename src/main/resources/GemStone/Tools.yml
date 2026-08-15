@@ -1,0 +1,27 @@
+# =====================================================================
+#  GemStone/Tools.yml
+#  REMOVER and SOCKET_REMOVER tool item definitions only.
+#  Move every entry here that was given out via:
+#     /mi gemstone give remover <id> <player> <amount>
+#     /mi gemstone give socket_remover <id> <player> <amount>
+#  Gemstones do NOT belong in this file — see GemStone/Gems.yml.
+#
+#  "type" below is the socket RARITY this tool acts on (e.g. common,
+#  rare, legendary) — or "ANY" to act on any rarity.
+# =====================================================================
+
+# remover_basic:
+#   display-name: "&e[ Gỡ Ngọc ] Cơ Bản"
+#   material: SHEARS
+#   model-id: 200001
+#   type: common               # only removes gems socketed as "common"
+#   lore:
+#     - "&7Gỡ 1 viên ngọc thường khỏi vật phẩm."
+
+# socket_remover_legendary:
+#   display-name: "&6[ Gỡ Lỗ ] Huyền Thoại"
+#   material: SHEARS
+#   model-id: 200002
+#   type: legendary            # only removes EMPTY legendary sockets
+#   lore:
+#     - "&7Gỡ 1 lỗ trống loại huyền thoại khỏi vật phẩm."

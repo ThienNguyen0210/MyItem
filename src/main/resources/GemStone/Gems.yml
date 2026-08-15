@@ -1,0 +1,27 @@
+# =====================================================================
+#  GemStone/Gems.yml
+#  Actual GEMSTONE items only (things placed INTO a socket).
+#  Move every entry here that was given out via:
+#     /mi gemstone give gem <id> <player> <amount>
+#  Removers / socket removers do NOT belong in this file anymore —
+#  see GemStone/Tools.yml.
+# =====================================================================
+
+# ruby1:
+#   display-name: "&c[ ● ] Ruby Ngọn Lửa"
+#   material: RUBY
+#   model-id: 100001
+#   type: common              # rarity this gem sockets into (matched against an empty socket's type)
+#   success: 100               # % chance the socketing succeeds
+#   format: "&f[ ● ] Ruby Ngọn Lửa"   # optional; used to find/replace the lore line
+#   lore:
+#     - "&7Một viên đá quý cơ bản."
+#   apply:
+#     stats:
+#       - "ATTACK_DAMAGE:5"
+#     ability:
+#       - "FIREBALL:10 20"
+#     BUFF:
+#       - "SPEED:1:200"
+#     element:
+#       - "FIRE:10"

@@ -54,18 +54,23 @@ public class GemRemover implements Listener {
         NamespacedKey idKey = new NamespacedKey(Main.getInstance(), "gem_item_id");
         String removerId = removerMeta.getPersistentDataContainer().get(idKey, PersistentDataType.STRING);
 
+        // The remover ITEM's own definition lives in Tools.yml (split out of the old
+        // Gem.yml). Gems it acts on are still looked up in Gems.yml via gemConfig below.
+        FileConfiguration toolsConfig = Main.getInstance().getGemToolsConfig();
         FileConfiguration gemConfig = Main.getInstance().getGemConfig();
-        if (removerId == null || !gemConfig.contains(removerId)) return;
+        if (removerId == null || !toolsConfig.contains(removerId)) return;
 
         // Mỗi loại remover chỉ gỡ được ĐÚNG 1 loại ngọc (đọc từ "type" của chính remover
-        // trong Gem.yml) — không còn gỡ ngẫu nhiên bất kỳ ngọc nào trên item nữa.
-        String targetType = gemConfig.contains(removerId + ".type")
-                ? gemConfig.getString(removerId + ".type")
+        // trong Tools.yml) — không còn gỡ ngẫu nhiên bất kỳ ngọc nào trên item nữa.
+        String targetType = toolsConfig.contains(removerId + ".type")
+                ? toolsConfig.getString(removerId + ".type")
                 : null;
 
         if (targetType == null) {
-            Main.getInstance().getLogger().warning(
-                    "[GemRemover] Remover '" + removerId + "' thiếu 'type' trong Gem.yml — không rõ nó gỡ loại ngọc nào.");
+            if (Main.getInstance().isGemDebugEnabled()) {
+                Main.getInstance().getLogger().warning(
+                        "[GemRemover] Remover '" + removerId + "' thiếu 'type' trong Tools.yml — không rõ nó gỡ loại ngọc nào.");
+            }
             player.sendMessage("§cDụng cụ gỡ ngọc này chưa được cấu hình đúng! Vui lòng báo Admin.");
             return;
         }
@@ -191,7 +196,7 @@ public class GemRemover implements Listener {
 
         if (replaced) {
             meta.setLore(lore);
-        } else {
+        } else if (Main.getInstance().isGemDebugEnabled()) {
             Main.getInstance().getLogger().warning(
                     "[GemRemover] Không tìm thấy dòng lore của ngọc '" + gemIdToRemove
                             + "' để khôi phục — lore có thể không đồng bộ với item_sockets.");
