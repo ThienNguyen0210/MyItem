@@ -47,4 +47,4 @@ upgrade:
   amulet-received: "&a&l✔ &7Bạn đã nhận được &b{amount} Bùa Bảo Vệ &atừ Admin!"
   gem-received: "&a&l✔ &7Bạn đã nhận được: {gem}"
   gem-fullinventory: "&cTúi đồ đầy, vật phẩm {gem} đã được thả xuống đất!"
-  consume-cooldown: "&fBạn chờ &a%time%s&f nữa để xài nha ^^"
+  consume-cooldown: "&fBạn chờ &a%time%s&f nữa để xài nha"
