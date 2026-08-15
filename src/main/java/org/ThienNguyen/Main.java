@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.Arrays;
 
 import org.ThienNguyen.GemSocket.GemRemover;
+import org.ThienNguyen.Listener.Passive.ProjectileShotDamageListener;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.ThienNguyen.Hook.MyItemExpansion;
 import org.ThienNguyen.Language.LanguageManager;
@@ -102,6 +103,7 @@ public class Main extends JavaPlugin {
         this.itemStorageManager = new ItemStorageManager(this);
         this.miBrowseGUI = new org.ThienNguyen.Command.MiBrowseGUI(this);
         getServer().getPluginManager().registerEvents(this.miBrowseGUI, this);
+        getServer().getPluginManager().registerEvents(new ProjectileShotDamageListener(), this);
         Bukkit.getPluginManager().registerEvents(new AIExperienceGUI(), this);
         getServer().getPluginManager().registerEvents(new JewelryManager(null), this);
         getServer().getPluginManager().registerEvents(new AIListener(), this);
