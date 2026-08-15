@@ -45,10 +45,8 @@ public class JewelryManager implements InventoryHolder, org.bukkit.event.Listene
     private final JavaPlugin plugin = Main.getInstance();
     private final Player player;
     private final Inventory gui;
-
-    // Danh sách slot từ config.yml (hỗ trợ nhiều slot cùng key)
     private final List<JewelrySlot> jewelrySlots = new ArrayList<>();
-    private final Map<Integer, ItemStack> currentJewelry = new HashMap<>(); // slot index -> item (tạm cho GUI)
+    private final Map<Integer, ItemStack> currentJewelry = new HashMap<>();
 
     // Slot hiển thị armor và main hand (read-only)
     private final Map<String, Integer> displaySlots = new HashMap<>(); // e.g., "head" -> slot index
@@ -65,8 +63,6 @@ public class JewelryManager implements InventoryHolder, org.bukkit.event.Listene
             this.gui = null;
             return; // Thoát sớm để không gây lỗi NullPointerException
         }
-
-        // 3. Kiểm tra tính năng có bật không (Dành cho người chơi)
         if (!isJewelryEnabled()) {
             // Chỉ gửi tin nhắn nếu player thực sự đang mở GUI
             player.sendMessage("§8[§bMyItem§8] §cThe jewelry feature is currently disabled!");
@@ -913,8 +909,6 @@ public class JewelryManager implements InventoryHolder, org.bukkit.event.Listene
         for (String key : pSlots.getKeys(false)) {
             int slotIdx = Integer.parseInt(key);
             ItemStack item = p.getInventory().getItem(slotIdx);
-
-            // Nếu ô đó trống trơn, điền placeholder vào
             if (item == null || item.getType() == Material.AIR) {
                 p.getInventory().setItem(slotIdx, createInventoryPlaceholder(slotIdx));
             }

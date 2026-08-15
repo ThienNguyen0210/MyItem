@@ -44,6 +44,7 @@ public final class MechanicRegistry {
             case "ADD_VALUE"   -> new AddValueMechanic(section);
             case "CHECK_VALUE" -> new CheckValueMechanic(section);
             case "PROJECTILE_SHOT" -> new ProjectileShotMechanic(section);
+            case "POTION_ZONE" -> new PotionZoneMechanic(section);
 
             default -> {
                 org.ThienNguyen.Main.getInstance().getLogger()
