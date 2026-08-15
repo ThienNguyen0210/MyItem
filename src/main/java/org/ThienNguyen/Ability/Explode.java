@@ -21,8 +21,9 @@ public class Explode implements IAbility {
     public void execute(Player attacker, LivingEntity target, int level, double baseDamage) {
         if (target == null || target.isDead() || target.hasMetadata("IS_ABILITY")) return;
 
-        double explodePercent = 8.0 + (level * 4.0);
-        double explosionDamage = baseDamage * (explodePercent / 100.0);
+        // Level 1 = 60% (0.60), mỗi level sau tăng +25% (0.25)
+        double explodePercent = 0.60 + (Math.max(0, level - 1) * 0.25);
+        double explosionDamage = baseDamage * explodePercent;
 
         Location loc = target.getLocation();
 
