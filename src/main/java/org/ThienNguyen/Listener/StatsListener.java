@@ -44,9 +44,8 @@ public class StatsListener implements Listener {
     private final UUID WINDY_MOVEMENT_SPEED_UUID = UUID.fromString("66666666-7777-8888-9999-000000000000");
     private final NamespacedKey PARTICLE_KEY = new NamespacedKey(Main.getInstance(), "item_particle");
 
-    // Key lưu trữ thông tin chủ sở hữu
-    private final NamespacedKey OWNER_UUID_KEY = new NamespacedKey(Main.getInstance(), "owner_uuid");
-    private final NamespacedKey OWNER_NAME_KEY = new NamespacedKey(Main.getInstance(), "owner_name");
+    // Key lưu trữ thông tin chủ sở hữu (phải khớp với CacheListener.KEY_OWNER_TAG)
+    private final NamespacedKey OWNER_TAG_KEY = new NamespacedKey(Main.getInstance(), "owner_tag");
 
     private final String MODIFIER_KEY = "windy_custom_stats";
     double totalHealthRegenPercent = Main.getInstance().getConfig().getDouble("regeneration.percent-per-second", 0.0);
@@ -105,21 +104,19 @@ public class StatsListener implements Listener {
         ItemMeta meta = item.getItemMeta();
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
 
-        if (pdc.has(OWNER_UUID_KEY, PersistentDataType.STRING)) {
-            String ownerUuidStr = pdc.get(OWNER_UUID_KEY, PersistentDataType.STRING);
-            if (ownerUuidStr != null && !ownerUuidStr.isEmpty()) {
-                return player.getUniqueId().toString().equalsIgnoreCase(ownerUuidStr);
+        if (!pdc.has(OWNER_TAG_KEY, PersistentDataType.STRING)) return true;
+
+        String ownersString = pdc.get(OWNER_TAG_KEY, PersistentDataType.STRING);
+        if (ownersString == null || ownersString.isEmpty()) return true;
+
+        String playerName = player.getName().toLowerCase();
+        for (String owner : ownersString.split(",")) {
+            if (owner.trim().equalsIgnoreCase(playerName)) {
+                return true;
             }
         }
 
-        if (pdc.has(OWNER_NAME_KEY, PersistentDataType.STRING)) {
-            String ownerName = pdc.get(OWNER_NAME_KEY, PersistentDataType.STRING);
-            if (ownerName != null && !ownerName.isEmpty()) {
-                return player.getName().equalsIgnoreCase(ownerName);
-            }
-        }
-
-        return true;
+        return false;
     }
 
     public void updateGemBuffsOnly(Player player) {

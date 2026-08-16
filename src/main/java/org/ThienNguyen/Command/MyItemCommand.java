@@ -380,6 +380,11 @@ public class MyItemCommand implements CommandExecutor {
                 if (!(sender instanceof Player player)) return true;
                 if (!checkAdmin(player)) return true;
 
+                if (args.length < 2) {
+                    player.sendMessage(PFX_ERR + "Usage: §f/mi del-tag <player>");
+                    return true;
+                }
+
                 ItemStack item = player.getInventory().getItemInMainHand();
                 if (item == null || item.getType().isAir()) {
                     player.sendMessage(PFX_ERR + "You must be holding an item in your main hand.");
@@ -390,18 +395,41 @@ public class MyItemCommand implements CommandExecutor {
                 if (meta == null) return true;
 
                 NamespacedKey ownerKey = new NamespacedKey(plugin, "owner_tag");
-                if (!meta.getPersistentDataContainer().has(ownerKey, PersistentDataType.STRING)) {
+                String owners = meta.getPersistentDataContainer().get(ownerKey, PersistentDataType.STRING);
+                if (owners == null || owners.isEmpty()) {
                     player.sendMessage(PFX_WRN + "This item has no owner tag.");
                     return true;
                 }
 
-                meta.getPersistentDataContainer().remove(ownerKey);
+                String target = args[1].trim();
+                List<String> remaining = new ArrayList<>();
+                boolean found = false;
+                for (String owner : owners.split(",")) {
+                    String trimmed = owner.trim();
+                    if (trimmed.isEmpty()) continue;
+                    if (trimmed.equalsIgnoreCase(target)) {
+                        found = true;
+                        continue;
+                    }
+                    remaining.add(trimmed);
+                }
+
+                if (!found) {
+                    player.sendMessage(PFX_WRN + "§e" + target + " §7is not on this item's owner tag.");
+                    return true;
+                }
+
+                if (remaining.isEmpty()) {
+                    meta.getPersistentDataContainer().remove(ownerKey);
+                } else {
+                    meta.getPersistentDataContainer().set(ownerKey, PersistentDataType.STRING, String.join(",", remaining));
+                }
                 item.setItemMeta(meta);
 
                 org.ThienNguyen.Lore.LoreGenerator.rebuild(item);
                 org.ThienNguyen.Listener.CacheListener.refreshCache(player);
 
-                player.sendMessage(PFX_OK + "Removed owner tag from item.");
+                player.sendMessage(PFX_OK + "Removed owner tag: §e" + target);
                 return true;
             }
             case "evo" -> {
@@ -1520,7 +1548,7 @@ public class MyItemCommand implements CommandExecutor {
         helpLines.add(miPrefix + "passive <bind/unbind> <id> §7- Thêm nội tại cho item");
         helpLines.add(miPrefix + "dye-color <r> <g> <b> §7- Đổi mã màu RGB cho áo da §c§lNEW");
         helpLines.add(miPrefix + "owner-tag <tên_người_chơi> §7- Gắn nhãn sở hữu item cho người chơi §c§lNEW");
-        helpLines.add(miPrefix + "del-tag §7- Xóa nhãn sở hữu khỏi item trên tay §c§lNEW");
+        helpLines.add(miPrefix + "del-tag <player> §7- Xóa nhãn sở hữu khỏi item trên tay §c§lNEW");
         int itemsPerPage = 5;
         int maxPages = (int) Math.ceil((double) helpLines.size() / itemsPerPage);
 

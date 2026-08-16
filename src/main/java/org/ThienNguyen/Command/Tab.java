@@ -7,8 +7,12 @@ import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,6 +101,7 @@ public class Tab implements TabCompleter {
             String sub = args[0].toLowerCase();
             switch (sub) {
                 case "owner-tag" -> suggestions.addAll(Bukkit.getOnlinePlayers().stream().map(Player::getName).collect(Collectors.toList()));
+                case "del-tag" -> suggestions.addAll(getOwnerTagNames(sender));
                 case "passive" -> suggestions.addAll(Arrays.asList("bind", "unbind"));
                 case "evo" -> {
                     suggestions.add("ALL");
@@ -277,6 +282,25 @@ public class Tab implements TabCompleter {
             }
         }
         return ids;
+    }
+
+    private List<String> getOwnerTagNames(CommandSender sender) {
+        if (!(sender instanceof Player player)) return Collections.emptyList();
+
+        ItemStack item = player.getInventory().getItemInMainHand();
+        if (item == null || item.getType().isAir() || !item.hasItemMeta()) return Collections.emptyList();
+
+        ItemMeta meta = item.getItemMeta();
+        NamespacedKey ownerKey = new NamespacedKey(Main.getInstance(), "owner_tag");
+        String owners = meta.getPersistentDataContainer().get(ownerKey, PersistentDataType.STRING);
+        if (owners == null || owners.isEmpty()) return Collections.emptyList();
+
+        List<String> names = new ArrayList<>();
+        for (String owner : owners.split(",")) {
+            String trimmed = owner.trim();
+            if (!trimmed.isEmpty()) names.add(trimmed);
+        }
+        return names;
     }
 
     private List<String> getItemDatabaseIds() {
