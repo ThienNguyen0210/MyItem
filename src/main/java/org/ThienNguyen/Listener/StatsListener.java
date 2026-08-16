@@ -27,6 +27,7 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -42,6 +43,11 @@ public class StatsListener implements Listener {
     private final UUID WINDY_ATTACK_SPEED_UUID = UUID.fromString("11111111-2222-3333-4444-555555555555");
     private final UUID WINDY_MOVEMENT_SPEED_UUID = UUID.fromString("66666666-7777-8888-9999-000000000000");
     private final NamespacedKey PARTICLE_KEY = new NamespacedKey(Main.getInstance(), "item_particle");
+
+    // Key lưu trữ thông tin chủ sở hữu
+    private final NamespacedKey OWNER_UUID_KEY = new NamespacedKey(Main.getInstance(), "owner_uuid");
+    private final NamespacedKey OWNER_NAME_KEY = new NamespacedKey(Main.getInstance(), "owner_name");
+
     private final String MODIFIER_KEY = "windy_custom_stats";
     double totalHealthRegenPercent = Main.getInstance().getConfig().getDouble("regeneration.percent-per-second", 0.0);
     private final org.bukkit.inventory.EquipmentSlot[] VALID_PLAYER_SLOTS = {
@@ -53,24 +59,15 @@ public class StatsListener implements Listener {
             org.bukkit.inventory.EquipmentSlot.OFF_HAND
     };
 
-    
-    
-    
-    
-    
-    
-    
     private static final Map<String, Attribute> ATTRIBUTE_CACHE = new HashMap<>();
 
     private static Attribute resolveAttribute(String modernKey, String... legacyFieldNames) {
         return ATTRIBUTE_CACHE.computeIfAbsent(modernKey, k -> {
-            
             try {
                 Attribute attr = Registry.ATTRIBUTE.get(NamespacedKey.minecraft(modernKey));
                 if (attr != null) return attr;
             } catch (Throwable ignored) {}
 
-            
             for (String fieldName : legacyFieldNames) {
                 try {
                     java.lang.reflect.Field field = Attribute.class.getField(fieldName);
@@ -98,6 +95,33 @@ public class StatsListener implements Listener {
         return resolveAttribute("armor", "GENERIC_ARMOR");
     }
 
+    /**
+     * Kiểm tra xem người chơi có phải là chủ sở hữu của vật phẩm hay không.
+     * Nếu vật phẩm không có Tag Owner -> Trả về true (cho phép xài).
+     */
+    private boolean isOwner(Player player, ItemStack item) {
+        if (item == null || !item.hasItemMeta()) return true;
+
+        ItemMeta meta = item.getItemMeta();
+        PersistentDataContainer pdc = meta.getPersistentDataContainer();
+
+        if (pdc.has(OWNER_UUID_KEY, PersistentDataType.STRING)) {
+            String ownerUuidStr = pdc.get(OWNER_UUID_KEY, PersistentDataType.STRING);
+            if (ownerUuidStr != null && !ownerUuidStr.isEmpty()) {
+                return player.getUniqueId().toString().equalsIgnoreCase(ownerUuidStr);
+            }
+        }
+
+        if (pdc.has(OWNER_NAME_KEY, PersistentDataType.STRING)) {
+            String ownerName = pdc.get(OWNER_NAME_KEY, PersistentDataType.STRING);
+            if (ownerName != null && !ownerName.isEmpty()) {
+                return player.getName().equalsIgnoreCase(ownerName);
+            }
+        }
+
+        return true;
+    }
+
     public void updateGemBuffsOnly(Player player) {
         FileConfiguration gemConfig = Main.getInstance().getGemConfig();
 
@@ -106,7 +130,8 @@ public class StatsListener implements Listener {
                 ItemStack item = player.getInventory().getItem(slot);
                 if (item == null || item.getType().isAir()) continue;
 
-                if (!org.ThienNguyen.Hook.MMOCORE.canUse(player, item)) continue;
+                // Kiểm tra xem có phải chính chủ và có đủ điều kiện dùng không
+                if (!isOwner(player, item) || !org.ThienNguyen.Hook.MMOCORE.canUse(player, item)) continue;
 
                 for (String gemId : org.ThienNguyen.GemSocket.GemLogic.getGemsOnItem(item)) {
                     if (gemConfig.contains(gemId + ".apply.BUFF")) {
@@ -135,7 +160,6 @@ public class StatsListener implements Listener {
         Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
             if (!player.isOnline()) return;
 
-
             Attribute maxHealth = maxHealthAttribute();
             AttributeInstance hpAttr = maxHealth != null ? player.getAttribute(maxHealth) : null;
             if (hpAttr != null) {
@@ -157,8 +181,6 @@ public class StatsListener implements Listener {
             }
         }, 2L);
     }
-
-
 
     public void updatePlayerStats(Player player) {
         if (player == null || !player.isOnline()) return;
@@ -185,12 +207,14 @@ public class StatsListener implements Listener {
         FileConfiguration mainConfig = Main.getInstance().getConfig();
         UUID uuid = player.getUniqueId();
 
-        
+        // 1. Quét trang bị chính (Armor + Mainhand + Offhand)
         for (org.bukkit.inventory.EquipmentSlot slot : VALID_PLAYER_SLOTS) {
             try {
                 ItemStack item = player.getInventory().getItem(slot);
                 if (item == null || item.getType().isAir()) continue;
-                if (!MMOCORE.canUse(player, item)) continue;
+
+                // Nếu không phải chính chủ hoặc không đủ yêu cầu sử dụng -> Bỏ qua
+                if (!isOwner(player, item) || !MMOCORE.canUse(player, item)) continue;
 
                 if (foundParticleId == null && item.hasItemMeta()) {
                     String pId = item.getItemMeta().getPersistentDataContainer().get(PARTICLE_KEY, PersistentDataType.STRING);
@@ -244,9 +268,8 @@ public class StatsListener implements Listener {
             } catch (Exception ignored) {}
         }
 
-        
+        // 2. Quét trang sức (Jewelry)
         Map<Integer, ItemStack> guiJewelryMap = org.ThienNguyen.JewelryManager.getCachedJewelry(uuid);
-
         Set<Integer> jewelrySlotIndices = getJewelrySlots();
 
         for (int slotIdx : jewelrySlotIndices) {
@@ -262,7 +285,8 @@ public class StatsListener implements Listener {
                 }
 
                 if (effectiveItem != null && !effectiveItem.getType().isAir() && isJewelryMatch(effectiveItem, slotIdx)) {
-                    if (!MMOCORE.canUse(player, effectiveItem)) continue;
+                    // Kiểm tra chính chủ + điều kiện xài cho Trang sức
+                    if (!isOwner(player, effectiveItem) || !MMOCORE.canUse(player, effectiveItem)) continue;
 
                     totalHealth += Health.getHealth(effectiveItem);
                     totalMaxMana += MaxMana.get(effectiveItem);
@@ -305,7 +329,7 @@ public class StatsListener implements Listener {
             } catch (Exception ignored) {}
         }
 
-        
+        // 3. Set Combo
         String comboId = org.ThienNguyen.Listener.ItemCombo.ComboListener.getFullSetComboId(player);
         if (comboId != null) {
             ConfigurationSection comboStats = Main.getInstance().getComboConfig().getConfigurationSection(comboId + ".stats");
@@ -323,7 +347,7 @@ public class StatsListener implements Listener {
             }
         }
 
-        
+        // 4. Tăng/Giảm Stat Chั่ว thời (StatBoostAPI)
         for (Map.Entry<String, org.ThienNguyen.API.StatBoostAPI.StatBoost> entry : org.ThienNguyen.API.StatBoostAPI.getBoosts(uuid).entrySet()) {
             org.ThienNguyen.API.StatBoostAPI.StatBoost boost = entry.getValue();
             String statKey = boost.statKey();
@@ -356,7 +380,7 @@ public class StatsListener implements Listener {
             }
         }
 
-        
+        // Tính toán các chỉ số %
         double baseMinecraftHealth = 20.0;
         Attribute maxHealthAttr = maxHealthAttribute();
         org.bukkit.attribute.AttributeInstance hpInstance = maxHealthAttr != null ? player.getAttribute(maxHealthAttr) : null;
@@ -373,9 +397,6 @@ public class StatsListener implements Listener {
         if (pctHealthRegen != 0.0)   totalHealthRegen   *= (1.0 + (pctHealthRegen / 100.0));
         totalHealth -= baseMinecraftHealth;
 
-        
-        
-        
         PlayerCombatCache.getStats(uuid).totalAttackSpeed = totalAttackSpeed;
 
         double effectiveHealthBonus = PlayerCombatCache.getEffective(uuid, "health", totalHealth);
@@ -391,9 +412,6 @@ public class StatsListener implements Listener {
         Attribute movementSpeedAttr = movementSpeedAttribute();
         if (movementSpeedAttr != null) applyVanillaAttribute(player, movementSpeedAttr, WINDY_MOVEMENT_SPEED_UUID, (0.1 * totalMovementSpeed) / 100.0);
 
-        
-        
-        
         if (pctArmor != 0.0) totalArmor *= (1.0 + (pctArmor / 100.0));
         player.setMetadata("windy_armor", new FixedMetadataValue(Main.getInstance(), totalArmor));
 

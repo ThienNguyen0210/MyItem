@@ -346,7 +346,64 @@ public class MyItemCommand implements CommandExecutor {
                 statsHandler.handleCommand(player, args, slot);
                 org.ThienNguyen.Listener.CacheListener.refreshCache(player);
             }
+            case "owner-tag" -> {
+                if (!(sender instanceof Player player)) return true;
+                if (!checkAdmin(player)) return true;
 
+                if (args.length < 2) {
+                    player.sendMessage(PFX_ERR + "Usage: §f/mi owner-tag <player1,player2,...>");
+                    return true;
+                }
+
+                ItemStack item = player.getInventory().getItemInMainHand();
+                if (item == null || item.getType().isAir()) {
+                    player.sendMessage(PFX_ERR + "You must be holding an item in your main hand.");
+                    return true;
+                }
+
+                String owners = args[1].toLowerCase().trim();
+                ItemMeta meta = item.getItemMeta();
+                if (meta == null) return true;
+
+                NamespacedKey ownerKey = new NamespacedKey(plugin, "owner_tag");
+                meta.getPersistentDataContainer().set(ownerKey, PersistentDataType.STRING, owners);
+                item.setItemMeta(meta);
+
+                org.ThienNguyen.Lore.LoreGenerator.rebuild(item);
+                org.ThienNguyen.Listener.CacheListener.refreshCache(player);
+
+                player.sendMessage(PFX_OK + "Applied owner tag(s): §e" + owners);
+                return true;
+            }
+
+            case "del-tag" -> {
+                if (!(sender instanceof Player player)) return true;
+                if (!checkAdmin(player)) return true;
+
+                ItemStack item = player.getInventory().getItemInMainHand();
+                if (item == null || item.getType().isAir()) {
+                    player.sendMessage(PFX_ERR + "You must be holding an item in your main hand.");
+                    return true;
+                }
+
+                ItemMeta meta = item.getItemMeta();
+                if (meta == null) return true;
+
+                NamespacedKey ownerKey = new NamespacedKey(plugin, "owner_tag");
+                if (!meta.getPersistentDataContainer().has(ownerKey, PersistentDataType.STRING)) {
+                    player.sendMessage(PFX_WRN + "This item has no owner tag.");
+                    return true;
+                }
+
+                meta.getPersistentDataContainer().remove(ownerKey);
+                item.setItemMeta(meta);
+
+                org.ThienNguyen.Lore.LoreGenerator.rebuild(item);
+                org.ThienNguyen.Listener.CacheListener.refreshCache(player);
+
+                player.sendMessage(PFX_OK + "Removed owner tag from item.");
+                return true;
+            }
             case "evo" -> {
                 if (!(sender instanceof Player player)) return true;
 
@@ -1459,9 +1516,11 @@ public class MyItemCommand implements CommandExecutor {
         helpLines.add(miPrefix + "ai <profile> §7- Tạo item từ AI ");
         helpLines.add(miPrefix + "expire <time> §7- Thiết lập hạn sử dụng cho vật phẩm");
         helpLines.add(miPrefix + "storage <create/save/load/browse> §7- Quản lí item (ManagerItem)");
-        helpLines.add(miPrefix + "checkitem §7- Kiểm tra data vật phẩm §c§lNEW");
-        helpLines.add(miPrefix + "passive <bind/unbind> <id> §7- Thêm nội tại cho item §c§lNEW");
+        helpLines.add(miPrefix + "checkitem §7- Kiểm tra data vật phẩm");
+        helpLines.add(miPrefix + "passive <bind/unbind> <id> §7- Thêm nội tại cho item");
         helpLines.add(miPrefix + "dye-color <r> <g> <b> §7- Đổi mã màu RGB cho áo da §c§lNEW");
+        helpLines.add(miPrefix + "owner-tag <tên_người_chơi> §7- Gắn nhãn sở hữu item cho người chơi §c§lNEW");
+        helpLines.add(miPrefix + "del-tag §7- Xóa nhãn sở hữu khỏi item trên tay §c§lNEW");
         int itemsPerPage = 5;
         int maxPages = (int) Math.ceil((double) helpLines.size() / itemsPerPage);
 

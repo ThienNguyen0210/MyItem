@@ -27,7 +27,8 @@ public class Tab implements TabCompleter {
             "gemstone", "enchant", "unskill", "upgrade", "givegem", "giveamulet", "trans",
             "connect", "editor", "stats", "update", "version", "particle", "unparticle",
             "tiers", "consume", "tooltip", "loreformat",
-            "ic", "evo", "ai", "getai", "expire", "storage", "checkitem", "passive", "dye-color"
+            "ic", "evo", "ai", "getai", "expire", "storage", "checkitem", "passive", "dye-color",
+            "owner-tag", "del-tag"
     );
 
     private static final List<String> IC_SUBCOMMANDS = Arrays.asList("add", "unadd");
@@ -55,9 +56,6 @@ public class Tab implements TabCompleter {
             suggestions.addAll(MAIN_SUBCOMMANDS);
         }
 
-
-
-
         else if (args.length == 2 && args[0].equalsIgnoreCase("ic")) {
             suggestions.addAll(IC_SUBCOMMANDS);
         }
@@ -67,7 +65,6 @@ public class Tab implements TabCompleter {
             if (icSub.equals("add") || icSub.equals("unadd")) {
                 FileConfiguration comboConfig = Main.getInstance().getComboConfig();
                 if (comboConfig != null) {
-
                     suggestions.addAll(comboConfig.getKeys(false));
                 }
             }
@@ -96,18 +93,15 @@ public class Tab implements TabCompleter {
             }
         }
 
-
-
-
         else if (args.length == 2) {
             String sub = args[0].toLowerCase();
             switch (sub) {
-                case "passive" -> suggestions.addAll(Arrays.asList("bind", "unbind")); // Gợi ý hành động cho passive
+                case "owner-tag" -> suggestions.addAll(Bukkit.getOnlinePlayers().stream().map(Player::getName).collect(Collectors.toList()));
+                case "passive" -> suggestions.addAll(Arrays.asList("bind", "unbind"));
                 case "evo" -> {
                     suggestions.add("ALL");
                     suggestions.add("mm_");
                     suggestions.add("mm_<id Mythicmob>");
-
                     suggestions.addAll(Arrays.asList("ZOMBIE", "SKELETON", "CREEPER", "SPIDER", "ENDERMAN"));
                 }
                 case "consume" -> suggestions.add("give");
@@ -180,9 +174,7 @@ public class Tab implements TabCompleter {
         else if (args.length == 3) {
             String sub = args[0].toLowerCase();
             switch (sub) {
-                case "passive" -> {
-                    suggestions.add("<ID_Passive>");
-                }
+                case "passive" -> suggestions.add("<ID_Passive>");
                 case "consume" -> {
                     FileConfiguration consumeConfig = Main.getInstance().getConsumeConfig();
                     if (consumeConfig != null) suggestions.addAll(consumeConfig.getKeys(false));
@@ -198,7 +190,6 @@ public class Tab implements TabCompleter {
                 }
                 case "gemstone" -> suggestions.addAll(Arrays.asList("Gem", "Drill", "Remover", "Socket_Remover"));
                 case "element" -> {
-
                     FileConfiguration eConfig = Main.getInstance().getElementConfig();
                     if (eConfig != null) suggestions.addAll(eConfig.getKeys(false));
                 }
@@ -208,7 +199,6 @@ public class Tab implements TabCompleter {
                 case "buff", "debuff" -> suggestions.addAll(COMMON_AMPLIFIER);
                 case "givegem" -> suggestions.addAll(Bukkit.getOnlinePlayers().stream().map(Player::getName).collect(Collectors.toList()));
                 case "giveamulet" -> suggestions.addAll(COMMON_AMOUNTS);
-
             }
         }
 
@@ -224,22 +214,14 @@ public class Tab implements TabCompleter {
                         FileConfiguration config = Main.getInstance().getGemConfig();
                         if (config != null) suggestions.addAll(config.getKeys(false));
                     } else if (type.equals("drill")) {
-                        // DucLo.yml đã bị xóa — mũi khoan giờ nằm lồng trong type.yml
-                        // dưới "<type>.drills.<id>", nên phải quét qua mọi loại thay vì
-                        // đọc trực tiếp getKeys(false) từ 1 file phẳng như trước.
                         suggestions.addAll(org.ThienNguyen.GemSocket.GemType.getAllDrillIds());
                     }
                     else if (type.equals("remover")) {
-                        // Removers now live in Tools.yml (split out of the old Gem.yml).
                         FileConfiguration config = Main.getInstance().getGemToolsConfig();
-
                         if (config != null) suggestions.addAll(config.getKeys(false));
                     }
                     else if (type.equals("socket_remover")) {
-                        // Socket removers (GemThaoLo) are configured in Tools.yml the
-                        // same way "remover" entries are — same source of ids.
                         FileConfiguration config = Main.getInstance().getGemToolsConfig();
-
                         if (config != null) suggestions.addAll(config.getKeys(false));
                     }
                 }
@@ -280,9 +262,9 @@ public class Tab implements TabCompleter {
         allSkills.addAll(SkillManager.getSkillNamesByType("Mythicmob"));
         return allSkills;
     }
+
     private List<String> getPassiveIds() {
         List<String> ids = new ArrayList<>();
-        // Lấy chính xác thư mục plugins/MyItem/Listener/Passives
         java.io.File passiveFolder = new java.io.File(Main.getInstance().getDataFolder(), "Listener/Passives");
 
         if (passiveFolder.exists() && passiveFolder.isDirectory()) {
@@ -290,13 +272,13 @@ public class Tab implements TabCompleter {
             if (files != null) {
                 for (java.io.File file : files) {
                     String name = file.getName();
-                    // Loại bỏ đuôi ".yml" (4 ký tự) để lấy tên ID
                     ids.add(name.substring(0, name.length() - 4));
                 }
             }
         }
         return ids;
     }
+
     private List<String> getItemDatabaseIds() {
         if (Main.getInstance().getItemDatabase() != null) {
             return Main.getInstance().getItemDatabase().getAllIds();

@@ -131,7 +131,6 @@ public class EventDamage implements Listener {
             if (attacker != null) attacker.sendActionBar("§c§l✖ Bạn đang bị tước vũ khí!");
             return;
         }
-
         // STUNNED_STATUS: kẻ bị stun không thể tấn công (khác ROOTED_STATUS — chỉ khoá
         // di chuyển, vẫn tấn công bình thường nên KHÔNG có check tương ứng ở đây).
         // Set bởi StatusMechanic (type: STATUS, status: STUN).

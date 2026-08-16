@@ -26,6 +26,7 @@ import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -36,7 +37,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CacheListener implements Listener {
-
+    private static final NamespacedKey KEY_OWNER_TAG = new NamespacedKey(Main.getInstance(), "owner_tag");
     private static final NamespacedKey KEY_PCT_DAMAGE          = new NamespacedKey(Main.getInstance(), "pct_damage");
     private static final NamespacedKey KEY_PCT_CRIT_DMG_RED    = new NamespacedKey(Main.getInstance(), "pct_critical_damage_reduction");
     private static final NamespacedKey KEY_PCT_ARMOR           = new NamespacedKey(Main.getInstance(), "pct_armor");
@@ -64,7 +65,30 @@ public class CacheListener implements Listener {
 
 
 
+    private static boolean isOwner(Player player, ItemStack item) {
+        if (item == null || !item.hasItemMeta()) return true;
 
+        ItemMeta meta = item.getItemMeta();
+        var pdc = meta.getPersistentDataContainer();
+
+        if (!pdc.has(KEY_OWNER_TAG, PersistentDataType.STRING)) {
+            return true;
+        }
+
+        String ownersString = pdc.get(KEY_OWNER_TAG, PersistentDataType.STRING);
+        if (ownersString == null || ownersString.isEmpty()) return true;
+
+        String playerName = player.getName().toLowerCase();
+        String[] allowedPlayers = ownersString.split(",");
+
+        for (String owner : allowedPlayers) {
+            if (owner.trim().toLowerCase().equals(playerName)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
 
     private static final org.bukkit.attribute.Attribute KNOCKBACK_RESISTANCE_ATTRIBUTE =
@@ -291,14 +315,8 @@ public class CacheListener implements Listener {
             }
         }
 
-
-
-
         stats.clearWeaponElements();
         stats.bestAbilities.clear();
-
-
-
         double pctBonusDmg = 0.0;
         double pctArmor = 0.0;
         double pctTrueDmg = 0.0;
@@ -315,6 +333,7 @@ public class CacheListener implements Listener {
         for (EquipmentSlot slot : ALL_SLOTS) {
             ItemStack item = player.getInventory().getItem(slot);
             if (item == null || item.getType() == Material.AIR) continue;
+            if (!isOwner(player, item)) continue;
             Map<String, Integer> itemDefs = ElementCore.getItemDefenses(item);
             itemDefs.forEach((elem, lv) -> {
                 stats.elementDefenses.merge(elem, lv, Integer::sum);
@@ -457,7 +476,7 @@ public class CacheListener implements Listener {
 
         Map<Integer, ItemStack> jewelryItems = JewelryManager.getCachedJewelry(player.getUniqueId());
         for (ItemStack jItem : jewelryItems.values()) {
-            applyJewelryStats(stats, jItem, eConfig, gemConfig);
+            applyJewelryStats(player, stats, jItem, eConfig, gemConfig);
         }
 
         FileConfiguration mainConfig = Main.getInstance().getConfig();
@@ -469,7 +488,7 @@ public class CacheListener implements Listener {
                         int slotIdx = Integer.parseInt(key);
                         ItemStack item = player.getInventory().getItem(slotIdx);
                         if (item != null && item.getType() != Material.AIR && !isPlaceholder(item)) {
-                            applyJewelryStats(stats, item, eConfig, gemConfig);
+                            applyJewelryStats(player, stats, item, eConfig, gemConfig);
                         }
                     } catch (Exception ignored) {}
                 }
@@ -570,8 +589,9 @@ public class CacheListener implements Listener {
             }
         } catch (Exception ignored) {}
     }
-    private static void applyJewelryStats(PlayerCombatCache.CombatStats stats, ItemStack jItem, FileConfiguration eConfig, FileConfiguration gemConfig) {
+    private static void applyJewelryStats(Player player, PlayerCombatCache.CombatStats stats, ItemStack jItem, FileConfiguration eConfig, FileConfiguration gemConfig) {
         if (jItem == null || jItem.getType() == Material.AIR) return;
+        if (!isOwner(player, jItem)) return;
         stats.totalAccuracy += Accuracy.get(jItem);
         stats.totalExpBonus += ExpBonus.get(jItem);
         stats.totalCritDamageReduction += CritDamageReduction.get(jItem);
