@@ -74,7 +74,8 @@ public class GemThaoLo implements Listener {
         NamespacedKey idKey = new NamespacedKey(Main.getInstance(), "gem_item_id");
         String removerId = removerMeta.getPersistentDataContainer().get(idKey, PersistentDataType.STRING);
 
-        // Socket-remover tool items are defined in Tools.yml (split out of the old Gem.yml).
+        // The socket remover ITEM's own definition lives in Tools.yml (same split
+        // GemRemover uses) — not Gems.yml, which only holds GEMSTONE definitions.
         FileConfiguration toolsConfig = Main.getInstance().getGemToolsConfig();
         if (removerId == null || !toolsConfig.contains(removerId)) return;
 
@@ -83,10 +84,8 @@ public class GemThaoLo implements Listener {
                 : null;
 
         if (targetType == null) {
-            if (Main.getInstance().isGemDebugEnabled()) {
-                Main.getInstance().getLogger().warning(
-                        "[MyItem] Socket remover '" + removerId + "' is missing 'type' in Tools.yml — unclear which socket rarity it should remove.");
-            }
+            Main.getInstance().getLogger().warning(
+                    "[MyItem] Socket remover '" + removerId + "' is missing 'type' in Tools.yml — unclear which socket rarity it should remove.");
             player.sendMessage(lang.getMessage("item.socket-remover-misconfigured"));
             return;
         }
@@ -199,7 +198,7 @@ public class GemThaoLo implements Listener {
         if (!meta.hasLore()) return;
 
         FileConfiguration typeConfig = Main.getInstance().getGemTypeConfig();
-        String emptyFormat = typeConfig.getString(socketType + ".format", "&7[ ○ ] Empty Socket");
+        String emptyFormat = typeConfig.getString(socketType + ".format", "&7[ ○ ] Lỗ trống");
         String coloredEmpty = ChatColor.translateAlternateColorCodes('&', emptyFormat);
 
         List<String> lore = new ArrayList<>(meta.getLore());
@@ -230,7 +229,7 @@ public class GemThaoLo implements Listener {
 
         if (removed) {
             meta.setLore(lore);
-        } else if (Main.getInstance().isGemDebugEnabled()) {
+        } else {
             Main.getInstance().getLogger().warning(
                     "[MyItem] Could not find the lore line for empty socket type '" + socketType
                             + "' to remove — lore may be out of sync with item_sockets.");

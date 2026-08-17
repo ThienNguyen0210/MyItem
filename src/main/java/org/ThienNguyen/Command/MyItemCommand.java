@@ -823,8 +823,14 @@ public class MyItemCommand implements CommandExecutor {
                 switch (type) {
                     case "gem" -> {
                         FileConfiguration gemConfig = Main.getInstance().getGemConfig();
-                        if (gemConfig.contains(id)) {
-                            itemResult = createGemItem(id, gemConfig, "GEMSTONE");
+                        // realPath may be a full dotted path (e.g. "gems.ruby1") if the
+                        // entry is nested under a wrapper section rather than being a
+                        // flat top-level key. Always store the short `id` on the item
+                        // (that's what other systems look it up by), but read the
+                        // material/display-name/lore/model-id from realPath.
+                        String realPath = resolveIdCaseInsensitive(gemConfig, id);
+                        if (realPath != null) {
+                            itemResult = createGemItem(id, realPath, gemConfig, "GEMSTONE");
                             itemTag = "GEMSTONE";
                         }
                     }
@@ -842,19 +848,21 @@ public class MyItemCommand implements CommandExecutor {
                         }
                     }
                     case "remover" -> {
-                        FileConfiguration removerConfig = Main.getInstance().getGemConfig();
-                        if (removerConfig.contains(id)) {
-                            itemResult = createGemItem(id, removerConfig, "REMOVER");
+                        FileConfiguration removerConfig = Main.getInstance().getGemToolsConfig();
+                        String realPath = resolveIdCaseInsensitive(removerConfig, id);
+                        if (realPath != null) {
+                            itemResult = createGemItem(id, realPath, removerConfig, "REMOVER");
                             itemTag = "REMOVER";
                         }
                     }
                     case "socket_remover" -> {
-                        // Configured in Gem.yml exactly like "remover" — each entry needs
+                        // Configured in Tools.yml exactly like "remover" — each entry needs
                         // a "type" field (a rarity, or "ANY") that GemThaoLo reads to
                         // decide which empty sockets this item is allowed to remove.
-                        FileConfiguration socketRemoverConfig = Main.getInstance().getGemConfig();
-                        if (socketRemoverConfig.contains(id)) {
-                            itemResult = createGemItem(id, socketRemoverConfig, "SOCKET_REMOVER");
+                        FileConfiguration socketRemoverConfig = Main.getInstance().getGemToolsConfig();
+                        String realPath = resolveIdCaseInsensitive(socketRemoverConfig, id);
+                        if (realPath != null) {
+                            itemResult = createGemItem(id, realPath, socketRemoverConfig, "SOCKET_REMOVER");
                             itemTag = "SOCKET_REMOVER";
                         }
                     }
@@ -1481,7 +1489,31 @@ public class MyItemCommand implements CommandExecutor {
             return null;
         }
     }
+    private String resolveIdCaseInsensitive(FileConfiguration config, String id) {
+        if (config.contains(id)) return id; // exact match, fast path
+        for (String key : config.getKeys(false)) {
+            if (key.equalsIgnoreCase(id)) return key;
+        }
+        // Fall back to a recursive search so IDs nested under a wrapper
+        // section (e.g. "gems.ruby1" instead of a flat top-level "ruby1")
+        // still resolve. Returns the full dotted path if found.
+        return findKeyRecursive(config, id);
+    }
 
+    private String findKeyRecursive(ConfigurationSection section, String id) {
+        for (String key : section.getKeys(false)) {
+            if (key.equalsIgnoreCase(id)) {
+                String path = section.getCurrentPath();
+                return path.isEmpty() ? key : path + "." + key;
+            }
+            ConfigurationSection child = section.getConfigurationSection(key);
+            if (child != null) {
+                String found = findKeyRecursive(child, id);
+                if (found != null) return found;
+            }
+        }
+        return null;
+    }
     private void sendHelp(CommandSender sender, int page) {
         List<String> helpLines = new ArrayList<>();
         String miPrefix = "§8[§4§l?§8]§3 /myitem ";
