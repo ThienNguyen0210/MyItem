@@ -1447,7 +1447,6 @@ public class MyItemCommand implements CommandExecutor {
         return true;
     }
 
-    // ── Gem item builder (unchanged logic) ───────────────────────────────────
     private ItemStack createGemItem(String id, FileConfiguration config, String itemTag) {
         return createGemItem(id, id, config, itemTag);
     }
