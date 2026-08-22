@@ -483,11 +483,16 @@ public class JewelryManager implements InventoryHolder, org.bukkit.event.Listene
                 String key = rs.getString("slot_key");
                 String data = rs.getString("item_data");
                 ItemStack item = deserializeItem(data);
-                // Lưu theo slot, hỗ trợ nhiều slot cùng key
-                jewelrySlots.stream().filter(s -> s.key.equals(key)).forEach(js -> {
-                    if (loaded.containsKey(js.slot)) return;  // Tránh overwrite nếu nhiều
-                    loaded.put(js.slot, item);
-                });
+                // slot_key lưu chỉ số slot vật lý (duy nhất), không phải type key dùng chung
+                try {
+                    int slotIndex = Integer.parseInt(key);
+                    boolean slotStillValid = jewelrySlots.stream().anyMatch(s -> s.slot == slotIndex);
+                    if (slotStillValid) {
+                        loaded.put(slotIndex, item);
+                    }
+                } catch (NumberFormatException ex) {
+                    // Dữ liệu cũ (lưu theo type key) - bỏ qua để tránh nhân bản item vào mọi slot cùng loại
+                }
             }
             currentJewelry.putAll(loaded);
             jewelryCache.put(uuid, new HashMap<>(loaded)); // Save to cache
@@ -512,18 +517,18 @@ public class JewelryManager implements InventoryHolder, org.bukkit.event.Listene
 
             // BƯỚC 2: Lưu lại những item đang thực sự có trong currentJewelry
             try (PreparedStatement insertPs = conn.prepareStatement("INSERT INTO jewelry (uuid, slot_key, item_data) VALUES (?, ?, ?)")) {
-                Map<String, ItemStack> savedByKey = new HashMap<>();
+                Map<Integer, ItemStack> savedBySlot = new HashMap<>();
                 for (JewelrySlot js : jewelrySlots) {
                     ItemStack item = currentJewelry.get(js.slot);
                     // Chỉ lưu những item không phải không khí và không phải placeholder
                     if (item != null && !item.getType().isAir() && !item.isSimilar(createPlaceholderItem(js))) {
-                        savedByKey.put(js.key, item);
+                        savedBySlot.put(js.slot, item);
                     }
                 }
 
-                for (Map.Entry<String, ItemStack> entry : savedByKey.entrySet()) {
+                for (Map.Entry<Integer, ItemStack> entry : savedBySlot.entrySet()) {
                     insertPs.setString(1, uuid.toString());
-                    insertPs.setString(2, entry.getKey());
+                    insertPs.setString(2, String.valueOf(entry.getKey()));
                     insertPs.setString(3, serializeItem(entry.getValue()));
                     insertPs.addBatch();
                 }
@@ -803,9 +808,15 @@ public class JewelryManager implements InventoryHolder, org.bukkit.event.Listene
                 String data = rs.getString("item_data");
                 ItemStack item = deserializeItem(data);
 
-                temp.jewelrySlots.stream()
-                        .filter(s -> s.key.equals(key))
-                        .forEach(js -> loaded.put(js.slot, item));
+                try {
+                    int slotIndex = Integer.parseInt(key);
+                    boolean slotStillValid = temp.jewelrySlots.stream().anyMatch(s -> s.slot == slotIndex);
+                    if (slotStillValid) {
+                        loaded.put(slotIndex, item);
+                    }
+                } catch (NumberFormatException ex) {
+                    // Dữ liệu cũ (lưu theo type key) - bỏ qua để tránh nhân bản item vào mọi slot cùng loại
+                }
             }
             jewelryCache.put(uuid, loaded);
         } catch (SQLException ex) {
