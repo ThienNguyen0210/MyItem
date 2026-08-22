@@ -243,6 +243,7 @@ public class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new StatsListener(), this);
         // Refresh cache cho người chơi đang online
         for (Player p : Bukkit.getOnlinePlayers()) {
+            org.ThienNguyen.JewelryManager.loadDataToCache(p);
             cacheListener.refreshCache(p);
         }
 

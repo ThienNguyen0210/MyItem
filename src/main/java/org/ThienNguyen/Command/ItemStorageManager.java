@@ -1,6 +1,7 @@
 package org.ThienNguyen.Command;
 
 import org.ThienNguyen.Main;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
@@ -19,7 +20,11 @@ import org.bukkit.persistence.PersistentDataType;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import org.ThienNguyen.Lore.LoreGenerator;
+import org.ThienNguyen.Utils.Tooltips;
 
 public class ItemStorageManager {
 
@@ -29,6 +34,13 @@ public class ItemStorageManager {
 
     // Namespace mặc định dùng cho PDC (theo ví dụ của bạn)
     private static final String PDC_NAMESPACE = "myitem";
+
+    // Các key điều khiển của hệ thống Lore/Tooltip (LoreGenerator + Tooltips)
+    // Lưu riêng dưới "lore-format" / "tooltip", KHÔNG đi qua nhánh stats chung
+    private static final String KEY_LORE_FORMAT_ID = "lore_format_id";
+    private static final String KEY_TOOLTIP_TYPE   = "tooltip_type";
+    private static final String KEY_ORIGINAL_NAME  = "original_name";
+    private static final String KEY_ORIGINAL_LORE  = "original_lore";
 
     // Danh sách stat (lấy từ Tab + các key phổ biến)
     private static final Set<String> STAT_KEYS = new HashSet<>(Arrays.asList(
@@ -64,6 +76,37 @@ public class ItemStorageManager {
                 if (item != null) {
                     itemCache.put(id.toLowerCase(), item);
                 }
+            }
+        }
+
+        // Dời việc render lore-format/tooltip sang tick kế tiếp (xem lý do
+        // chi tiết trong buildItemFromConfig). Lúc này toàn bộ config của
+        // plugin chắc chắn đã load xong nên gọi TiersLore/StatsLore/... an toàn.
+        Bukkit.getScheduler().runTask(plugin, this::regenerateFormattedItems);
+    }
+
+    /**
+     * Render lại lore/tooltip cho các item có gắn "lore-format" và/hoặc
+     * "tooltip" trong cache, dựa trên config Lore/Tooltip HIỆN TẠI.
+     * Được gọi 1 tick sau loadAllItems() để tránh đệ quy khi khởi động plugin.
+     */
+    private void regenerateFormattedItems() {
+        NamespacedKey formatKey = new NamespacedKey(Main.getInstance(), KEY_LORE_FORMAT_ID);
+        NamespacedKey tooltipKey = new NamespacedKey(Main.getInstance(), KEY_TOOLTIP_TYPE);
+
+        for (ItemStack item : itemCache.values()) {
+            ItemMeta meta = item.getItemMeta();
+            if (meta == null) continue;
+
+            PersistentDataContainer itemPdc = meta.getPersistentDataContainer();
+            String tooltipType = itemPdc.get(tooltipKey, PersistentDataType.STRING);
+            String loreFormatId = itemPdc.get(formatKey, PersistentDataType.STRING);
+
+            if (tooltipType != null && !tooltipType.isEmpty()) {
+                // reapplyTooltipSilent tự xử lý cả 2 trường hợp: có/không có lore-format đi kèm
+                Tooltips.reapplyTooltipSilent(item, tooltipType);
+            } else if (loreFormatId != null && !loreFormatId.isEmpty()) {
+                LoreGenerator.rebuild(item);
             }
         }
     }
@@ -102,20 +145,57 @@ public class ItemStorageManager {
         // ── Cơ bản ────────────────────────────────────────────────
         config.set(path + "material", item.getType().name());
 
-        if (meta.hasDisplayName()) {
-            config.set(path + "name", meta.getDisplayName());
+        // ── Lore-format / Tooltip: lưu ID để có thể chỉnh sửa & áp lại sau này ──
+        PersistentDataContainer formatPdc = meta.getPersistentDataContainer();
+        String loreFormatId = formatPdc.get(new NamespacedKey(Main.getInstance(), KEY_LORE_FORMAT_ID), PersistentDataType.STRING);
+        String tooltipType  = formatPdc.get(new NamespacedKey(Main.getInstance(), KEY_TOOLTIP_TYPE), PersistentDataType.STRING);
+        boolean isGenerated = (loreFormatId != null && !loreFormatId.isEmpty())
+                || (tooltipType != null && !tooltipType.isEmpty());
+
+        config.set(path + "lore-format", (loreFormatId != null && !loreFormatId.isEmpty()) ? loreFormatId : null);
+        config.set(path + "tooltip", (tooltipType != null && !tooltipType.isEmpty()) ? tooltipType : null);
+
+        // Tên: nếu item đang được bọc format/tooltip, tên hiển thị đã bị chèn
+        // ký tự trang trí (icon/fill) → ưu tiên lưu tên GỐC (original_name) cho sạch.
+        String nameToSave = null;
+        if (isGenerated) {
+            String rawOriginalName = formatPdc.get(new NamespacedKey(Main.getInstance(), KEY_ORIGINAL_NAME), PersistentDataType.STRING);
+            if (rawOriginalName != null && !rawOriginalName.isEmpty()) nameToSave = rawOriginalName;
         }
+        if (nameToSave == null && meta.hasDisplayName()) {
+            nameToSave = meta.getDisplayName();
+        }
+        config.set(path + "name", nameToSave);
 
         if (meta.hasCustomModelData()) {
             config.set(path + "model-id", meta.getCustomModelData());
         }
 
         // Lore: § → &
-        if (meta.hasLore()) {
-            List<String> lore = meta.getLore().stream()
+        // Nếu item đang được bọc format/tooltip, dòng lore hiện tại (meta.getLore())
+        // đã bị chèn ký tự trang trí (fill-character, icon...) — không lưu bản đó.
+        // Thay vào đó lấy lore GỐC (original_lore, được Tooltips lưu lại trước khi bọc)
+        // để file yml giữ nội dung sạch, dễ chỉnh sửa, và áp lại được format khác sau này.
+        List<String> loreToSave = null;
+        if (isGenerated) {
+            String rawOriginalLore = formatPdc.get(new NamespacedKey(Main.getInstance(), KEY_ORIGINAL_LORE), PersistentDataType.STRING);
+            if (rawOriginalLore != null) {
+                loreToSave = rawOriginalLore.isEmpty()
+                        ? new ArrayList<>()
+                        : new ArrayList<>(Arrays.asList(rawOriginalLore.split(Pattern.quote(Tooltips.SEPARATOR))));
+            }
+        }
+        if (loreToSave == null && meta.hasLore()) {
+            loreToSave = meta.getLore();
+        }
+
+        if (loreToSave != null && !loreToSave.isEmpty()) {
+            List<String> lore = loreToSave.stream()
                     .map(line -> line.replace("§", "&"))
                     .collect(Collectors.toList());
             config.set(path + "lore", lore);
+        } else {
+            config.set(path + "lore", null);
         }
 
         // Enchantments
@@ -153,6 +233,15 @@ public class ItemStorageManager {
             List<String> flags = new ArrayList<>();
             for (ItemFlag flag : meta.getItemFlags()) flags.add(flag.name());
             config.set(path + "flags", flags);
+        } else {
+            config.set(path + "flags", null);
+        }
+
+        // Unbreakable ("indestructible") — tách riêng với ItemFlag, phải lưu thủ công
+        if (meta.isUnbreakable()) {
+            config.set(path + "unbreakable", true);
+        } else {
+            config.set(path + "unbreakable", null);
         }
 
         // ── PDC → stats / element / effect / ability ──────────────
@@ -168,6 +257,15 @@ public class ItemStorageManager {
 
             for (NamespacedKey key : pdc.getKeys()) {
                 String fullKey = key.getKey();
+
+                // Các key điều khiển Lore-format/Tooltip đã được lưu riêng ở trên (lore-format/tooltip)
+                // → bỏ qua để không bị quét nhầm vào "stats"
+                if (fullKey.equalsIgnoreCase(KEY_LORE_FORMAT_ID)
+                        || fullKey.equalsIgnoreCase(KEY_TOOLTIP_TYPE)
+                        || fullKey.equalsIgnoreCase(KEY_ORIGINAL_NAME)
+                        || fullKey.equalsIgnoreCase(KEY_ORIGINAL_LORE)) {
+                    continue;
+                }
 
                 Object value = null;
                 if (pdc.has(key, PersistentDataType.STRING)) {
@@ -323,6 +421,11 @@ public class ItemStorageManager {
             }
         }
 
+        // Unbreakable ("indestructible")
+        if (config.contains(path + "unbreakable")) {
+            meta.setUnbreakable(config.getBoolean(path + "unbreakable"));
+        }
+
         // ── PDC (hỗ trợ cả format mới + format cũ) ────────────────
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
 
@@ -392,6 +495,25 @@ public class ItemStorageManager {
                     else if (value instanceof Float) pdc.set(key, PersistentDataType.FLOAT, (Float) value);
                 }
             }
+        }
+
+        // ── Lore-format / Tooltip: ghi ID điều khiển vào PDC ─────────────────
+        // CHÚ Ý: KHÔNG render/rebuild lore ngay tại đây. buildItemFromConfig()
+        // chạy bên trong loadAllItems(), tức là bên trong constructor của
+        // ItemStorageManager - lúc này các config khác của plugin (vd: Tiers)
+        // có thể chưa sẵn sàng. Nếu resolvePlaceholder() cần đến 1 config chưa
+        // load, nó có thể vô tình kích hoạt Main#reloadPluginConfigs(), mà hàm
+        // đó lại tạo mới ItemStorageManager -> gọi lại loadAllItems() -> đệ quy
+        // vô hạn (StackOverflowError). Vì vậy ở đây chỉ gắn PDC, còn việc
+        // render thật sự được dời sang tick kế tiếp trong loadAllItems().
+        String loreFormatId = config.getString(path + "lore-format");
+        String tooltipType  = config.getString(path + "tooltip");
+
+        if (loreFormatId != null && !loreFormatId.isEmpty()) {
+            pdc.set(new NamespacedKey(Main.getInstance(), KEY_LORE_FORMAT_ID), PersistentDataType.STRING, loreFormatId);
+        }
+        if (tooltipType != null && !tooltipType.isEmpty()) {
+            pdc.set(new NamespacedKey(Main.getInstance(), KEY_TOOLTIP_TYPE), PersistentDataType.STRING, tooltipType);
         }
 
         item.setItemMeta(meta);

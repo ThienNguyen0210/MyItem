@@ -22,7 +22,7 @@ public class Tooltips {
     private static final NamespacedKey ORIGINAL_NAME_KEY = new NamespacedKey(Main.getInstance(), "original_name");
     private static final NamespacedKey TOOLTIP_TYPE_KEY = new NamespacedKey(Main.getInstance(), "tooltip_type");
 
-    private static final String SEPARATOR = "§|§line§|§";
+    public static final String SEPARATOR = "§|§line§|§";
 
     private static void ensureOriginalDataSaved(ItemMeta meta) {
         if (!meta.getPersistentDataContainer().has(ORIGINAL_NAME_KEY, PersistentDataType.STRING)) {
