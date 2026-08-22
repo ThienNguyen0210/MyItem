@@ -200,6 +200,21 @@ public class CacheListener implements Listener {
 
 
 
+    private static final class PercentAccumulator {
+        double bonusDmg;
+        double armor;
+        double trueDmg;
+        double critDmgReduction;
+        double magicDmg;
+        double magicDef;
+        double pveBonus;
+        double pvpBonus;
+        double allDamage;
+        double bowDamage;
+        double deathDamage;
+        double effectResistance;
+    }
+
     private static void applyAccumulatedPercents(PlayerCombatCache.CombatStats stats,
                                                  double pctBonusDmg, double pctArmor, double pctTrueDmg,
                                                  double pctCritDmgReduction, double pctMagicDmg, double pctMagicDef,
@@ -317,18 +332,7 @@ public class CacheListener implements Listener {
 
         stats.clearWeaponElements();
         stats.bestAbilities.clear();
-        double pctBonusDmg = 0.0;
-        double pctArmor = 0.0;
-        double pctTrueDmg = 0.0;
-        double pctCritDmgReduction = 0.0;
-        double pctMagicDmg = 0.0;
-        double pctMagicDef = 0.0;
-        double pctPveBonus = 0.0;
-        double pctPvpBonus = 0.0;
-        double pctAllDamage = 0.0;
-        double pctBowDamage = 0.0;
-        double pctDeathDamage = 0.0;
-        double pctEffectResistance = 0.0;
+        PercentAccumulator pctAcc = new PercentAccumulator();
 
         for (EquipmentSlot slot : ALL_SLOTS) {
             ItemStack item = player.getInventory().getItem(slot);
@@ -344,40 +348,40 @@ public class CacheListener implements Listener {
                 var pdc = item.getItemMeta().getPersistentDataContainer();
 
                 if (pdc.has(KEY_PCT_DAMAGE, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "damage", slot))
-                    pctBonusDmg += pdc.get(KEY_PCT_DAMAGE, PersistentDataType.DOUBLE);
+                    pctAcc.bonusDmg += pdc.get(KEY_PCT_DAMAGE, PersistentDataType.DOUBLE);
 
                 if (pdc.has(KEY_PCT_CRIT_DMG_RED, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "critical_damage_reduction", slot))
-                    pctCritDmgReduction += pdc.get(KEY_PCT_CRIT_DMG_RED, PersistentDataType.DOUBLE);
+                    pctAcc.critDmgReduction += pdc.get(KEY_PCT_CRIT_DMG_RED, PersistentDataType.DOUBLE);
 
                 if (pdc.has(KEY_PCT_ARMOR, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "armor", slot))
-                    pctArmor += pdc.get(KEY_PCT_ARMOR, PersistentDataType.DOUBLE);
+                    pctAcc.armor += pdc.get(KEY_PCT_ARMOR, PersistentDataType.DOUBLE);
 
                 if (pdc.has(KEY_PCT_TRUE_DMG, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "true_damage", slot))
-                    pctTrueDmg += pdc.get(KEY_PCT_TRUE_DMG, PersistentDataType.DOUBLE);
+                    pctAcc.trueDmg += pdc.get(KEY_PCT_TRUE_DMG, PersistentDataType.DOUBLE);
 
                 if (pdc.has(KEY_PCT_MAGIC_DMG, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "magic_damage", slot))
-                    pctMagicDmg += pdc.get(KEY_PCT_MAGIC_DMG, PersistentDataType.DOUBLE);
+                    pctAcc.magicDmg += pdc.get(KEY_PCT_MAGIC_DMG, PersistentDataType.DOUBLE);
 
                 if (pdc.has(KEY_PCT_MAGIC_DEF, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "magic_defense", slot))
-                    pctMagicDef += pdc.get(KEY_PCT_MAGIC_DEF, PersistentDataType.DOUBLE);
+                    pctAcc.magicDef += pdc.get(KEY_PCT_MAGIC_DEF, PersistentDataType.DOUBLE);
 
                 if (pdc.has(KEY_PCT_PVE, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "pve_damage", slot))
-                    pctPveBonus += pdc.get(KEY_PCT_PVE, PersistentDataType.DOUBLE);
+                    pctAcc.pveBonus += pdc.get(KEY_PCT_PVE, PersistentDataType.DOUBLE);
 
                 if (pdc.has(KEY_PCT_PVP, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "pvp_damage", slot))
-                    pctPvpBonus += pdc.get(KEY_PCT_PVP, PersistentDataType.DOUBLE);
+                    pctAcc.pvpBonus += pdc.get(KEY_PCT_PVP, PersistentDataType.DOUBLE);
 
                 if (pdc.has(KEY_PCT_ALL_DMG, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "all_damage", slot))
-                    pctAllDamage += pdc.get(KEY_PCT_ALL_DMG, PersistentDataType.DOUBLE);
+                    pctAcc.allDamage += pdc.get(KEY_PCT_ALL_DMG, PersistentDataType.DOUBLE);
 
                 if (pdc.has(KEY_PCT_BOW_DMG, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "bow_damage", slot))
-                    pctBowDamage += pdc.get(KEY_PCT_BOW_DMG, PersistentDataType.DOUBLE);
+                    pctAcc.bowDamage += pdc.get(KEY_PCT_BOW_DMG, PersistentDataType.DOUBLE);
 
                 if (pdc.has(KEY_PCT_DEATH_DMG, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "death_damage", slot))
-                    pctDeathDamage += pdc.get(KEY_PCT_DEATH_DMG, PersistentDataType.DOUBLE);
+                    pctAcc.deathDamage += pdc.get(KEY_PCT_DEATH_DMG, PersistentDataType.DOUBLE);
 
                 if (pdc.has(KEY_PCT_EFFECT_RES, PersistentDataType.DOUBLE) && isAllowedPercent(item, slotConfig, "effect_resistance", slot))
-                    pctEffectResistance += pdc.get(KEY_PCT_EFFECT_RES, PersistentDataType.DOUBLE);
+                    pctAcc.effectResistance += pdc.get(KEY_PCT_EFFECT_RES, PersistentDataType.DOUBLE);
             }
 
             if (isAllowed(item, slotConfig, "accuracy", slot)) {
@@ -476,7 +480,7 @@ public class CacheListener implements Listener {
 
         Map<Integer, ItemStack> jewelryItems = JewelryManager.getCachedJewelry(player.getUniqueId());
         for (ItemStack jItem : jewelryItems.values()) {
-            applyJewelryStats(player, stats, jItem, eConfig, gemConfig);
+            applyJewelryStats(player, stats, pctAcc, jItem, eConfig, gemConfig);
         }
 
         FileConfiguration mainConfig = Main.getInstance().getConfig();
@@ -488,7 +492,7 @@ public class CacheListener implements Listener {
                         int slotIdx = Integer.parseInt(key);
                         ItemStack item = player.getInventory().getItem(slotIdx);
                         if (item != null && item.getType() != Material.AIR && !isPlaceholder(item)) {
-                            applyJewelryStats(player, stats, item, eConfig, gemConfig);
+                            applyJewelryStats(player, stats, pctAcc, item, eConfig, gemConfig);
                         }
                     } catch (Exception ignored) {}
                 }
@@ -508,9 +512,9 @@ public class CacheListener implements Listener {
 
 
 
-        applyAccumulatedPercents(stats, pctBonusDmg, pctArmor, pctTrueDmg, pctCritDmgReduction,
-                pctMagicDmg, pctMagicDef, pctPveBonus, pctPvpBonus, pctAllDamage,
-                pctBowDamage, pctDeathDamage, pctEffectResistance);
+        applyAccumulatedPercents(stats, pctAcc.bonusDmg, pctAcc.armor, pctAcc.trueDmg, pctAcc.critDmgReduction,
+                pctAcc.magicDmg, pctAcc.magicDef, pctAcc.pveBonus, pctAcc.pvpBonus, pctAcc.allDamage,
+                pctAcc.bowDamage, pctAcc.deathDamage, pctAcc.effectResistance);
 
 
 
@@ -589,9 +593,50 @@ public class CacheListener implements Listener {
             }
         } catch (Exception ignored) {}
     }
-    private static void applyJewelryStats(Player player, PlayerCombatCache.CombatStats stats, ItemStack jItem, FileConfiguration eConfig, FileConfiguration gemConfig) {
+    private static void applyJewelryStats(Player player, PlayerCombatCache.CombatStats stats, PercentAccumulator pctAcc, ItemStack jItem, FileConfiguration eConfig, FileConfiguration gemConfig) {
         if (jItem == null || jItem.getType() == Material.AIR) return;
         if (!isOwner(player, jItem)) return;
+
+        if (jItem.hasItemMeta()) {
+            var pdc = jItem.getItemMeta().getPersistentDataContainer();
+
+            if (pdc.has(KEY_PCT_DAMAGE, PersistentDataType.DOUBLE))
+                pctAcc.bonusDmg += pdc.get(KEY_PCT_DAMAGE, PersistentDataType.DOUBLE);
+
+            if (pdc.has(KEY_PCT_CRIT_DMG_RED, PersistentDataType.DOUBLE))
+                pctAcc.critDmgReduction += pdc.get(KEY_PCT_CRIT_DMG_RED, PersistentDataType.DOUBLE);
+
+            if (pdc.has(KEY_PCT_ARMOR, PersistentDataType.DOUBLE))
+                pctAcc.armor += pdc.get(KEY_PCT_ARMOR, PersistentDataType.DOUBLE);
+
+            if (pdc.has(KEY_PCT_TRUE_DMG, PersistentDataType.DOUBLE))
+                pctAcc.trueDmg += pdc.get(KEY_PCT_TRUE_DMG, PersistentDataType.DOUBLE);
+
+            if (pdc.has(KEY_PCT_MAGIC_DMG, PersistentDataType.DOUBLE))
+                pctAcc.magicDmg += pdc.get(KEY_PCT_MAGIC_DMG, PersistentDataType.DOUBLE);
+
+            if (pdc.has(KEY_PCT_MAGIC_DEF, PersistentDataType.DOUBLE))
+                pctAcc.magicDef += pdc.get(KEY_PCT_MAGIC_DEF, PersistentDataType.DOUBLE);
+
+            if (pdc.has(KEY_PCT_PVE, PersistentDataType.DOUBLE))
+                pctAcc.pveBonus += pdc.get(KEY_PCT_PVE, PersistentDataType.DOUBLE);
+
+            if (pdc.has(KEY_PCT_PVP, PersistentDataType.DOUBLE))
+                pctAcc.pvpBonus += pdc.get(KEY_PCT_PVP, PersistentDataType.DOUBLE);
+
+            if (pdc.has(KEY_PCT_ALL_DMG, PersistentDataType.DOUBLE))
+                pctAcc.allDamage += pdc.get(KEY_PCT_ALL_DMG, PersistentDataType.DOUBLE);
+
+            if (pdc.has(KEY_PCT_BOW_DMG, PersistentDataType.DOUBLE))
+                pctAcc.bowDamage += pdc.get(KEY_PCT_BOW_DMG, PersistentDataType.DOUBLE);
+
+            if (pdc.has(KEY_PCT_DEATH_DMG, PersistentDataType.DOUBLE))
+                pctAcc.deathDamage += pdc.get(KEY_PCT_DEATH_DMG, PersistentDataType.DOUBLE);
+
+            if (pdc.has(KEY_PCT_EFFECT_RES, PersistentDataType.DOUBLE))
+                pctAcc.effectResistance += pdc.get(KEY_PCT_EFFECT_RES, PersistentDataType.DOUBLE);
+        }
+
         stats.totalAccuracy += Accuracy.get(jItem);
         stats.totalExpBonus += ExpBonus.get(jItem);
         stats.totalCritDamageReduction += CritDamageReduction.get(jItem);
