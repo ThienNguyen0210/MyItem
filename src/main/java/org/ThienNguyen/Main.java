@@ -519,7 +519,7 @@ public class Main extends JavaPlugin {
 
         String description =
                 "\n§f> Tên plugin: §3§lMyitem" +
-                        "\n§f> Phiên bản: §e" + "3.0 §f§lUltimate" +
+                        "\n§f> Phiên bản: §e" + "4.0" +
                         "\n§f> AI: §e" + "1.0" +
                         "\n§f> Tác giả: §dThiện Dev" +
                         "\n§f> Dành cho: §a1.14.x -> 1.21.x" +

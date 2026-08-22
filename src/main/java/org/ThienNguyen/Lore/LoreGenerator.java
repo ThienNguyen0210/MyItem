@@ -123,9 +123,59 @@ public class LoreGenerator {
                 String tierLine = org.ThienNguyen.Lore.TiersLore.getTierLine(item);
                 return (tierLine == null || tierLine.isEmpty()) ? null : List.of(tierLine);
 
+            case "lore":
+                return getExternalLore(item);
+
             default:
                 return null;
         }
+    }
+
+    /**
+     * Reads externally-attached lore (e.g. from an /itemlore command or another
+     * plugin) out of the item's PersistentDataContainer. Stored as a single
+     * newline-separated string so it survives a full {@link #rebuild(ItemStack)}
+     * pass; each line becomes its own rendered lore line wherever {lore} is
+     * placed in the format.
+     */
+    private static List<String> getExternalLore(ItemStack item) {
+        if (item == null || !item.hasItemMeta()) return null;
+
+        ItemMeta meta = item.getItemMeta();
+        NamespacedKey key = new NamespacedKey(Main.getInstance(), "external_lore");
+        String raw = meta.getPersistentDataContainer().get(key, PersistentDataType.STRING);
+
+        if (raw == null || raw.isEmpty()) return null;
+
+        List<String> lines = new ArrayList<>();
+        for (String line : raw.split("\\n", -1)) {
+            lines.add(line);
+        }
+        return lines;
+    }
+
+    /**
+     * Attaches / overwrites the external lore text on an item and immediately
+     * rebuilds its rendered lore so the change is reflected right away.
+     * Pass {@code null} or an empty string to clear the external lore.
+     *
+     * @param item    the item to modify
+     * @param rawText the raw lore text; use "\n" to separate multiple lines
+     */
+    public static void setExternalLore(ItemStack item, String rawText) {
+        if (item == null || !item.hasItemMeta()) return;
+
+        ItemMeta meta = item.getItemMeta();
+        NamespacedKey key = new NamespacedKey(Main.getInstance(), "external_lore");
+
+        if (rawText == null || rawText.isEmpty()) {
+            meta.getPersistentDataContainer().remove(key);
+        } else {
+            meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, rawText);
+        }
+
+        item.setItemMeta(meta);
+        rebuild(item);
     }
 
     private static List<String> getSocketLore(ItemStack item) {

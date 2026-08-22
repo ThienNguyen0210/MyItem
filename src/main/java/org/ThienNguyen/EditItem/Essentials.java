@@ -1,7 +1,10 @@
 package org.ThienNguyen.EditItem;
 
 import net.md_5.bungee.api.ChatColor;
+import org.ThienNguyen.Lore.LoreGenerator;
+import org.ThienNguyen.Main;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -10,6 +13,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,7 +101,8 @@ public class Essentials implements CommandExecutor, TabCompleter {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
 
-        List<String> lore = meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
+        boolean formatDriven = isFormatDriven(meta);
+        List<String> lore = new ArrayList<>(getEditableLoreLines(item, meta, formatDriven));
         String action = args[0].toLowerCase();
 
         switch (action) {
@@ -154,6 +159,7 @@ public class Essentials implements CommandExecutor, TabCompleter {
                 if (copiedLore.isEmpty()) {
                     player.sendMessage("§8[§bMyItem§8] §7(Note: This item has no lore)");
                 }
+                return; // nothing changed, no need to write back
             }
             case "paste" -> {
                 if (copiedLore == null) {
@@ -164,7 +170,56 @@ public class Essentials implements CommandExecutor, TabCompleter {
                 lore.addAll(copiedLore);
                 player.sendMessage("§8[§bMyItem§8] §aPasted " + copiedLore.size() + " lore lines into the item!");
             }
-            default -> player.sendMessage("§8[§bMyItem§8] §cInvalid action! Use: add, set, remove, insert, copy, paste");
+            default -> {
+                player.sendMessage("§8[§bMyItem§8] §cInvalid action! Use: add, set, remove, insert, copy, paste");
+                return;
+            }
+        }
+
+        applyLoreLines(item, meta, formatDriven, lore);
+    }
+
+    /**
+     * True if this item is rendered by the LoreRenderer/LoreGenerator format
+     * system (has a "lore_format_id" tag). For these items, raw meta.setLore()
+     * edits get wiped out the next time anything triggers LoreGenerator.rebuild(),
+     * so edits must go through the "external_lore" PDC channel + {lore} placeholder
+     * instead.
+     */
+    private boolean isFormatDriven(ItemMeta meta) {
+        NamespacedKey formatKey = new NamespacedKey(Main.getInstance(), "lore_format_id");
+        String formatId = meta.getPersistentDataContainer().get(formatKey, PersistentDataType.STRING);
+        return formatId != null;
+    }
+
+    /**
+     * Returns the lines the player is currently editing:
+     * - format-driven items: the stored external_lore lines (what {lore} renders)
+     * - plain items: the actual displayed lore
+     */
+    private List<String> getEditableLoreLines(ItemStack item, ItemMeta meta, boolean formatDriven) {
+        if (formatDriven) {
+            NamespacedKey externalKey = new NamespacedKey(Main.getInstance(), "external_lore");
+            String raw = meta.getPersistentDataContainer().get(externalKey, PersistentDataType.STRING);
+            if (raw == null || raw.isEmpty()) return new ArrayList<>();
+            return new ArrayList<>(Arrays.asList(raw.split("\\n", -1)));
+        }
+
+        return meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
+    }
+
+    /**
+     * Writes the edited lines back:
+     * - format-driven items: joins the lines and stores them via
+     *   LoreGenerator.setExternalLore(), which also triggers an immediate
+     *   rebuild so the {lore} block reflects the change right away.
+     * - plain items: writes straight to meta.setLore(), same as before.
+     */
+    private void applyLoreLines(ItemStack item, ItemMeta meta, boolean formatDriven, List<String> lore) {
+        if (formatDriven) {
+            String joined = lore.isEmpty() ? null : String.join("\n", lore);
+            LoreGenerator.setExternalLore(item, joined);
+            return;
         }
 
         meta.setLore(lore);
@@ -194,8 +249,9 @@ public class Essentials implements CommandExecutor, TabCompleter {
             ItemStack item = player.getInventory().getItemInMainHand();
             if (item.getType() == Material.AIR || !item.hasItemMeta()) return null;
 
-            List<String> lore = item.getItemMeta().getLore();
-            if (lore == null) lore = new ArrayList<>();
+            ItemMeta meta = item.getItemMeta();
+            boolean formatDriven = isFormatDriven(meta);
+            List<String> lore = getEditableLoreLines(item, meta, formatDriven);
 
             if (args.length == 2) {
                 String action = args[0].toLowerCase();
