@@ -1,14 +1,11 @@
 package org.ThienNguyen.API;
-
 import org.ThienNguyen.Listener.CacheListener;
 import org.ThienNguyen.Listener.PlayerCombatCache;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-
 /**
  * Public API cho phép plugin khác cộng/nhân chỉ số cho người chơi (flat hoặc percent),
  * áp dụng LẶP LẠI mỗi lần stats được refresh (đổi đồ, respawn, join...) — khác với
@@ -38,21 +35,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * KHÔNG throw exception, để 1 plugin gõ sai không kéo sập plugin khác.
  */
 public final class StatBoostAPI {
-
     public enum BoostType { FLAT, PERCENT }
-
     public record StatBoost(String statKey, BoostType type, double value) {}
-
-    // uuid -> sourceId -> boost đang active
     private static final Map<UUID, Map<String, StatBoost>> BOOSTS = new ConcurrentHashMap<>();
-
     private StatBoostAPI() {}
-
     /** Cộng thẳng {@code amount} vào stat gốc, giữ nguyên mỗi lần refreshCache() chạy. */
     public static void addFlatBoost(UUID uuid, String sourceId, String statKey, double amount) {
         register(uuid, sourceId, new StatBoost(normalize(statKey), BoostType.FLAT, amount));
     }
-
     /**
      * Nhân thêm {@code percent}% vào stat (vd 10.0 nghĩa là +10%), áp dụng SAU tất cả các
      * boost FLAT (kể cả flat của chính StatBoostAPI lẫn flat từ equipment/gem/combo), giống
@@ -61,7 +51,6 @@ public final class StatBoostAPI {
     public static void addPercentBoost(UUID uuid, String sourceId, String statKey, double percent) {
         register(uuid, sourceId, new StatBoost(normalize(statKey), BoostType.PERCENT, percent));
     }
-
     private static void register(UUID uuid, String sourceId, StatBoost boost) {
         if (uuid == null || sourceId == null || sourceId.isBlank()) return;
         if (!PlayerCombatCache.isKnownStat(boost.statKey())) {
@@ -72,7 +61,6 @@ public final class StatBoostAPI {
         BOOSTS.computeIfAbsent(uuid, k -> new ConcurrentHashMap<>()).put(sourceId, boost);
         refresh(uuid);
     }
-
     /** Gỡ 1 boost cụ thể theo sourceId. Trả về true nếu có boost bị gỡ. */
     public static boolean removeBoost(UUID uuid, String sourceId) {
         Map<String, StatBoost> map = BOOSTS.get(uuid);
@@ -81,24 +69,20 @@ public final class StatBoostAPI {
         if (removed) refresh(uuid);
         return removed;
     }
-
     /** Gỡ toàn bộ boost của 1 người chơi (vd gọi khi cần reset sạch). */
     public static void clearAll(UUID uuid) {
         if (BOOSTS.remove(uuid) != null) refresh(uuid);
     }
-
     /** Xem danh sách boost đang active của 1 người chơi (chỉ đọc, dùng để debug/hiển thị). */
     public static Map<String, StatBoost> getBoosts(UUID uuid) {
         return Map.copyOf(BOOSTS.getOrDefault(uuid, Map.of()));
     }
-
     private static void refresh(UUID uuid) {
         Player p = Bukkit.getPlayer(uuid);
         if (p != null && p.isOnline()) {
             CacheListener.refreshCache(p);
         }
     }
-
     /**
      * Gọi NỘI BỘ từ CacheListener#refreshCache(), sau khi mọi field gốc (equipment, gem,
      * combo, MyAttribute...) đã được tính xong. Cộng flat trước, nhân percent sau — áp dụng
@@ -109,7 +93,6 @@ public final class StatBoostAPI {
     public static void apply(UUID uuid, PlayerCombatCache.CombatStats stats) {
         Map<String, StatBoost> map = BOOSTS.get(uuid);
         if (map == null || map.isEmpty()) return;
-
         for (StatBoost b : map.values()) {
             if (b.type() == BoostType.FLAT) {
                 PlayerCombatCache.addToField(stats, b.statKey(), b.value());
@@ -121,7 +104,6 @@ public final class StatBoostAPI {
             }
         }
     }
-
     private static String normalize(String statKey) {
         return statKey == null ? "" : statKey.trim().toLowerCase();
     }

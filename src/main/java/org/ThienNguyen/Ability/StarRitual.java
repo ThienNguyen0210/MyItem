@@ -1,5 +1,4 @@
 package org.ThienNguyen.Ability;
-
 import org.ThienNguyen.Main;
 import org.bukkit.*;
 import org.bukkit.entity.Entity;
@@ -8,55 +7,31 @@ import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
-
 import java.util.ArrayList;
 import java.util.List;
-
 public class StarRitual implements IAbility {
-
     @Override
     public String getName() {
         return "STAR_RITUAL";
     }
-
     @Override
     public void execute(Player attacker, LivingEntity target, int level, double baseDamage) {
         if (attacker == null) return;
-
-        
         double multiplier = 0.60 + (Math.max(0, level - 1) * 0.07);
         double damageToDeal = baseDamage * multiplier;
         Location origin = attacker.getLocation();
         double radius = 4.0;
-
-        
         drawStarEffect(origin, radius);
-
-        
-        
         List<Entity> nearbyEnemies = attacker.getNearbyEntities(radius, 3.0, radius);
-
-        
         new BukkitRunnable() {
             @Override
             public void run() {
                 for (Entity entity : nearbyEnemies) {
-                    
                     if (entity instanceof LivingEntity victim && !entity.equals(attacker) && !(entity instanceof org.bukkit.entity.ArmorStand)) {
-
-                        
                         if (victim.hasMetadata("IS_ABILITY")) continue;
-
-                        
                         victim.setMetadata("IS_ABILITY", new FixedMetadataValue(Main.getInstance(), true));
-
-                        
                         victim.damage(damageToDeal, attacker);
-
-                        
                         victim.getWorld().spawnParticle(Particle.ENCHANTED_HIT, victim.getLocation().add(0, 1, 0), 3);
-
-                        
                         new BukkitRunnable() {
                             @Override
                             public void run() {
@@ -69,10 +44,8 @@ public class StarRitual implements IAbility {
                 }
             }
         }.runTask(Main.getInstance());
-
         origin.getWorld().playSound(origin, Sound.ENTITY_ILLUSIONER_CAST_SPELL, 1.0f, 1.2f);
     }
-
     private void drawStarEffect(Location origin, double radius) {
         List<Location> points = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
@@ -86,7 +59,6 @@ public class StarRitual implements IAbility {
             drawLine(points.get(sequence[i]), points.get(sequence[i+1]));
         }
     }
-
     private void drawLine(Location start, Location end) {
         double distance = start.distance(end);
         Vector direction = end.toVector().subtract(start.toVector()).normalize();

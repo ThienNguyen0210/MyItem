@@ -1,5 +1,4 @@
 package org.ThienNguyen.Listener.Passive.Trigger;
-
 public enum PassiveTrigger {
     ON_HIT,           
     ON_KILL,          

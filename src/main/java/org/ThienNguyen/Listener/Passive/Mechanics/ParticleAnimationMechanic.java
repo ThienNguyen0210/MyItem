@@ -1,5 +1,4 @@
 package org.ThienNguyen.Listener.Passive.Mechanics;
-
 import org.ThienNguyen.Listener.Passive.AbstractMechanic;
 import org.ThienNguyen.Listener.Passive.ExpressionResolver;
 import org.ThienNguyen.Listener.Passive.PassiveContext;
@@ -15,9 +14,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
-
 public class ParticleAnimationMechanic extends AbstractMechanic {
-
     private final Particle particle;
     private final String shape;
     private final String rawRadius;
@@ -29,13 +26,10 @@ public class ParticleAnimationMechanic extends AbstractMechanic {
     private final String rawForwardOffset;
     private final String rawSideOffset;
     private final boolean rotate;
-
     private final Color dustColor;
     private final Material blockMaterial;
-
     public ParticleAnimationMechanic(ConfigurationSection cfg) {
         super(cfg);
-
         Particle parsed;
         try {
             parsed = Particle.valueOf(cfg.getString("particle", "FLAME").toUpperCase());
@@ -43,7 +37,6 @@ public class ParticleAnimationMechanic extends AbstractMechanic {
             parsed = Particle.FLAME;
         }
         this.particle = parsed;
-
         this.shape                  = cfg.getString("shape", "CIRCLE").toUpperCase();
         this.rawRadius              = cfg.getString("radius",               "1.0");
         this.rawPointsPerTick       = cfg.getString("points-per-tick",      "12");
@@ -54,11 +47,9 @@ public class ParticleAnimationMechanic extends AbstractMechanic {
         this.rawForwardOffset       = cfg.getString("forward-offset",       "0.0");
         this.rawSideOffset          = cfg.getString("side-offset",          "0.0");
         this.rotate                 = cfg.getBoolean("rotate", true);
-
         this.dustColor = parseColor(cfg.getString("dust-color", "#FF5500"));
         this.blockMaterial = parseMaterial(cfg.getString("block-material", "OAK_LEAVES"));
     }
-
     private Color parseColor(String hex) {
         try {
             if (hex.startsWith("#")) hex = hex.substring(1);
@@ -68,7 +59,6 @@ public class ParticleAnimationMechanic extends AbstractMechanic {
             return Color.RED;
         }
     }
-
     private Material parseMaterial(String name) {
         try {
             return Material.valueOf(name.toUpperCase());
@@ -76,12 +66,9 @@ public class ParticleAnimationMechanic extends AbstractMechanic {
             return Material.OAK_LEAVES;
         }
     }
-
     @Override
     protected boolean doExecute(PassiveContext ctx) {
         LivingEntity center = resolveTarget(ctx);
-
-        // 1. Lấy vị trí xuất phát an toàn (kể cả khi center đã chết hoặc null)
         Location initialLoc = null;
         if (center != null) {
             try {
@@ -91,14 +78,10 @@ public class ParticleAnimationMechanic extends AbstractMechanic {
         if (initialLoc == null) {
             initialLoc = ctx.getActorLocation();
         }
-
         if (initialLoc == null || initialLoc.getWorld() == null) return false;
-
         World world = initialLoc.getWorld();
         Player actor = ctx.getActor();
         Player safeActor = (actor != null && actor.isValid()) ? actor : null;
-
-        // 2. Resolve các thông số kỹ thuật an toàn
         double radius           = ExpressionResolver.resolve(rawRadius,           safeActor, 1.0);
         int    pointsPerTick    = Math.max(1, ExpressionResolver.resolveInt(rawPointsPerTick,    safeActor, 12));
         int    particlePerPoint = Math.max(1, ExpressionResolver.resolveInt(rawParticlePerPoint, safeActor, 1));
@@ -107,24 +90,17 @@ public class ParticleAnimationMechanic extends AbstractMechanic {
         double height           = ExpressionResolver.resolve(rawHeight,        safeActor, 1.0);
         double forwardOffset    = ExpressionResolver.resolve(rawForwardOffset, safeActor, 0.0);
         double sideOffset       = ExpressionResolver.resolve(rawSideOffset,    safeActor, 0.0);
-
-        // Tạo biến lưu vị trí tĩnh làm Fallback khi target chết/bị xóa
         final Location lastKnownOrigin = computeOrigin(initialLoc, height, forwardOffset, sideOffset);
-
-        // 3. Chạy Task hiển thị hiệu ứng
         new BukkitRunnable() {
             int elapsedTicks = 0;
             double rotationOffset = 0.0;
-
             @Override
             public void run() {
                 if (elapsedTicks >= durationTicks) {
                     cancel();
                     return;
                 }
-
                 Location origin;
-                // Nếu mục tiêu còn tồn tại và sống -> Bám theo mục tiêu
                 if (center != null && center.isValid() && !center.isDead()) {
                     origin = computeOrigin(center.getLocation(), height, forwardOffset, sideOffset);
                     lastKnownOrigin.setX(origin.getX());
@@ -133,43 +109,31 @@ public class ParticleAnimationMechanic extends AbstractMechanic {
                     lastKnownOrigin.setYaw(origin.getYaw());
                     lastKnownOrigin.setPitch(origin.getPitch());
                 } else {
-                    // Mục tiêu đã gục/biến mất -> Dùng tọa độ cuối cùng recorded
                     origin = lastKnownOrigin;
                 }
-
                 drawShape(world, origin, rotationOffset, radius, pointsPerTick, particlePerPoint);
-
                 if (rotate) {
                     rotationOffset += Math.PI / 8;
                 }
-
                 elapsedTicks += updateInterval;
             }
         }.runTaskTimer(Main.getInstance(), 0L, updateInterval);
-
         return true;
     }
-
     private Location computeOrigin(Location base, double height, double forwardOffset, double sideOffset) {
         Location origin = base.clone().add(0, height, 0);
-
         if (forwardOffset == 0.0 && sideOffset == 0.0) return origin;
-
         Vector direction = base.getDirection().setY(0);
         if (direction.lengthSquared() < 1.0E-6) {
             direction = new Vector(0, 0, 1);
         } else {
             direction = direction.normalize();
         }
-
         Vector right = new Vector(-direction.getZ(), 0, direction.getX());
-
         if (forwardOffset != 0.0) origin.add(direction.clone().multiply(forwardOffset));
         if (sideOffset != 0.0)    origin.add(right.clone().multiply(sideOffset));
-
         return origin;
     }
-
     private void drawShape(World world, Location origin, double rotOff,
                            double radius, int pointsPerTick, int particlePerPoint) {
         if ("SPHERE".equals(shape)) {
@@ -178,7 +142,6 @@ public class ParticleAnimationMechanic extends AbstractMechanic {
             drawCircle(world, origin, rotOff, radius, pointsPerTick, particlePerPoint, 0.0);
         }
     }
-
     private void spawnParticleSafe(World world, Location point, int count) {
         try {
             if (particle == Particle.DUST) {
@@ -194,7 +157,6 @@ public class ParticleAnimationMechanic extends AbstractMechanic {
             world.spawnParticle(Particle.FLAME, point, count, 0, 0, 0, 0);
         }
     }
-
     private void drawCircle(World world, Location origin, double rotOff,
                             double radius, int points, int ppp, double yOffset) {
         for (int i = 0; i < points; i++) {
@@ -206,7 +168,6 @@ public class ParticleAnimationMechanic extends AbstractMechanic {
             spawnParticleSafe(world, point, ppp);
         }
     }
-
     private void drawSphere(World world, Location origin, double rotOff,
                             double radius, int pointsPerTick, int ppp) {
         int rings = Math.max(3, pointsPerTick / 4);

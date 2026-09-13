@@ -1,5 +1,4 @@
 package org.ThienNguyen.Element;
-
 import org.ThienNguyen.Main;
 import org.bukkit.*;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -8,19 +7,13 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
-
 import java.util.HashMap;
 import java.util.Map;
-
 public class ElementCore {
-    
     private static final String ATK_PREFIX = "elem_";
     private static final String DEF_PREFIX = "elem_def_";
-
-    
     private static final NamespacedKey ELEMENT_KEY = new NamespacedKey(Main.getInstance(), "item_element");
     private static final NamespacedKey LEVEL_KEY = new NamespacedKey(Main.getInstance(), "item_element_level");
-
     /**
      * HÀM QUAN TRỌNG: Lấy level an toàn tránh lỗi ép kiểu Double/Integer từ PersistentData
      */
@@ -34,42 +27,34 @@ public class ElementCore {
         }
         return 0;
     }
-
     /**
      * Lấy toàn bộ nguyên tố TẤN CÔNG (Sửa lỗi cannot find symbol getAllElements)
      */
     public static Map<String, Integer> getAllElements(ItemStack item) {
         Map<String, Integer> elements = new HashMap<>();
         if (item == null || !item.hasItemMeta()) return elements;
-
         PersistentDataContainer pdc = item.getItemMeta().getPersistentDataContainer();
         for (NamespacedKey key : pdc.getKeys()) {
             String k = key.getKey();
-            
             if (k.startsWith(ATK_PREFIX) && !k.startsWith(DEF_PREFIX)) {
                 String elementId = k.replace(ATK_PREFIX, "").toUpperCase();
                 int level = getSafeInt(pdc, key);
                 if (level > 0) elements.put(elementId, level);
             }
         }
-
-        
         String oldId = pdc.get(ELEMENT_KEY, PersistentDataType.STRING);
         int oldLv = getSafeInt(pdc, LEVEL_KEY);
         if (oldId != null && oldLv > 0) {
             elements.merge(oldId.toUpperCase(), oldLv, Integer::max);
         }
-
         return elements;
     }
-
     /**
      * Lấy toàn bộ chỉ số PHÒNG THỦ nguyên tố
      */
     public static Map<String, Integer> getAllDefenses(ItemStack item) {
         Map<String, Integer> defenses = new HashMap<>();
         if (item == null || !item.hasItemMeta()) return defenses;
-
         PersistentDataContainer pdc = item.getItemMeta().getPersistentDataContainer();
         for (NamespacedKey key : pdc.getKeys()) {
             String k = key.getKey();
@@ -81,7 +66,6 @@ public class ElementCore {
         }
         return defenses;
     }
-
     /**
      * Thêm/Cập nhật nguyên tố TẤN CÔNG
      */
@@ -89,13 +73,11 @@ public class ElementCore {
         if (item == null || item.getType().isAir()) return;
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
-
         NamespacedKey key = new NamespacedKey(Main.getInstance(), ATK_PREFIX + elementId.toLowerCase());
         int currentLevel = getSafeInt(meta.getPersistentDataContainer(), key);
         meta.getPersistentDataContainer().set(key, PersistentDataType.INTEGER, currentLevel + level);
         item.setItemMeta(meta);
     }
-
     /**
      * Thêm/Cập nhật nguyên tố PHÒNG THỦ
      */
@@ -103,35 +85,29 @@ public class ElementCore {
         if (item == null || item.getType().isAir()) return;
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
-
         NamespacedKey key = new NamespacedKey(Main.getInstance(), DEF_PREFIX + elementId.toLowerCase());
         int currentLevel = getSafeInt(meta.getPersistentDataContainer(), key);
         meta.getPersistentDataContainer().set(key, PersistentDataType.INTEGER, currentLevel + level);
         item.setItemMeta(meta);
     }
-
     /**
      * Hiệu ứng Particle khi gây sát thương nguyên tố
      */
     public static void playEffect(Entity target, String elementId) {
         FileConfiguration config = Main.getInstance().getElementConfig();
         if (config == null || !config.contains(elementId)) return;
-
         String typeStr = config.getString(elementId + ".particle", "CRIT");
         int density = config.getInt(elementId + ".density", 5);
         Location loc = target.getLocation().add(0, 1, 0);
-
         try {
             Particle particle = Particle.valueOf(typeStr.toUpperCase());
             World world = loc.getWorld();
             if (world == null) return;
-
             for (int i = 0; i < density; i++) {
                 double offsetX = (Math.random() - 0.5) * 0.6;
                 double offsetY = (Math.random() - 0.5) * 0.6;
                 double offsetZ = (Math.random() - 0.5) * 0.6;
                 Location spawnLoc = loc.clone().add(offsetX, offsetY, offsetZ);
-
                 if (particle == Particle.DUST) {
                     String colorStr = config.getString(elementId + ".color", "255,0,0");
                     String[] rgb = colorStr.split(",");
@@ -151,9 +127,6 @@ public class ElementCore {
             }
         } catch (Exception ignored) {}
     }
-
-    
-
     public static void setElement(ItemStack item, String elementId, int level) {
         if (item == null || item.getType().isAir()) return;
         ItemMeta meta = item.getItemMeta();
@@ -162,17 +135,14 @@ public class ElementCore {
         meta.getPersistentDataContainer().set(LEVEL_KEY, PersistentDataType.INTEGER, level);
         item.setItemMeta(meta);
     }
-
     public static String getElement(ItemStack item) {
         if (item == null || !item.hasItemMeta()) return null;
         return item.getItemMeta().getPersistentDataContainer().get(ELEMENT_KEY, PersistentDataType.STRING);
     }
-
     public static int getLevel(ItemStack item) {
         if (item == null || !item.hasItemMeta()) return 0;
         return getSafeInt(item.getItemMeta().getPersistentDataContainer(), LEVEL_KEY);
     }
-
     public static Map<String, Integer> getItemDefenses(ItemStack item) {
         return getAllDefenses(item); 
     }

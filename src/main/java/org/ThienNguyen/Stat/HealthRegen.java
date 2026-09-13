@@ -1,10 +1,8 @@
 package org.ThienNguyen.Stat;
-
 import org.ThienNguyen.Main;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
-
 public class HealthRegen {
     private static final NamespacedKey KEY = new NamespacedKey(Main.getInstance(), "health_regen");
     public static double get(ItemStack item) {

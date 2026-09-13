@@ -1,17 +1,10 @@
 package org.ThienNguyen.Skill;
-
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-
 public interface ISkill {
     String getName();
-
-    
     String getType();
-
-    
     String getTrigger();
-
     /**
      * Thực thi kỹ năng
      * @param player Người sử dụng kỹ năng

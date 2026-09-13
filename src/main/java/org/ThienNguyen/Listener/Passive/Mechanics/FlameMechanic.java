@@ -1,5 +1,4 @@
 package org.ThienNguyen.Listener.Passive.Mechanics;
-
 import org.ThienNguyen.Listener.Passive.AbstractMechanic;
 import org.ThienNguyen.Listener.Passive.ExpressionResolver;
 import org.ThienNguyen.Listener.Passive.PassiveContext;
@@ -8,38 +7,27 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
-
-
 public class FlameMechanic extends AbstractMechanic {
-
     private final String rawDamagePerSecond;
     private final String rawDurationSeconds;
     private final boolean visualFire;
-
     public FlameMechanic(ConfigurationSection cfg) {
         super(cfg);
         this.rawDamagePerSecond = cfg.getString("damage-per-second", "0");
         this.rawDurationSeconds = cfg.getString("duration-seconds",  "5");
         this.visualFire         = cfg.getBoolean("visual-fire", true);
     }
-
     @Override
     protected boolean doExecute(PassiveContext ctx) {
         LivingEntity target = resolveTarget(ctx);
         if (target == null || target.isDead() || !target.isValid()) return false;
-
         double damagePerSecond = ExpressionResolver.resolve(rawDamagePerSecond, ctx.getActor(), 0);
         int    durationSeconds = ExpressionResolver.resolveInt(rawDurationSeconds, ctx.getActor(), 5);
-
         if (damagePerSecond <= 0 || durationSeconds <= 0) return false;
-
         if (visualFire) target.setFireTicks(durationSeconds * 20);
-
         Player damager = ctx.getActor();
-
         new org.bukkit.scheduler.BukkitRunnable() {
             int ticksElapsed = 0;
-
             @Override
             public void run() {
                 if (target.isDead() || !target.isValid() || ticksElapsed >= durationSeconds) {
@@ -58,7 +46,6 @@ public class FlameMechanic extends AbstractMechanic {
                 ticksElapsed++;
             }
         }.runTaskTimer(Main.getInstance(), 20L, 20L);
-
         return true;
     }
 }

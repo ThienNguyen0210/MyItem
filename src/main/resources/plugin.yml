@@ -2,9 +2,8 @@ name: MyItem
 version: 3.0
 main: org.ThienNguyen.Main
 api-version: '1.13'
-author: Thiện dev
+author: ThienDev
 description: Plugin quan ly vat pham tuy chinh
-
 commands:
   myitem:
     description: Lenh chinh cho he thong MyItem
@@ -36,3 +35,6 @@ commands:
   material:
     description: "Thay đổi loại vật liệu của item"
     permission: "myitem.material"
+    # and more...
+#Dự án ngưng update từ ngày 13.9.2026
+#

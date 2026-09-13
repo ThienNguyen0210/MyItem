@@ -1,5 +1,4 @@
 package org.ThienNguyen.Listener.Passive.Mechanics;
-
 import org.ThienNguyen.Listener.Passive.ExpressionResolver;
 import org.ThienNguyen.Listener.Passive.PassiveContext;
 import org.ThienNguyen.Listener.Passive.PassiveMechanic;
@@ -17,14 +16,11 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-
-
 /**
  * Ném một potion bay đi và khi chạm đất, tạo ra một vùng hiệu ứng
  * (AreaEffectCloud) tồn tại trong khoảng thời gian cấu hình. Vì vị trí đích
@@ -56,21 +52,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * </pre>
  */
 public class PotionZoneMechanic implements PassiveMechanic {
-
-
-
-
     private static final Map<UUID, ZoneSpec> pendingZones = new ConcurrentHashMap<>();
-
-
     public static ZoneSpec consumePendingZone(UUID projectileId) {
         return pendingZones.remove(projectileId);
     }
-
-
-
     private enum TargetMode { VICTIM, ACTOR }
-
     private final TargetMode targetMode;
     private final String rawSpeed;
     private final String rawRadius;
@@ -79,9 +65,6 @@ public class PotionZoneMechanic implements PassiveMechanic {
     private final Color color;
     private final Particle particle;
     private final List<EffectSpec> effectSpecs;
-
-
-
     public PotionZoneMechanic(ConfigurationSection cfg) {
         String targetStr = cfg.getString("target", "VICTIM").trim().toUpperCase();
         TargetMode mode;
@@ -93,68 +76,48 @@ public class PotionZoneMechanic implements PassiveMechanic {
             mode = TargetMode.VICTIM;
         }
         this.targetMode = mode;
-
         this.rawSpeed              = cfg.getString("speed", "0.6");
         this.rawRadius             = cfg.getString("radius", "3");
         this.rawDurationSeconds    = cfg.getString("duration-seconds", "8");
         this.reapplicationDelayTicks = cfg.getInt("reapplication-delay-ticks", 20);
-
         this.color    = parseColor(cfg.getString("color", null));
         this.particle = parseParticle(cfg.getString("particle", null));
-
         this.effectSpecs = parseEffects(cfg);
         if (this.effectSpecs.isEmpty()) {
             Main.getInstance().getLogger()
                     .warning("[Passive] POTION_ZONE: không có 'effects' nào hợp lệ trong config, cloud sẽ không gây hiệu ứng gì.");
         }
     }
-
-
-
     @Override
     public boolean execute(PassiveContext ctx) {
         Player actor = ctx.getActor();
         if (actor == null) return false;
-
         Location targetLoc = resolveTargetLocation(ctx);
         if (targetLoc == null) return false;
-
         Location launchFrom = actor.getEyeLocation();
         double speed = ExpressionResolver.resolve(rawSpeed, actor, 0.6);
-
         Vector dir = targetLoc.toVector().subtract(launchFrom.toVector());
         double horizontalDist = Math.sqrt(dir.getX() * dir.getX() + dir.getZ() * dir.getZ());
-
         dir.setY(dir.getY() + (horizontalDist * 0.15) + 0.2);
         if (dir.lengthSquared() == 0) dir = new Vector(0, 1, 0);
         dir.normalize().multiply(Math.max(0.05, speed));
-
         final Vector velocity = dir;
-
         ThrownPotion potion = launchFrom.getWorld().spawn(launchFrom, ThrownPotion.class, p -> {
             p.setShooter(actor);
             p.setVelocity(velocity);
             p.setItem(new ItemStack(Material.SPLASH_POTION));
         });
-
         ZoneSpec spec = buildZoneSpec(actor);
         pendingZones.put(potion.getUniqueId(), spec);
-
-
         Bukkit.getScheduler().runTaskLater(Main.getInstance(),
                 () -> pendingZones.remove(potion.getUniqueId()), 20L * 30);
-
         return true;
     }
-
-
-
     private Location resolveTargetLocation(PassiveContext ctx) {
         Location loc = (targetMode == TargetMode.VICTIM) ? ctx.getVictimLocation() : ctx.getActorLocation();
         if (loc == null) loc = ctx.getActorLocation();
         return loc;
     }
-
     private ZoneSpec buildZoneSpec(Player actor) {
         ZoneSpec spec = new ZoneSpec();
         spec.radius       = Math.max(0.5, ExpressionResolver.resolve(rawRadius, actor, 3));
@@ -163,7 +126,6 @@ public class PotionZoneMechanic implements PassiveMechanic {
         spec.reapplicationDelayTicks = Math.max(1, reapplicationDelayTicks);
         spec.color    = color;
         spec.particle = particle;
-
         spec.effects = new ArrayList<>();
         for (EffectSpec es : effectSpecs) {
             int amplifier = ExpressionResolver.resolveInt(es.rawAmplifier, actor, 0);
@@ -173,9 +135,6 @@ public class PotionZoneMechanic implements PassiveMechanic {
         }
         return spec;
     }
-
-
-
     private static Color parseColor(String raw) {
         if (raw == null || raw.isBlank()) return null;
         String[] parts = raw.split(",");
@@ -198,7 +157,6 @@ public class PotionZoneMechanic implements PassiveMechanic {
             return null;
         }
     }
-
     private static Particle parseParticle(String raw) {
         if (raw == null || raw.isBlank()) return null;
         try {
@@ -209,13 +167,11 @@ public class PotionZoneMechanic implements PassiveMechanic {
             return null;
         }
     }
-
     @SuppressWarnings("unchecked")
     private static List<EffectSpec> parseEffects(ConfigurationSection cfg) {
         List<EffectSpec> result = new ArrayList<>();
         List<?> rawList = cfg.getList("effects");
         if (rawList == null) return result;
-
         for (Object obj : rawList) {
             ConfigurationSection section;
             if (obj instanceof ConfigurationSection cs) {
@@ -231,7 +187,6 @@ public class PotionZoneMechanic implements PassiveMechanic {
                         .warning("[Passive] POTION_ZONE: 1 entry trong 'effects' không hợp lệ, bỏ qua.");
                 continue;
             }
-
             String typeStr = section.getString("type", "");
             PotionEffectType type = PotionEffectType.getByName(typeStr.trim().toUpperCase());
             if (type == null) {
@@ -239,7 +194,6 @@ public class PotionZoneMechanic implements PassiveMechanic {
                         .warning("[Passive] POTION_ZONE: hiệu ứng không hợp lệ: '" + typeStr + "', bỏ qua.");
                 continue;
             }
-
             EffectSpec es = new EffectSpec();
             es.type               = type;
             es.rawAmplifier       = section.getString("amplifier", "0");
@@ -251,10 +205,6 @@ public class PotionZoneMechanic implements PassiveMechanic {
         }
         return result;
     }
-
-
-
-
     public static final class ZoneSpec {
         public double radius;
         public int durationTicks;
@@ -263,7 +213,6 @@ public class PotionZoneMechanic implements PassiveMechanic {
         public Particle particle;
         public List<PotionEffect> effects;
     }
-
     private static final class EffectSpec {
         PotionEffectType type;
         String rawAmplifier;

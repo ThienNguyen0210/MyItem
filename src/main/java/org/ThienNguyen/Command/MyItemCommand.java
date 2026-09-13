@@ -1,5 +1,4 @@
 package org.ThienNguyen.Command;
-
 import org.ThienNguyen.Ability.AbilityData;
 import org.ThienNguyen.Listener.AIExperienceGUI;
 import org.ThienNguyen.Listener.Station.StationCMD;
@@ -31,27 +30,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-
 public class MyItemCommand implements CommandExecutor {
-
-    // ── Prefix ───────────────────────────────────────────────────────────────
-    // Palette: §8 dark-gray brackets · §b aqua plugin name · §7 gray body text
-    // Icons  : §a✔ success · §c✖ error · §e⚠ warning
     private static final String PFX     = "§8[§bMyItem§8] §7";   // normal info
     private static final String PFX_OK  = "§8[§bMyItem§8] §a✔ §7"; // success
     private static final String PFX_ERR = "§8[§bMyItem§8] §c✖ §7"; // error
     private static final String PFX_WRN = "§8[§bMyItem§8] §e⚠ §7"; // warning
-
     private final StationDatabase stationDb;
     private final Main plugin;
     public static final NamespacedKey COMBO_KEY = new NamespacedKey(Main.getInstance(), "combo_id");
     private final Stats statsHandler = new Stats();
-
     public MyItemCommand(Main plugin, StationDatabase stationDb) {
         this.plugin = plugin;
         this.stationDb = stationDb;
     }
-
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         var lang = plugin.getLangManager();
@@ -59,9 +50,7 @@ public class MyItemCommand implements CommandExecutor {
             sendHelp(sender, 1);
             return true;
         }
-
         String subCommand = args[0].toLowerCase();
-
         switch (subCommand) {
             case "help" -> {
                 int page = 1;
@@ -75,54 +64,42 @@ public class MyItemCommand implements CommandExecutor {
                 }
                 sendHelp(sender, page);
             }
-
             case "loreformat" -> {
                 if (!(sender instanceof Player player)) return true;
                 if (args.length < 2) {
                     player.sendMessage(PFX_ERR + "Usage: §f/mi loreformat <id>");
                     return true;
                 }
-
                 String formatId = args[1];
                 ItemStack item = player.getInventory().getItemInMainHand();
-
                 if (item == null || item.getType().isAir()) {
                     player.sendMessage(PFX_ERR + "You must be holding an item in your main hand.");
                     return true;
                 }
-
                 if (!plugin.getLoreFormatConfig().contains(formatId)) {
                     player.sendMessage(PFX_ERR + "Format ID §f" + formatId + " §7does not exist.");
                     return true;
                 }
-
                 ItemMeta meta = item.getItemMeta();
                 NamespacedKey key = new NamespacedKey(plugin, "lore_format_id");
                 meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, formatId);
                 item.setItemMeta(meta);
-
                 org.ThienNguyen.Lore.LoreGenerator.rebuild(item);
-
                 player.sendMessage(PFX_OK + "Lore format §e" + formatId + " §7applied successfully.");
                 return true;
             }
-
             case "ic" -> {
                 if (!(sender instanceof Player player)) return true;
                 if (!checkAdmin(player)) return true;
-
                 if (args.length >= 2) {
                     String subAction = args[1].toLowerCase();
                     ItemStack item = player.getInventory().getItemInMainHand();
-
                     if (item == null || item.getType().isAir()) {
                         player.sendMessage(PFX_ERR + "You must be holding an item in your main hand.");
                         return true;
                     }
-
                     ItemMeta meta = item.getItemMeta();
                     if (meta == null) return true;
-
                     switch (subAction) {
                         case "add" -> {
                             if (args.length < 3) {
@@ -149,44 +126,35 @@ public class MyItemCommand implements CommandExecutor {
                     player.sendMessage(PFX_ERR + "Usage: §f/mi ic <add|unadd> [id]");
                 }
             }
-
             case "ai" -> {
                 if (!(sender instanceof Player player)) return true;
                 if (!AIExperienceGUI.hasAccepted(player)) {
                     AIExperienceGUI.openEulaGUI(player);
                     return true;
                 }
-
                 FileConfiguration config = Main.getInstance().getAIConfig();
                 ConfigurationSection profilesSection = config.getConfigurationSection("ai.profiles");
-
                 if (profilesSection == null) {
                     player.sendMessage(PFX_ERR + "Section §eai.profiles §7not found in AIConfig.yml.");
                     return true;
                 }
-
                 if (args.length < 2) {
                     player.sendMessage(PFX + "Usage: §f/myitem ai <id> §7— Choose a profile.");
                     player.sendMessage(PFX + "Available: §b" + String.join(", ", profilesSection.getKeys(false)));
                     return true;
                 }
-
                 String id = args[1].toLowerCase();
                 ConfigurationSection profile = profilesSection.getConfigurationSection(id);
-
                 if (profile == null) {
                     player.sendMessage(PFX_ERR + "Profile §f" + id + " §7does not exist.");
                     player.sendMessage(PFX + "Suggestions: §e" + String.join(", ", profilesSection.getKeys(false)));
                     return true;
                 }
-
                 player.sendMessage(PFX_OK + "Selected profile: §e" + id);
                 player.sendMessage(PFX + profile.getString("description", "No description available."));
                 player.sendMessage(PFX + "Type your item description in chat §7(or §fcancel§7):");
                 player.sendMessage(PFX_WRN + "Stat variables like §fnormal§7/§flegend §7are placeholders — they have no functional effect.");
-
                 player.setMetadata("ai_prompt_mode", new FixedMetadataValue(Main.getInstance(), id));
-
                 Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
                     if (player.hasMetadata("ai_prompt_mode")) {
                         player.removeMetadata("ai_prompt_mode", Main.getInstance());
@@ -194,22 +162,18 @@ public class MyItemCommand implements CommandExecutor {
                     }
                 }, 2400L);
             }
-
             case "getai" -> {
                 if (!(sender instanceof Player player)) return true;
                 if (!player.hasPermission("myitem.admin")) {
                     player.sendMessage(PFX_ERR + "You do not have permission to retrieve AI items.");
                     return true;
                 }
-
                 if (args.length < 2) {
                     player.sendMessage(PFX_ERR + "Usage: §f/mi getai <id>");
                     return true;
                 }
-
                 String id = args[1];
                 ItemStack aiItem = org.ThienNguyen.AI.utils.YamlManager.getItemFromAiFolder(id);
-
                 if (aiItem != null) {
                     player.getInventory().addItem(aiItem);
                     player.sendMessage(PFX_OK + "Retrieved item §e" + id + " §7from the AI storage.");
@@ -218,7 +182,6 @@ public class MyItemCommand implements CommandExecutor {
                     player.sendMessage(PFX_ERR + "Item §f" + id + " §7not found in §nAI/Item.yml§7.");
                 }
             }
-
             case "save" -> {
                 if (!(sender instanceof Player player)) return true;
                 if (!checkAdmin(player)) return true;
@@ -235,7 +198,6 @@ public class MyItemCommand implements CommandExecutor {
                 Main.getInstance().getItemDatabase().saveItem(id, item);
                 player.sendMessage(PFX_OK + "Item saved to database with ID: §f" + id);
             }
-
             case "load" -> {
                 if (!sender.hasPermission("myitem.admin")) {
                     sender.sendMessage(PFX_ERR + "You do not have permission.");
@@ -245,7 +207,6 @@ public class MyItemCommand implements CommandExecutor {
                     sender.sendMessage(PFX_ERR + "Usage: §f/mi load <id> [player]");
                     return true;
                 }
-
                 String id = args[1];
                 Player target;
                 if (args.length >= 3) {
@@ -262,7 +223,6 @@ public class MyItemCommand implements CommandExecutor {
                         return true;
                     }
                 }
-
                 ItemStack loadedItem = Main.getInstance().getItemDatabase().loadItem(id);
                 if (loadedItem != null) {
                     target.getInventory().addItem(loadedItem);
@@ -274,7 +234,6 @@ public class MyItemCommand implements CommandExecutor {
                     sender.sendMessage(PFX_ERR + "No item found with ID: §f" + id);
                 }
             }
-
             case "delete" -> {
                 if (!(sender instanceof Player player)) return true;
                 if (!checkAdmin(player)) return true;
@@ -290,31 +249,25 @@ public class MyItemCommand implements CommandExecutor {
                 Main.getInstance().getItemDatabase().deleteItem(id);
                 player.sendMessage(PFX_OK + "Item §f" + id + " §7deleted from database.");
             }
-
             case "element" -> {
                 if (!(sender instanceof Player player)) return true;
-
                 if (args.length < 4) {
                     player.sendMessage(PFX + "Usage:");
                     player.sendMessage("  §f/mi element attack <id> <level> §7— Add attack element");
                     player.sendMessage("  §f/mi element defense <id> <level> §7— Add defense element");
                     return true;
                 }
-
                 ItemStack item = player.getInventory().getItemInMainHand();
                 if (item == null || item.getType().isAir()) {
                     player.sendMessage(PFX_ERR + "You must be holding an item in your main hand.");
                     return true;
                 }
-
                 String type = args[1].toLowerCase();
                 String elementId = args[2].toUpperCase();
-
                 if (!Main.getInstance().getElementConfig().contains(elementId)) {
                     player.sendMessage(PFX_ERR + "Element §f" + elementId + " §7does not exist.");
                     return true;
                 }
-
                 try {
                     int level = Integer.parseInt(args[3]);
                     if (type.equals("attack")) {
@@ -333,15 +286,13 @@ public class MyItemCommand implements CommandExecutor {
                     player.sendMessage(PFX_ERR + "Level must be an integer.");
                 }
             }
-
             case "stats" -> {
                 if (!(sender instanceof Player player)) return true;
-
+                org.ThienNguyen.Command.GUI.GUIStats.setStatsHandler(statsHandler::handleCommand);
                 if (args.length < 3) {
-                    player.sendMessage(PFX_ERR + "Usage: §f/mi stats <type> <value> [any/mainhand/offhand/head/chest/legs/feet]");
+                    org.ThienNguyen.Command.GUI.GUIStats.openGuiStats(player);
                     return true;
                 }
-
                 String slot = (args.length >= 4) ? args[3].toLowerCase() : "any";
                 statsHandler.handleCommand(player, args, slot);
                 org.ThienNguyen.Listener.CacheListener.refreshCache(player);
@@ -349,58 +300,46 @@ public class MyItemCommand implements CommandExecutor {
             case "owner-tag" -> {
                 if (!(sender instanceof Player player)) return true;
                 if (!checkAdmin(player)) return true;
-
                 if (args.length < 2) {
                     player.sendMessage(PFX_ERR + "Usage: §f/mi owner-tag <player1,player2,...>");
                     return true;
                 }
-
                 ItemStack item = player.getInventory().getItemInMainHand();
                 if (item == null || item.getType().isAir()) {
                     player.sendMessage(PFX_ERR + "You must be holding an item in your main hand.");
                     return true;
                 }
-
                 String owners = args[1].toLowerCase().trim();
                 ItemMeta meta = item.getItemMeta();
                 if (meta == null) return true;
-
                 NamespacedKey ownerKey = new NamespacedKey(plugin, "owner_tag");
                 meta.getPersistentDataContainer().set(ownerKey, PersistentDataType.STRING, owners);
                 item.setItemMeta(meta);
-
                 org.ThienNguyen.Lore.LoreGenerator.rebuild(item);
                 org.ThienNguyen.Listener.CacheListener.refreshCache(player);
-
                 player.sendMessage(PFX_OK + "Applied owner tag(s): §e" + owners);
                 return true;
             }
-
             case "del-tag" -> {
                 if (!(sender instanceof Player player)) return true;
                 if (!checkAdmin(player)) return true;
-
                 if (args.length < 2) {
                     player.sendMessage(PFX_ERR + "Usage: §f/mi del-tag <player>");
                     return true;
                 }
-
                 ItemStack item = player.getInventory().getItemInMainHand();
                 if (item == null || item.getType().isAir()) {
                     player.sendMessage(PFX_ERR + "You must be holding an item in your main hand.");
                     return true;
                 }
-
                 ItemMeta meta = item.getItemMeta();
                 if (meta == null) return true;
-
                 NamespacedKey ownerKey = new NamespacedKey(plugin, "owner_tag");
                 String owners = meta.getPersistentDataContainer().get(ownerKey, PersistentDataType.STRING);
                 if (owners == null || owners.isEmpty()) {
                     player.sendMessage(PFX_WRN + "This item has no owner tag.");
                     return true;
                 }
-
                 String target = args[1].trim();
                 List<String> remaining = new ArrayList<>();
                 boolean found = false;
@@ -413,41 +352,34 @@ public class MyItemCommand implements CommandExecutor {
                     }
                     remaining.add(trimmed);
                 }
-
                 if (!found) {
                     player.sendMessage(PFX_WRN + "§e" + target + " §7is not on this item's owner tag.");
                     return true;
                 }
-
                 if (remaining.isEmpty()) {
                     meta.getPersistentDataContainer().remove(ownerKey);
                 } else {
                     meta.getPersistentDataContainer().set(ownerKey, PersistentDataType.STRING, String.join(",", remaining));
                 }
                 item.setItemMeta(meta);
-
                 org.ThienNguyen.Lore.LoreGenerator.rebuild(item);
                 org.ThienNguyen.Listener.CacheListener.refreshCache(player);
-
                 player.sendMessage(PFX_OK + "Removed owner tag: §e" + target);
                 return true;
             }
             case "evo" -> {
                 if (!(sender instanceof Player player)) return true;
-
                 if (args.length < 4) {
                     player.sendMessage(PFX + "Usage: §f/mi evo <target|ALL> <amount> <new_item_id>");
                     player.sendMessage(PFX + "§7- §ftarget §7: Mob name (§eZOMBIE§7, §eSKELETON§7...) or MythicMobs ID.");
                     player.sendMessage(PFX + "§7- §fALL §7: Any kill counts.");
                     return true;
                 }
-
                 ItemStack item = player.getInventory().getItemInMainHand();
                 if (item == null || item.getType().isAir()) {
                     player.sendMessage(PFX_ERR + "You must be holding an item in your main hand.");
                     return true;
                 }
-
                 String target = args[1];
                 int required;
                 try {
@@ -457,30 +389,24 @@ public class MyItemCommand implements CommandExecutor {
                     return true;
                 }
                 String nextId = args[3];
-
                 if (Main.getInstance().getItemDatabase().loadItem(nextId) == null) {
                     player.sendMessage(PFX_ERR + "ID '§f" + nextId + "§7' does not exist in the Item Database.");
                     return true;
                 }
-
                 org.bukkit.inventory.meta.ItemMeta meta = item.getItemMeta();
                 org.bukkit.persistence.PersistentDataContainer pdc = meta.getPersistentDataContainer();
-
                 pdc.set(org.ThienNguyen.Evolution.EvolutionManager.TARGET_KEY, org.bukkit.persistence.PersistentDataType.STRING, target);
                 pdc.set(org.ThienNguyen.Evolution.EvolutionManager.CURRENT_KEY, org.bukkit.persistence.PersistentDataType.INTEGER, 0);
                 pdc.set(org.ThienNguyen.Evolution.EvolutionManager.REQUIRED_KEY, org.bukkit.persistence.PersistentDataType.INTEGER, required);
                 pdc.set(org.ThienNguyen.Evolution.EvolutionManager.NEXT_ID_KEY, org.bukkit.persistence.PersistentDataType.STRING, nextId);
-
                 item.setItemMeta(meta);
                 org.ThienNguyen.Evolution.EvolutionManager.addProgress(player, item, "INITIALIZE_ONLY");
-
                 player.sendMessage(PFX_OK + "Evolution configured for item.");
                 player.sendMessage(PFX + "Target  : §e" + target);
                 player.sendMessage(PFX + "Kills   : §e" + required);
                 player.sendMessage(PFX + "Evolves → §b" + nextId);
                 return true;
             }
-
             case "ability" -> {
                 if (!(sender instanceof Player player)) return true;
                 if (args.length < 4) {
@@ -501,7 +427,6 @@ public class MyItemCommand implements CommandExecutor {
                     player.sendMessage(PFX_ERR + "Invalid number format.");
                 }
             }
-
             case "buff", "debuff" -> {
                 if (!(sender instanceof Player player)) return true;
                 if (!checkAdmin(player)) return true;
@@ -529,7 +454,6 @@ public class MyItemCommand implements CommandExecutor {
                     player.sendMessage(PFX_ERR + "Level must be an integer.");
                 }
             }
-
             case "skill" -> {
                 if (!(sender instanceof Player player)) return true;
                 if (!checkAdmin(player)) return true;
@@ -539,40 +463,33 @@ public class MyItemCommand implements CommandExecutor {
                 }
                 ItemStack item = player.getInventory().getItemInMainHand();
                 if (item == null || item.getType().isAir()) return true;
-
                 String typeInput = args[1];
                 String skillName = args[2];
                 String trigger = args[3].toUpperCase();
-
                 try {
                     int cooldown = Integer.parseInt(args[4]);
                     int level = Integer.parseInt(args[5]);
-
                     ISkill skill = SkillManager.getSkill(skillName);
                     if (skill == null) {
                         player.sendMessage(PFX_ERR + "Skill §f" + skillName + " §7does not exist.");
                         return true;
                     }
-
                     var meta = item.getItemMeta();
                     if (meta != null) {
                         NamespacedKey key = new NamespacedKey(Main.getInstance(), "item_skills");
                         String skillEntry = skill.getName() + ":" + trigger + ":" + cooldown + ":" + level + ":" + typeInput;
                         String oldData = meta.getPersistentDataContainer().get(key, PersistentDataType.STRING);
                         String newData = (oldData == null || oldData.isEmpty()) ? skillEntry : oldData + "," + skillEntry;
-
                         meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, newData);
                         item.setItemMeta(meta);
                         org.ThienNguyen.Lore.SkillLore.updateLore(item);
                         org.ThienNguyen.Listener.CacheListener.refreshCache(player);
-
                         player.sendMessage(PFX_OK + "Skill §b" + skill.getName() + " §7added to item.");
                     }
                 } catch (NumberFormatException e) {
                     player.sendMessage(PFX_ERR + "Invalid number format.");
                 }
             }
-
             case "upgrade" -> {
                 if (!(sender instanceof Player player)) {
                     sender.sendMessage(PFX_ERR + "This command can only be used by players.");
@@ -581,7 +498,6 @@ public class MyItemCommand implements CommandExecutor {
                 new org.ThienNguyen.Utils.GUI().openUpgrade(player);
                 return true;
             }
-
             case "givegem" -> {
                 if (!sender.hasPermission("myitem.admin")) {
                     sender.sendMessage(PFX_ERR + "You do not have permission.");
@@ -591,23 +507,19 @@ public class MyItemCommand implements CommandExecutor {
                     sender.sendMessage(PFX_ERR + "Usage: §f/myitem givegem <id> <player> <amount>");
                     return true;
                 }
-
                 try {
                     int id = Integer.parseInt(args[1]);
                     Player targetPlayer = Bukkit.getPlayer(args[2]);
                     int amount = Integer.parseInt(args[3]);
-
                     if (targetPlayer == null || !targetPlayer.isOnline()) {
                         sender.sendMessage(PFX_ERR + "Player §e" + args[2] + " §7is not online.");
                         return true;
                     }
-
                     ItemStack gem = org.ThienNguyen.Utils.Upgrade.createGemFromConfig(id);
                     if (gem == null) {
                         sender.sendMessage(PFX_ERR + "Gem ID §e" + id + " §7not found in §nUpgrade/Gem.yml§7.");
                         return true;
                     }
-
                     gem.setAmount(amount);
                     Map<Integer, ItemStack> overFlow = targetPlayer.getInventory().addItem(gem);
                     if (!overFlow.isEmpty()) {
@@ -616,20 +528,16 @@ public class MyItemCommand implements CommandExecutor {
                         }
                         targetPlayer.sendMessage(lang.getMessage("upgrade.gem-fullinventory", "{gem}"));
                     }
-
                     String gemName = gem.getItemMeta().hasDisplayName()
                             ? gem.getItemMeta().getDisplayName()
                             : gem.getType().name();
-
                     targetPlayer.sendMessage(lang.getMessage("upgrade.gem-received", "{gem}", gemName));
                     sender.sendMessage(PFX_OK + "Sent §e" + amount + "x " + gemName + " §7to §f" + targetPlayer.getName() + "§7.");
-
                 } catch (NumberFormatException e) {
                     sender.sendMessage(PFX_ERR + "Invalid ID or amount.");
                 }
                 return true;
             }
-
             case "giveamulet" -> {
                 if (!sender.hasPermission("myitem.admin")) {
                     sender.sendMessage(PFX_ERR + "You do not have permission.");
@@ -639,48 +547,40 @@ public class MyItemCommand implements CommandExecutor {
                     sender.sendMessage(PFX_ERR + "Usage: §f/myitem giveamulet <player> <amount>");
                     return true;
                 }
-
                 Player target = org.bukkit.Bukkit.getPlayer(args[1]);
                 if (target == null) {
                     sender.sendMessage(PFX_ERR + "Player not found: §f" + args[1]);
                     return true;
                 }
-
                 try {
                     int amount = Integer.parseInt(args[2]);
                     if (amount <= 0) amount = 1;
-
                     ItemStack amulet = org.ThienNguyen.Utils.Upgrade.createProtectionScroll();
                     if (amulet == null) {
                         sender.sendMessage(PFX_ERR + "Protection scroll config not found in §nUpgrade/protection.yml§7.");
                         return true;
                     }
-
                     amulet.setAmount(amount);
                     if (target.getInventory().firstEmpty() == -1) {
                         target.getWorld().dropItemNaturally(target.getLocation(), amulet);
                     } else {
                         target.getInventory().addItem(amulet);
                     }
-
                     sender.sendMessage(lang.getMessage("upgrade.amulet-sent",
                             "{amount}", String.valueOf(amount),
                             "{player}", target.getName()));
                     target.sendMessage(lang.getMessage("upgrade.amulet-received",
                             "{amount}", String.valueOf(amount)));
-
                 } catch (NumberFormatException e) {
                     sender.sendMessage(PFX_ERR + "Amount §f" + args[2] + " §7must be an integer.");
                 }
                 return true;
             }
-
             case "trans" -> {
                 if (!(sender instanceof Player player)) return true;
                 new org.ThienNguyen.Utils.ChuyenHoa().openGUI(player);
                 return true;
             }
-
             case "unskill" -> {
                 if (!(sender instanceof Player player)) return true;
                 if (!checkAdmin(player)) return true;
@@ -688,27 +588,22 @@ public class MyItemCommand implements CommandExecutor {
                     player.sendMessage(PFX_ERR + "Usage: §f/mi unskill <skill_name>");
                     return true;
                 }
-
                 ItemStack item = player.getInventory().getItemInMainHand();
                 if (item == null || item.getType().isAir()) {
                     player.sendMessage(PFX_ERR + "You must be holding an item in your main hand.");
                     return true;
                 }
-
                 String skillToRemove = args[1].toUpperCase().trim();
                 var meta = item.getItemMeta();
                 if (meta == null) return true;
-
                 NamespacedKey skillKey = new NamespacedKey(Main.getInstance(), "item_skills");
                 NamespacedKey loreStartKey = new NamespacedKey(Main.getInstance(), "skill_lore_start");
                 NamespacedKey loreEndKey = new NamespacedKey(Main.getInstance(), "skill_lore_end");
-
                 String oldData = meta.getPersistentDataContainer().get(skillKey, PersistentDataType.STRING);
                 if (oldData == null || oldData.trim().isEmpty()) {
                     player.sendMessage(PFX_WRN + "This item has no skills to remove.");
                     return true;
                 }
-
                 List<String> skillList = new ArrayList<>();
                 boolean removed = false;
                 for (String entry : oldData.split(",")) {
@@ -721,12 +616,10 @@ public class MyItemCommand implements CommandExecutor {
                     }
                     skillList.add(entry);
                 }
-
                 if (!removed) {
                     player.sendMessage(PFX_ERR + "Skill §f" + skillToRemove + " §7not found on this item.");
                     return true;
                 }
-
                 if (meta.hasLore()) {
                     List<String> lore = new ArrayList<>(meta.getLore());
                     Integer oldStart = meta.getPersistentDataContainer().get(loreStartKey, PersistentDataType.INTEGER);
@@ -736,7 +629,6 @@ public class MyItemCommand implements CommandExecutor {
                         meta.setLore(lore);
                     }
                 }
-
                 if (skillList.isEmpty()) {
                     meta.getPersistentDataContainer().remove(skillKey);
                     meta.getPersistentDataContainer().remove(loreStartKey);
@@ -744,30 +636,24 @@ public class MyItemCommand implements CommandExecutor {
                 } else {
                     meta.getPersistentDataContainer().set(skillKey, PersistentDataType.STRING, String.join(",", skillList));
                 }
-
                 item.setItemMeta(meta);
                 org.ThienNguyen.Lore.SkillLore.updateLore(item);
                 player.sendMessage(PFX_OK + "Skill §f" + skillToRemove + " §7removed from item.");
                 return true;
             }
-
             case "enchant" -> {
                 if (!(sender instanceof Player player)) return true;
                 if (args.length < 3) {
                     player.sendMessage(PFX_ERR + "Usage: §f/mi enchant <name> <level>");
                     return true;
                 }
-
                 ItemStack item = player.getInventory().getItemInMainHand();
-
                 org.bukkit.NamespacedKey key = org.bukkit.NamespacedKey.minecraft(args[1].toLowerCase());
                 org.bukkit.enchantments.Enchantment enchant = org.bukkit.enchantments.Enchantment.getByKey(key);
-
                 if (enchant == null) {
                     player.sendMessage(PFX_ERR + "Enchantment not found: §f" + args[1]);
                     return true;
                 }
-
                 try {
                     int level = Integer.parseInt(args[2]);
                     item.addUnsafeEnchantment(enchant, level);
@@ -777,19 +663,11 @@ public class MyItemCommand implements CommandExecutor {
                     player.sendMessage(PFX_ERR + "Level must be a number.");
                 }
             }
-
-// Updated block for the "gemstone" case in your command handler.
-// Only two things changed from your version:
-//   1. Usage text / examples now mention "socket_remover" as a valid type.
-//   2. A new switch branch reads SOCKET_REMOVER items out of Gem.yml,
-//      the same way "remover" already does.
-
             case "gemstone" -> {
                 if (!sender.hasPermission("myitem.admin")) {
                     sender.sendMessage(PFX_ERR + "You do not have permission.");
                     return true;
                 }
-
                 if (args.length < 5 || !args[1].equalsIgnoreCase("give")) {
                     sender.sendMessage(PFX_ERR + "Usage: §f/mi gemstone give <gem|drill|remover|socket_remover> <id> <player> <amount>");
                     sender.sendMessage(PFX + "Examples:");
@@ -799,35 +677,25 @@ public class MyItemCommand implements CommandExecutor {
                     sender.sendMessage("  §f/mi gemstone give socket_remover socket_remover_legendary Steve 3");
                     return true;
                 }
-
                 String type = args[2].toLowerCase();
                 String id = args[3];
                 Player target = Bukkit.getPlayer(args[4]);
                 int amount = 1;
-
                 try {
                     if (args.length >= 6) amount = Integer.parseInt(args[5]);
                 } catch (NumberFormatException ignored) {
                     sender.sendMessage(PFX_ERR + "Amount must be an integer.");
                     return true;
                 }
-
                 if (target == null) {
                     sender.sendMessage(PFX_ERR + "Player not found: §f" + args[4]);
                     return true;
                 }
-
                 ItemStack itemResult = null;
                 String itemTag = "";
-
                 switch (type) {
                     case "gem" -> {
                         FileConfiguration gemConfig = Main.getInstance().getGemConfig();
-                        // realPath may be a full dotted path (e.g. "gems.ruby1") if the
-                        // entry is nested under a wrapper section rather than being a
-                        // flat top-level key. Always store the short `id` on the item
-                        // (that's what other systems look it up by), but read the
-                        // material/display-name/lore/model-id from realPath.
                         String realPath = resolveIdCaseInsensitive(gemConfig, id);
                         if (realPath != null) {
                             itemResult = createGemItem(id, realPath, gemConfig, "GEMSTONE");
@@ -838,9 +706,6 @@ public class MyItemCommand implements CommandExecutor {
                         FileConfiguration typeConfig = Main.getInstance().getGemTypeConfig();
                         String drillPath = org.ThienNguyen.GemSocket.GemType.resolveDrillPath(id);
                         if (drillPath != null) {
-                            // drillPath (e.g. "legendary.drills.DRILL_LEGENDARY") is used to read
-                            // material/display-name/lore/model-id, but the item's stored gem_item_id
-                            // must stay as the short `id`, since GemDucLo looks drills up by that id.
                             itemResult = createGemItem(id, drillPath, typeConfig, "DRILL");
                             itemTag = "DRILL";
                         } else {
@@ -856,9 +721,6 @@ public class MyItemCommand implements CommandExecutor {
                         }
                     }
                     case "socket_remover" -> {
-                        // Configured in Tools.yml exactly like "remover" — each entry needs
-                        // a "type" field (a rarity, or "ANY") that GemThaoLo reads to
-                        // decide which empty sockets this item is allowed to remove.
                         FileConfiguration socketRemoverConfig = Main.getInstance().getGemToolsConfig();
                         String realPath = resolveIdCaseInsensitive(socketRemoverConfig, id);
                         if (realPath != null) {
@@ -871,7 +733,6 @@ public class MyItemCommand implements CommandExecutor {
                         return true;
                     }
                 }
-
                 if (itemResult != null) {
                     itemResult.setAmount(amount);
                     target.getInventory().addItem(itemResult);
@@ -883,32 +744,24 @@ public class MyItemCommand implements CommandExecutor {
                 }
                 return true;
             }
-
             case "editor" -> {
                 if (!(sender instanceof Player player)) return true;
-
                 String link = "https://windycraft.com/editor";
-
                 net.md_5.bungee.api.chat.TextComponent message = new net.md_5.bungee.api.chat.TextComponent(
                         PFX + "Open the item designer at: ");
-
                 net.md_5.bungee.api.chat.TextComponent linkComponent =
                         new net.md_5.bungee.api.chat.TextComponent("§b§n" + link);
-
                 linkComponent.setHoverEvent(new net.md_5.bungee.api.chat.HoverEvent(
                         net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT,
                         new net.md_5.bungee.api.chat.ComponentBuilder("§eClick to copy the designer link!").create()
                 ));
-
                 linkComponent.setClickEvent(new net.md_5.bungee.api.chat.ClickEvent(
                         net.md_5.bungee.api.chat.ClickEvent.Action.COPY_TO_CLIPBOARD,
                         link
                 ));
-
                 message.addExtra(linkComponent);
                 player.spigot().sendMessage(message);
             }
-
             case "expire" -> {
                 if (!(sender instanceof Player player)) {
                     sender.sendMessage(PFX_ERR + "This command can only be used by players.");
@@ -918,33 +771,26 @@ public class MyItemCommand implements CommandExecutor {
                     player.sendMessage(PFX_ERR + "You do not have permission.");
                     return true;
                 }
-
                 FileConfiguration expConfig = Main.getInstance().setupConfig("Listener/Expire.yml");
-
                 if (args.length < 2) {
                     player.sendMessage(PFX_ERR + "Usage: §f/myitem expire <time>");
                     player.sendMessage(PFX + "Format: §fmo§7(month) §fd§7(day) §fh§7(hour) §fm§7(min) §fs§7(sec)");
                     player.sendMessage(PFX + "Example: §f/myitem expire 1h 5m 2s §7or §f/myitem expire 2d");
                     return true;
                 }
-
                 ItemStack item = player.getInventory().getItemInMainHand();
                 if (item == null || item.getType().isAir()) {
                     player.sendMessage(expConfig.getString("messages.no-item",
                             PFX_ERR + "You must be holding an item in your main hand."));
                     return true;
                 }
-
                 long durationMs = org.ThienNguyen.Listener.Expire.parseDuration(args, 1);
-
                 if (durationMs <= 0) {
                     player.sendMessage(expConfig.getString("messages.invalid-format",
                             PFX_ERR + "Invalid time format."));
                     return true;
                 }
-
                 long finalExpiryTimestamp = System.currentTimeMillis() + durationMs;
-
                 var meta = item.getItemMeta();
                 if (meta != null) {
                     meta.getPersistentDataContainer().set(
@@ -954,10 +800,8 @@ public class MyItemCommand implements CommandExecutor {
                     );
                     item.setItemMeta(meta);
                     org.ThienNguyen.Lore.LoreGenerator.rebuild(item);
-
                     StringBuilder timeVisual = new StringBuilder();
                     for (int i = 1; i < args.length; i++) timeVisual.append(args[i]).append(" ");
-
                     String successMsg = expConfig.getString("messages.success-applied",
                             PFX_OK + "Expiry applied: {time}");
                     player.sendMessage(successMsg.replace("{time}", timeVisual.toString().trim()));
@@ -965,7 +809,6 @@ public class MyItemCommand implements CommandExecutor {
                 }
                 return true;
             }
-
             case "consume" -> {
                 if (!sender.hasPermission("myitem.admin")) {
                     sender.sendMessage(PFX_ERR + "You do not have permission.");
@@ -975,7 +818,6 @@ public class MyItemCommand implements CommandExecutor {
                     sender.sendMessage(PFX_ERR + "Usage: §f/myitem consume give <id> <amount> <player>");
                     return true;
                 }
-
                 if (args[1].equalsIgnoreCase("give")) {
                     String consumeId = args[2];
                     int amount;
@@ -985,24 +827,20 @@ public class MyItemCommand implements CommandExecutor {
                         sender.sendMessage(PFX_ERR + "Amount must be a number.");
                         return true;
                     }
-
                     Player target = Bukkit.getPlayer(args[4]);
                     if (target == null) {
                         sender.sendMessage(PFX_ERR + "Player §f" + args[4] + " §7is not online.");
                         return true;
                     }
-
                     ItemStack consumeItem = org.ThienNguyen.Consume.ConsumeManager.getConsumeItem(consumeId, amount);
                     if (consumeItem == null) {
                         sender.sendMessage(PFX_ERR + "Item ID §f" + consumeId + " §7does not exist in §nConsume.yml§7.");
                         return true;
                     }
-
                     target.getInventory().addItem(consumeItem);
                     sender.sendMessage(PFX_OK + "Sent §f" + amount + "x " + consumeId + " §7to §e" + target.getName() + "§7.");
                 }
             }
-
             case "connect" -> {
                 if (!sender.hasPermission("myitem.admin")) {
                     sender.sendMessage(PFX_ERR + "You do not have permission.");
@@ -1019,7 +857,6 @@ public class MyItemCommand implements CommandExecutor {
                 String code = args[1].toUpperCase();
                 org.ThienNguyen.Webapi.Web.connectItem(player, code);
             }
-
             case "reload" -> {
                 if (!sender.hasPermission("myitem.admin")) {
                     sender.sendMessage(PFX_ERR + "You do not have permission.");
@@ -1028,7 +865,6 @@ public class MyItemCommand implements CommandExecutor {
                 Main.getInstance().reloadPluginConfigs();
                 sender.sendMessage(PFX_OK + "All configurations have been reloaded successfully.");
             }
-
             case "particle" -> {
                 if (!(sender instanceof Player player)) {
                     sender.sendMessage(PFX_ERR + "This command can only be used by players.");
@@ -1042,18 +878,15 @@ public class MyItemCommand implements CommandExecutor {
                     player.sendMessage(PFX_ERR + "Usage: §f/mi particle <id>");
                     return true;
                 }
-
                 ItemStack item = player.getInventory().getItemInMainHand();
                 if (item == null || item.getType().isAir()) {
                     player.sendMessage(PFX_ERR + "You must be holding an item in your main hand.");
                     return true;
                 }
-
                 String particleId = args[1];
                 if (!Main.getInstance().getParticleConfig().contains("effects." + particleId)) {
                     player.sendMessage(PFX_WRN + "ID '§f" + particleId + "§7' is not defined in §nParticle.yml§7. It will still be stored.");
                 }
-
                 var meta = item.getItemMeta();
                 if (meta != null) {
                     meta.getPersistentDataContainer().set(
@@ -1067,17 +900,14 @@ public class MyItemCommand implements CommandExecutor {
                 }
                 return true;
             }
-
             case "unparticle" -> {
                 if (!(sender instanceof Player player)) return true;
                 if (!player.hasPermission("myitem.admin")) return true;
-
                 ItemStack item = player.getInventory().getItemInMainHand();
                 if (item == null || item.getType().isAir()) {
                     player.sendMessage(PFX_ERR + "You must be holding an item in your main hand.");
                     return true;
                 }
-
                 var meta = item.getItemMeta();
                 if (meta != null) {
                     NamespacedKey key = new NamespacedKey(Main.getInstance(), "item_particle");
@@ -1092,7 +922,6 @@ public class MyItemCommand implements CommandExecutor {
                 }
                 return true;
             }
-
             case "version" -> {
                 if (!sender.hasPermission("myitem.admin")) {
                     sender.sendMessage(PFX_ERR + "You do not have permission.");
@@ -1104,7 +933,6 @@ public class MyItemCommand implements CommandExecutor {
                 }
                 org.ThienNguyen.Webapi.Update.openVersionGUI((Player) sender, plugin);
             }
-
             case "tooltip" -> {
                 if (!sender.hasPermission("myitem.admin")) {
                     sender.sendMessage(PFX_ERR + "You do not have permission.");
@@ -1114,7 +942,6 @@ public class MyItemCommand implements CommandExecutor {
                     sender.sendMessage(PFX_ERR + "This command can only be used by players.");
                     return true;
                 }
-
                 if (args.length < 2) {
                     player.sendMessage(PFX + "§8§m────────§r §eTooltip System §8§m────────");
                     player.sendMessage(PFX + "§f/mi tooltip add <type> §7— Apply tooltip frame");
@@ -1122,7 +949,6 @@ public class MyItemCommand implements CommandExecutor {
                     player.sendMessage(PFX + "§8§m─────────────────────────");
                     return true;
                 }
-
                 String subAction = args[1].toLowerCase();
                 switch (subAction) {
                     case "add" -> {
@@ -1136,7 +962,6 @@ public class MyItemCommand implements CommandExecutor {
                     default -> player.sendMessage(PFX_ERR + "Invalid action. Use §fadd §7or §fundo§7.");
                 }
             }
-
             case "update" -> {
                 if (!sender.hasPermission("myitem.admin")) {
                     sender.sendMessage(PFX_ERR + "You do not have permission.");
@@ -1158,11 +983,9 @@ public class MyItemCommand implements CommandExecutor {
                 }
                 return true;
             }
-
             case "sync" -> {
                 return new StationCMD(plugin, stationDb).onCommand(sender, command, label, args);
             }
-
             case "tiers" -> {
                 if (args.length < 2) {
                     sender.sendMessage(PFX_ERR + "Usage: §f/mi tiers <id>");
@@ -1181,38 +1004,30 @@ public class MyItemCommand implements CommandExecutor {
                 pTiers.sendMessage(PFX_OK + "Item tier updated successfully.");
                 break;
             }
-
             case "checkitem" -> {
                 if (!(sender instanceof Player player)) return true;
-
                 ItemStack item = player.getInventory().getItemInMainHand();
                 if (item == null || item.getType().isAir()) {
                     player.sendMessage(PFX_ERR + "You must be holding an item in your main hand.");
                     return true;
                 }
-
                 player.sendMessage("§8§m──────────§r §b§lItem Inspector §8§m──────────");
                 player.sendMessage("§7Material      §8: §f" + item.getType().name());
-
                 ItemMeta meta = item.getItemMeta();
                 if (meta != null) {
-                    // Kiểm tra màu nếu là trang bị da (Leather Armor)
                     if (meta instanceof org.bukkit.inventory.meta.LeatherArmorMeta leatherMeta) {
                         org.bukkit.Color color = leatherMeta.getColor();
                         String hexColor = String.format("#%06X", (0xFFFFFF & color.asRGB()));
                         player.sendMessage("§7Leather Color §8: §fRGB(" + color.getRed() + ", " + color.getGreen() + ", " + color.getBlue() + ") §8[" + hexColor + "]");
                     }
-
                     if (meta.hasCustomModelData()) {
                         player.sendMessage("§7Custom Model  §8: §e" + meta.getCustomModelData());
                     } else {
                         player.sendMessage("§7Custom Model  §8: §8none");
                     }
-
                     player.sendMessage("§7PDC Keys:");
                     var pdc = meta.getPersistentDataContainer();
                     var keys = pdc.getKeys();
-
                     if (keys.isEmpty()) {
                         player.sendMessage("  §8(no persistent data on this item)");
                     } else {
@@ -1242,38 +1057,30 @@ public class MyItemCommand implements CommandExecutor {
             }
             case "dye-color" -> {
                 if (!(sender instanceof Player player)) return true;
-
                 if (args.length < 4) {
                     player.sendMessage(PFX_ERR + "Usage: /myitem dye-color <red> <green> <blue>");
                     return true;
                 }
-
                 ItemStack item = player.getInventory().getItemInMainHand();
                 if (item == null || item.getType().isAir()) {
                     player.sendMessage(PFX_ERR + "You must be holding an item in your main hand.");
                     return true;
                 }
-
                 ItemMeta meta = item.getItemMeta();
                 if (!(meta instanceof org.bukkit.inventory.meta.LeatherArmorMeta leatherMeta)) {
                     player.sendMessage(PFX_ERR + "The item in your main hand must be leather armor.");
                     return true;
                 }
-
                 try {
                     int red = Integer.parseInt(args[1]);
                     int green = Integer.parseInt(args[2]);
                     int blue = Integer.parseInt(args[3]);
-
-                    // Giới hạn giá trị màu từ 0 đến 255
                     red = Math.clamp(red, 0, 255);
                     green = Math.clamp(green, 0, 255);
                     blue = Math.clamp(blue, 0, 255);
-
                     org.bukkit.Color color = org.bukkit.Color.fromRGB(red, green, blue);
                     leatherMeta.setColor(color);
                     item.setItemMeta(leatherMeta);
-
                     String hexColor = String.format("#%06X", (0xFFFFFF & color.asRGB()));
                     player.sendMessage("§aSuccessfully updated leather color to RGB(" + red + ", " + green + ", " + blue + ") §8[" + hexColor + "]");
                 } catch (NumberFormatException e) {
@@ -1284,35 +1091,29 @@ public class MyItemCommand implements CommandExecutor {
             case "passive" -> {
                 if (!(sender instanceof Player player)) return true;
                 if (!checkAdmin(player)) return true;
-
                 if (args.length < 2) {
                     player.sendMessage(PFX + "Usage:");
                     player.sendMessage("  §f/mi passive bind <id> §7— Bind a passive to held item");
                     player.sendMessage("  §f/mi passive unbind <id> §7— Unbind a passive from held item");
                     return true;
                 }
-
                 String action = args[1].toLowerCase();
                 ItemStack item = player.getInventory().getItemInMainHand();
                 if (item == null || item.getType().isAir()) {
                     player.sendMessage(PFX_ERR + "You must be holding an item in your main hand.");
                     return true;
                 }
-
                 ItemMeta meta = item.getItemMeta();
                 if (meta == null) return true;
-
                 NamespacedKey passiveKey = new NamespacedKey(plugin, "passive_ids");
                 String oldData = meta.getPersistentDataContainer().get(passiveKey, PersistentDataType.STRING);
                 if (oldData == null) oldData = "";
-
                 List<String> currentIds = new ArrayList<>();
                 if (!oldData.isEmpty()) {
                     for (String pid : oldData.split(",")) {
                         if (!pid.trim().isEmpty()) currentIds.add(pid.trim());
                     }
                 }
-
                 switch (action) {
                     case "bind" -> {
                         if (args.length < 3) {
@@ -1356,7 +1157,6 @@ public class MyItemCommand implements CommandExecutor {
                 }
                 return true;
             }
-
             case "storage" -> {
                 if (args.length < 2) {
                     sender.sendMessage(PFX + "§f/myitem storage create <type> §7— Create new yml file");
@@ -1366,10 +1166,8 @@ public class MyItemCommand implements CommandExecutor {
                     sender.sendMessage(PFX + "§f/myitem storage browse §7— Browse item GUI");
                     return true;
                 }
-
                 ItemStorageManager ism = plugin.getItemStorageManager();
                 String action = args[1].toLowerCase();
-
                 switch (action) {
                     case "browse" -> {
                         if (!(sender instanceof Player p)) {
@@ -1432,13 +1230,10 @@ public class MyItemCommand implements CommandExecutor {
                     default -> sender.sendMessage(PFX_ERR + "Unknown action: §f" + action);
                 }
             }
-
             default -> sendHelp(sender, 1);
         }
         return true;
     }
-
-    // ── Permission helper ─────────────────────────────────────────────────────
     private boolean checkAdmin(Player p) {
         if (!p.hasPermission("myitem.admin")) {
             p.sendMessage(PFX_ERR + "You do not have permission to perform this action.");
@@ -1446,11 +1241,9 @@ public class MyItemCommand implements CommandExecutor {
         }
         return true;
     }
-
     private ItemStack createGemItem(String id, FileConfiguration config, String itemTag) {
         return createGemItem(id, id, config, itemTag);
     }
-
     /**
      * @param storedId  id lưu vào PDC (gem_item_id) — dùng để đối chiếu về sau (vd: GemDucLo tra cứu drill).
      * @param configPath đường dẫn dùng để ĐỌC material/display-name/lore/model-id trong config
@@ -1463,19 +1256,15 @@ public class MyItemCommand implements CommandExecutor {
             org.bukkit.Material mat = org.bukkit.Material.valueOf(matStr.toUpperCase());
             ItemStack item = new ItemStack(mat);
             org.bukkit.inventory.meta.ItemMeta meta = item.getItemMeta();
-
             if (meta != null) {
                 meta.setDisplayName(org.bukkit.ChatColor.translateAlternateColorCodes('&',
                         config.getString(configPath + ".display-name", storedId)));
-
                 List<String> lore = new ArrayList<>();
                 for (String line : config.getStringList(configPath + ".lore"))
                     lore.add(org.bukkit.ChatColor.translateAlternateColorCodes('&', line));
                 meta.setLore(lore);
-
                 if (config.contains(configPath + ".model-id"))
                     meta.setCustomModelData(config.getInt(configPath + ".model-id"));
-
                 NamespacedKey typeKey = new NamespacedKey(Main.getInstance(), "gem_item_type");
                 NamespacedKey idKey   = new NamespacedKey(Main.getInstance(), "gem_item_id");
                 meta.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, itemTag);
@@ -1493,12 +1282,8 @@ public class MyItemCommand implements CommandExecutor {
         for (String key : config.getKeys(false)) {
             if (key.equalsIgnoreCase(id)) return key;
         }
-        // Fall back to a recursive search so IDs nested under a wrapper
-        // section (e.g. "gems.ruby1" instead of a flat top-level "ruby1")
-        // still resolve. Returns the full dotted path if found.
         return findKeyRecursive(config, id);
     }
-
     private String findKeyRecursive(ConfigurationSection section, String id) {
         for (String key : section.getKeys(false)) {
             if (key.equalsIgnoreCase(id)) {
@@ -1518,41 +1303,30 @@ public class MyItemCommand implements CommandExecutor {
         String miPrefix = "§8[§4§l?§8]§3 /myitem ";
         String basicPrefix = "§8[§4§l?§8]§3 /";
         String rpgPrefix = "§8[§4§l?§8]§3 /rpginv ";
-
-
         helpLines.add(miPrefix + "save <id> §7- Lưu item vào database");
         helpLines.add(miPrefix + "load <id> §7- Lấy item từ database");
         helpLines.add(miPrefix + "delete <id> §7- Xóa item database");
         helpLines.add(miPrefix + "stats <loại> <giá trị> §7- Chỉnh chỉ số");
         helpLines.add(miPrefix + "element <id> <lv> §7- Cường hóa nguyên tố");
-
-
         helpLines.add(miPrefix + "ability <tên> <lv> <%> §7- Gán nội tại");
         helpLines.add(miPrefix + "buff <tên> <lv> §7- Gán hiệu ứng tốt");
         helpLines.add(miPrefix + "debuff <tên> <lv> §7- Gán hiệu ứng xấu");
         helpLines.add(miPrefix + "skill <type> <tên> <trig> <cd> <lv>");
         helpLines.add(miPrefix + "unskill <tên> §7- Gỡ kỹ năng khỏi item");
-
-
         helpLines.add(basicPrefix + "setname <tên> §7- Đổi tên vật phẩm");
         helpLines.add(basicPrefix + "setlore <line> <text> §7- Sửa lore");
         helpLines.add(basicPrefix + "material <loại> §7- Đổi vật liệu");
         helpLines.add(basicPrefix + "setmodel <id> §7- Đặt CustomModelData");
         helpLines.add(basicPrefix + "unbreaking §7- Làm item không hỏng");
-
-
         helpLines.add(basicPrefix + "attribute <attr> <val> §7- Thuộc tính gốc");
         helpLines.add(basicPrefix + "itemflag <flag> §7- Ẩn flags vật phẩm");
         helpLines.add(miPrefix + "enchant <enchant> <level> §7- Enchant item");
         helpLines.add(miPrefix + "gemstone give <typegem> <id> <p> <amt> §7- Gem cũ");
         helpLines.add(miPrefix + "reload §7- Nạp lại toàn bộ config");
-
-
         helpLines.add(miPrefix + "upgrade §7- Mở giao diện Cường Hóa");
         helpLines.add(miPrefix + "trans §7- Mở giao diện Chuyển Hóa Cấp Độ");
         helpLines.add(miPrefix + "givegem <id> §7- lấy đá cường hoá");
         helpLines.add(miPrefix + "giveamulet §7- Lấy bùa hộ mệnh");
-
         helpLines.add(rpgPrefix + "§7- Mở kho đồ trang sức cá nhân");
         helpLines.add(rpgPrefix + "type <id> §7- Gán loại trang sức cầm tay");
         helpLines.add(rpgPrefix + "untype §7- Xóa loại trang sức khỏi item");
@@ -1582,18 +1356,13 @@ public class MyItemCommand implements CommandExecutor {
         helpLines.add(miPrefix + "del-tag <player> §7- Xóa nhãn sở hữu khỏi item trên tay §c§lNEW");
         int itemsPerPage = 5;
         int maxPages = (int) Math.ceil((double) helpLines.size() / itemsPerPage);
-
         if (page < 1 || page > maxPages) page = 1;
-
         sender.sendMessage("§7[§b◀§7]§8§m ------§7[§2 Page§f (§d" + page + "/" + maxPages + "§f) §7]§8§m ------§7 [§b▶§7]");
-
         int start = (page - 1) * itemsPerPage;
         int end = Math.min(start + itemsPerPage, helpLines.size());
-
         for (int i = start; i < end; i++) {
             sender.sendMessage(helpLines.get(i));
         }
-
         sender.sendMessage("§7[§b◀§7]§8§m ----------------------------§7 [§b▶§7]");
     }
 }

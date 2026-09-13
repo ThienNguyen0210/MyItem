@@ -1,5 +1,4 @@
 package org.ThienNguyen.Listener.Passive;
-
 import org.ThienNguyen.Listener.Passive.Trigger.PassiveTrigger;
 import org.ThienNguyen.Main;
 import org.bukkit.NamespacedKey;
@@ -10,49 +9,30 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
-
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
-
-
 public class PassiveManager {
-
-    
     private static PassiveManager INSTANCE;
     public static PassiveManager getInstance() { return INSTANCE; }
     public static void init() { INSTANCE = new PassiveManager(); INSTANCE.loadAll(); }
-
-    
-    
     private final Map<String, PassiveDef> registry = new ConcurrentHashMap<>();
-
-    
     private final Map<UUID, Map<String, Long>> cooldowns = new ConcurrentHashMap<>();
-
-    
     private final Map<UUID, Set<String>> passiveIdsCache = new ConcurrentHashMap<>();
-
-    
     private static final NamespacedKey PDC_KEY = new NamespacedKey(Main.getInstance(), "passive_ids");
-
-    
     public void loadAll() {
         registry.clear();
-
         File folder = new File(Main.getInstance().getDataFolder(), "Listener/Passives");
         if (!folder.exists()) {
             folder.mkdirs();
             writeExample(folder);
         }
-
         File[] files = folder.listFiles((dir, name) -> name.endsWith(".yml"));
         if (files == null || files.length == 0) {
             Main.getInstance().getLogger().info("[Passive] Không tìm thấy file passive nào.");
             return;
         }
-
         int loaded = 0;
         for (File f : files) {
             YamlConfiguration cfg = YamlConfiguration.loadConfiguration(f);
@@ -64,47 +44,31 @@ public class PassiveManager {
         }
         Main.getInstance().getLogger().info("[Passive] Đã load " + loaded + " passive(s).");
     }
-
-    
-
-    
     public void trigger(PassiveTrigger triggerType,
                         Player actor,
                         LivingEntity victim,
                         double damage,
                         boolean isCrit,
                         EntityDamageByEntityEvent event) {
-
         if (actor == null) return;
-
-        
-        
         if (actor.hasMetadata(org.ThienNguyen.Listener.Passive.Mechanics.DamageMechanic.META_KEY_NORMAL_SOURCE)) return;
         if (victim != null && victim.hasMetadata(org.ThienNguyen.Listener.Passive.Mechanics.DamageMechanic.META_KEY_NORMAL_SOURCE)) return;
-
         Set<String> passiveIds = getCachedPassiveIds(actor);
         if (passiveIds.isEmpty()) return;
-
         PassiveContext ctx = new PassiveContext(actor, victim, damage, event);
-
         for (String pid : passiveIds) {
             PassiveDef def = registry.get(pid);
             if (def == null) continue;
             if (def.getTrigger() != triggerType) continue;
-            
             if (!def.checkConditions(ctx, isCrit)) continue;
             if (!rollChance(def.getChance(ctx))) continue;
             if (isOnCooldown(actor.getUniqueId(), pid)) continue;
-
             for (PassiveMechanic m : def.getMechanics()) {
                 m.execute(ctx);
             }
-
             applyCooldown(actor.getUniqueId(), pid, def.getCooldownSeconds());
         }
     }
-
-    
     public void trigger(PassiveTrigger triggerType,
                         Player actor,
                         LivingEntity victim,
@@ -112,47 +76,30 @@ public class PassiveManager {
                         boolean isCrit) {
         trigger(triggerType, actor, victim, damage, isCrit, null);
     }
-
-    
     public void triggerBlockBreak(Player actor, org.bukkit.block.Block block) {
         if (actor == null || block == null) return;
-
         Set<String> passiveIds = getCachedPassiveIds(actor);
         if (passiveIds.isEmpty()) return;
-
         PassiveContext ctx = new PassiveContext(actor, null, 0, null, block);
-
         for (String pid : passiveIds) {
             PassiveDef def = registry.get(pid);
             if (def == null) continue;
             if (def.getTrigger() != PassiveTrigger.ON_BLOCK_BREAK) continue;
-            
-            
             if (!def.checkConditions(ctx)) continue;
             if (!rollChance(def.getChance(ctx))) continue;
             if (isOnCooldown(actor.getUniqueId(), pid)) continue;
-
             for (PassiveMechanic m : def.getMechanics()) {
                 m.execute(ctx);
             }
-
             applyCooldown(actor.getUniqueId(), pid, def.getCooldownSeconds());
         }
     }
-
-    
-
-    
     private Set<String> getCachedPassiveIds(Player player) {
         return passiveIdsCache.computeIfAbsent(player.getUniqueId(), uuid -> collectPassiveIds(player));
     }
-
-    
     public void invalidatePassiveCache(UUID uuid) {
         passiveIdsCache.remove(uuid);
     }
-
-    
     private Set<String> collectPassiveIds(Player player) {
         Set<String> ids = new HashSet<>();
         ItemStack[] equip = {
@@ -176,27 +123,22 @@ public class PassiveManager {
         }
         return ids;
     }
-
     private boolean rollChance(int chance) {
         if (chance >= 100) return true;
         if (chance <= 0)   return false;
         return ThreadLocalRandom.current().nextInt(100) < chance;
     }
-
     private boolean isOnCooldown(UUID uuid, String passiveId) {
         Map<String, Long> map = cooldowns.get(uuid);
         if (map == null) return false;
         Long expire = map.get(passiveId);
         return expire != null && System.currentTimeMillis() < expire;
     }
-
     private void applyCooldown(UUID uuid, String passiveId, int seconds) {
         if (seconds <= 0) return;
         cooldowns.computeIfAbsent(uuid, k -> new ConcurrentHashMap<>())
                 .put(passiveId, System.currentTimeMillis() + (long) seconds * 1000L);
     }
-
-    
     public void handlePlayerDeath(Player player) {
         if (player == null) return;
         for (PassiveDef def : registry.values()) {
@@ -207,33 +149,24 @@ public class PassiveManager {
             }
         }
     }
-
-    
     public void clearPlayer(UUID uuid) {
         cooldowns.remove(uuid);
         passiveIdsCache.remove(uuid);
-
         for (PassiveDef def : registry.values()) {
             for (PassiveMechanic m : def.getMechanics()) {
                 clearPlayerAware(m, uuid);  
             }
         }
     }
-
     private void clearPlayerAware(PassiveMechanic mechanic, UUID uuid) {
         if (mechanic instanceof PlayerAware aware) {
             aware.onPlayerQuit(uuid);   
         }
     }
-
-    
     public Optional<PassiveDef> getDef(String id) {
         return Optional.ofNullable(registry.get(id));
     }
-
     public Collection<PassiveDef> getAllDefs() { return registry.values(); }
-
-    
     private void writeExample(File folder) {
         File ex = new File(folder, "example_execute.yml");
         if (ex.exists()) return;

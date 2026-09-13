@@ -1,5 +1,4 @@
 package org.ThienNguyen.Skill.TypeSkill;
-
 import io.lumine.mythic.api.skills.Skill;
 import io.lumine.mythic.bukkit.MythicBukkit;
 import org.ThienNguyen.Skill.ISkill;
@@ -9,37 +8,25 @@ import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import java.util.Optional;
-
 public class MythicMobsSkill implements ISkill {
     private final String skillId;
     private final JavaPlugin plugin;
-
     public MythicMobsSkill(JavaPlugin plugin, String skillId) {
         this.plugin = plugin;
         this.skillId = skillId;
     }
-
     @Override public String getName() { return skillId; }
     @Override public String getType() { return "MythicMobs"; }
     @Override public String getTrigger() { return "RIGHT_CLICK"; }
-
     @Override
     public void execute(@NotNull Player player, @Nullable LivingEntity target, int level, double baseDamage) {
         Optional<Skill> maybeSkill = MythicBukkit.inst().getSkillManager().getSkill(skillId);
         if (maybeSkill.isEmpty()) return;
-
-        
         player.setMetadata("MYITEM_CASTING_SKILL", new FixedMetadataValue(plugin, skillId));
         player.setMetadata("MYITEM_SKILL_LEVEL", new FixedMetadataValue(plugin, level));
-
-        
         player.setMetadata("MYITEM_SKILL_BASE_DAMAGE", new FixedMetadataValue(plugin, baseDamage));
-
         try {
-            
-            
             if (target != null) {
                 MythicBukkit.inst().getAPIHelper().castSkill(player, skillId, target, player.getLocation(), null, null, 1.0f);
             } else {

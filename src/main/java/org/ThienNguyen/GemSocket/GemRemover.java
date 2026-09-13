@@ -1,5 +1,4 @@
 package org.ThienNguyen.GemSocket;
-
 import org.ThienNguyen.Main;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -14,58 +13,39 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.regex.Pattern;
-
 public class GemRemover implements Listener {
-
     private final Random random = new Random();
-
     @EventHandler
     public void onRemoverApply(InventoryClickEvent event) {
         if (event.getAction() != InventoryAction.SWAP_WITH_CURSOR) return;
-
         ItemStack removerItem = event.getCursor();
         ItemStack targetItem = event.getCurrentItem();
-
         if (removerItem == null || targetItem == null || targetItem.getType() == Material.AIR) return;
-
         ItemMeta removerMeta = removerItem.getItemMeta();
         if (removerMeta == null) return;
-
         NamespacedKey typeKey = new NamespacedKey(Main.getInstance(), "gem_item_type");
         String itemType = removerMeta.getPersistentDataContainer().get(typeKey, PersistentDataType.STRING);
-
         if (itemType == null || !itemType.equals("REMOVER")) return;
-
         event.setCancelled(true);
         Player player = (Player) event.getWhoClicked();
         var lang = Main.getInstance().getLangManager();
-
         if (targetItem.getAmount() >= 2) {
             player.sendMessage(lang.getMessage("item.no-stack-allowed"));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1.0f, 0.8f);
             return;
         }
-
         NamespacedKey idKey = new NamespacedKey(Main.getInstance(), "gem_item_id");
         String removerId = removerMeta.getPersistentDataContainer().get(idKey, PersistentDataType.STRING);
-
-        // The remover ITEM's own definition lives in Tools.yml (split out of the old
-        // Gem.yml). Gems it acts on are still looked up in Gems.yml via gemConfig below.
         FileConfiguration toolsConfig = Main.getInstance().getGemToolsConfig();
         FileConfiguration gemConfig = Main.getInstance().getGemConfig();
         if (removerId == null || !toolsConfig.contains(removerId)) return;
-
-        // Mỗi loại remover chỉ gỡ được ĐÚNG 1 loại ngọc (đọc từ "type" của chính remover
-        // trong Tools.yml) — không còn gỡ ngẫu nhiên bất kỳ ngọc nào trên item nữa.
         String targetType = toolsConfig.contains(removerId + ".type")
                 ? toolsConfig.getString(removerId + ".type")
                 : null;
-
         if (targetType == null) {
             if (Main.getInstance().isGemDebugEnabled()) {
                 Main.getInstance().getLogger().warning(
@@ -74,16 +54,13 @@ public class GemRemover implements Listener {
             player.sendMessage("§cDụng cụ gỡ ngọc này chưa được cấu hình đúng! Vui lòng báo Admin.");
             return;
         }
-
         List<String> gemsOnItem = GemLogic.getGemsOnItem(targetItem);
         if (gemsOnItem.isEmpty()) {
             player.sendMessage("§cVật phẩm này không có ngọc nào để gỡ!");
             return;
         }
-
         List<String> matchingGems = new ArrayList<>();
         if (targetType.equalsIgnoreCase("ANY")) {
-            // Remover loại "ANY": gỡ được ngọc thuộc bất kỳ độ hiếm nào.
             matchingGems.addAll(gemsOnItem);
         } else {
             for (String gemId : gemsOnItem) {
@@ -93,7 +70,6 @@ public class GemRemover implements Listener {
                 }
             }
         }
-
         if (matchingGems.isEmpty()) {
             if (targetType.equalsIgnoreCase("ANY")) {
                 player.sendMessage("§cVật phẩm này không có ngọc nào để gỡ!");
@@ -102,10 +78,8 @@ public class GemRemover implements Listener {
             }
             return;
         }
-
         String removedGemId = matchingGems.get(random.nextInt(matchingGems.size()));
         String actualGemType = gemConfig.getString(removedGemId + ".type", targetType);
-
         ItemStack returnedGem = createGemItem(removedGemId);
         if (returnedGem != null) {
             if (player.getInventory().getItemInMainHand().getType() == Material.AIR) {
@@ -114,7 +88,6 @@ public class GemRemover implements Listener {
                 player.getInventory().addItem(returnedGem);
             }
         }
-
         if (removeGemFromItem(targetItem, removedGemId, actualGemType)) {
             player.sendMessage("§aĐã gỡ ngọc §f" + removedGemId + " §athành công! Ngọc đã được trả về.");
             player.playSound(player.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1f, 1f);
@@ -122,10 +95,8 @@ public class GemRemover implements Listener {
         } else {
             player.sendMessage("§cKhông thể gỡ ngọc này!");
         }
-
         removerItem.setAmount(removerItem.getAmount() - 1);
     }
-
     /**
      * Gỡ ngọc khỏi item: cập nhật item_sockets (PDC) VÀ lore trên CÙNG MỘT
      * ItemMeta, rồi commit 1 lần duy nhất ở cuối. (Bug cũ: restoreEmptySocketLore
@@ -136,20 +107,15 @@ public class GemRemover implements Listener {
     private boolean removeGemFromItem(ItemStack item, String gemIdToRemove, String socketType) {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return false;
-
         NamespacedKey socketKey = new NamespacedKey(Main.getInstance(), "item_sockets");
         String currentData = meta.getPersistentDataContainer().get(socketKey, PersistentDataType.STRING);
         if (currentData == null || currentData.isEmpty()) return false;
-
         String newData = currentData.replaceFirst(Pattern.quote(gemIdToRemove), "EMPTY_" + socketType);
         meta.getPersistentDataContainer().set(socketKey, PersistentDataType.STRING, newData);
-
         restoreEmptySocketLore(meta, gemIdToRemove, socketType);
-
         item.setItemMeta(meta);
         return true;
     }
-
     /**
      * Thay dòng lore của ngọc bị gỡ bằng dòng lỗ trống, dựa trên format thật của
      * ngọc đó (giống cách GemKham khớp dòng khi khảm ngọc, chỉ làm ngược lại) —
@@ -158,22 +124,17 @@ public class GemRemover implements Listener {
      */
     private void restoreEmptySocketLore(ItemMeta meta, String gemIdToRemove, String socketType) {
         if (!meta.hasLore()) return;
-
         FileConfiguration gemConfig = Main.getInstance().getGemConfig();
         FileConfiguration typeConfig = Main.getInstance().getGemTypeConfig();
-
         String emptyFormat = typeConfig.getString(socketType + ".format", "&7[ ○ ] Lỗ trống");
         String coloredEmpty = ChatColor.translateAlternateColorCodes('&', emptyFormat);
-
         String gemFormat = gemConfig.getString(gemIdToRemove + ".format");
         if (gemFormat == null || gemFormat.isEmpty()) {
             gemFormat = "&f[ ● ] " + gemConfig.getString(gemIdToRemove + ".display-name", gemIdToRemove);
         }
         String coloredGem = ChatColor.translateAlternateColorCodes('&', gemFormat);
-
         List<String> lore = new ArrayList<>(meta.getLore());
         boolean replaced = false;
-
         for (int i = 0; i < lore.size(); i++) {
             if (lore.get(i).equals(coloredGem)) {
                 lore.set(i, coloredEmpty);
@@ -181,8 +142,6 @@ public class GemRemover implements Listener {
                 break;
             }
         }
-
-        // Fallback: so sánh không màu, phòng trường hợp mã màu lệch nhưng nội dung giống nhau.
         if (!replaced) {
             String strippedGem = ChatColor.stripColor(coloredGem);
             for (int i = 0; i < lore.size(); i++) {
@@ -193,7 +152,6 @@ public class GemRemover implements Listener {
                 }
             }
         }
-
         if (replaced) {
             meta.setLore(lore);
         } else if (Main.getInstance().isGemDebugEnabled()) {
@@ -202,41 +160,32 @@ public class GemRemover implements Listener {
                             + "' để khôi phục — lore có thể không đồng bộ với item_sockets.");
         }
     }
-
     private ItemStack createGemItem(String gemId) {
         FileConfiguration gemConfig = Main.getInstance().getGemConfig();
         if (gemId == null || !gemConfig.contains(gemId)) return null;
         return createGemItemInternal(gemId, gemConfig, "GEMSTONE");
     }
-
     private ItemStack createGemItemInternal(String id, FileConfiguration config, String itemTag) {
         try {
             String matStr = config.getString(id + ".material", "STONE");
             Material mat = Material.valueOf(matStr.toUpperCase());
-
             ItemStack item = new ItemStack(mat);
             ItemMeta meta = item.getItemMeta();
-
             if (meta != null) {
                 meta.setDisplayName(ChatColor.translateAlternateColorCodes('&',
                         config.getString(id + ".display-name", id)));
-
                 List<String> loreList = new ArrayList<>();
                 for (String line : config.getStringList(id + ".lore")) {
                     loreList.add(ChatColor.translateAlternateColorCodes('&', line));
                 }
                 meta.setLore(loreList);
-
                 if (config.contains(id + ".model-id")) {
                     meta.setCustomModelData(config.getInt(id + ".model-id"));
                 }
-
                 NamespacedKey typeKey = new NamespacedKey(Main.getInstance(), "gem_item_type");
                 NamespacedKey idKey = new NamespacedKey(Main.getInstance(), "gem_item_id");
-
                 meta.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, itemTag);
                 meta.getPersistentDataContainer().set(idKey, PersistentDataType.STRING, id);
-
                 item.setItemMeta(meta);
             }
             return item;

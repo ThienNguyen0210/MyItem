@@ -1,5 +1,4 @@
 package org.ThienNguyen.Command;
-
 import org.ThienNguyen.Main;
 import org.ThienNguyen.Skill.SkillManager;
 import org.bukkit.Bukkit;
@@ -15,16 +14,13 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import java.util.*;
 import java.util.stream.Collectors;
-
 public class Tab implements TabCompleter {
     private static final List<String> ELEMENT_TYPES = Arrays.asList("attack", "defense");
     private static final List<String> COMMON_SLOTS = Arrays.asList(
             "mainhand", "offhand", "head", "chest", "legs", "feet", "any", "offhand,mainhand"
     );
-
     private static final List<String> MAIN_SUBCOMMANDS = Arrays.asList(
             "sync", "ability", "buff", "debuff", "element",
             "save", "load", "delete", "reload", "skill", "help",
@@ -34,38 +30,29 @@ public class Tab implements TabCompleter {
             "ic", "evo", "ai", "getai", "expire", "storage", "checkitem", "passive", "dye-color",
             "owner-tag", "del-tag"
     );
-
     private static final List<String> IC_SUBCOMMANDS = Arrays.asList("add", "unadd");
-
     private static final List<String> MI_SUBCOMMANDS = Arrays.asList("create", "save", "load", "reload", "browse");
-
     private static final List<String> SKILL_TYPES = Arrays.asList("Weapon", "Command", "Mythicmob");
-
     private static final List<String> TRIGGERS = Arrays.asList(
             "HIT", "SNEAK", "RIGHT_CLICK", "LEFT_CLICK", "SHIFT_LEFT", "SHIFT_RIGHT", "DOUBLE_SNEAK"
     );
-
     private static final List<String> COMMON_COOLDOWN = Arrays.asList("5", "10", "15", "20", "30", "45", "60", "90", "120", "300");
     private static final List<String> COMMON_LEVEL = Arrays.asList("1", "2", "3", "4", "5", "10", "20", "50", "100");
     private static final List<String> COMMON_AMPLIFIER = Arrays.asList("0", "1", "2", "3", "4", "5", "10");
     private static final List<String> COMMON_DURATION_TICKS = Arrays.asList("20", "40", "60", "100", "200", "400", "600");
     private static final List<String> COMMON_CENT = Arrays.asList("5", "10", "20", "30", "50", "70", "100");
     private static final List<String> COMMON_AMOUNTS = Arrays.asList("1", "16", "32", "64");
-
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
         List<String> suggestions = new ArrayList<>();
-
         if (args.length == 1) {
             suggestions.addAll(MAIN_SUBCOMMANDS);
         }
-
         else if (args.length == 2 && args[0].equalsIgnoreCase("ic")) {
             suggestions.addAll(IC_SUBCOMMANDS);
         }
         else if (args.length >= 3 && args[0].equalsIgnoreCase("ic")) {
             String icSub = args[1].toLowerCase();
-
             if (icSub.equals("add") || icSub.equals("unadd")) {
                 FileConfiguration comboConfig = Main.getInstance().getComboConfig();
                 if (comboConfig != null) {
@@ -73,13 +60,9 @@ public class Tab implements TabCompleter {
                 }
             }
         }
-
-        // ── mi: args[1] = subcommand ──────────────────────────────────────────
         else if (args.length == 2 && args[0].equalsIgnoreCase("storage")) {
             suggestions.addAll(MI_SUBCOMMANDS);
         }
-
-        // ── mi: args[2] = type (tên file .yml trong ManagerItem) ──────────────
         else if (args.length == 3 && args[0].equalsIgnoreCase("storage")) {
             String miSub = args[1].toLowerCase();
             if (miSub.equals("create") || miSub.equals("save") || miSub.equals("load")) {
@@ -87,8 +70,6 @@ public class Tab implements TabCompleter {
                 if (ism != null) suggestions.addAll(ism.getTypeNames());
             }
         }
-
-        // ── mi: args[3] = id (lọc theo type đã chọn ở args[2]) ───────────────
         else if (args.length == 4 && args[0].equalsIgnoreCase("storage")) {
             String miSub = args[1].toLowerCase();
             if (miSub.equals("save") || miSub.equals("load")) {
@@ -96,7 +77,6 @@ public class Tab implements TabCompleter {
                 if (ism != null) suggestions.addAll(ism.getIdsByType(args[2]));
             }
         }
-
         else if (args.length == 2) {
             String sub = args[0].toLowerCase();
             switch (sub) {
@@ -175,7 +155,6 @@ public class Tab implements TabCompleter {
                 case "giveamulet", "trans" -> suggestions.addAll(Bukkit.getOnlinePlayers().stream().map(Player::getName).collect(Collectors.toList()));
             }
         }
-
         else if (args.length == 3) {
             String sub = args[0].toLowerCase();
             switch (sub) {
@@ -206,7 +185,6 @@ public class Tab implements TabCompleter {
                 case "giveamulet" -> suggestions.addAll(COMMON_AMOUNTS);
             }
         }
-
         else if (args.length == 4) {
             String sub = args[0].toLowerCase();
             switch (sub) {
@@ -237,7 +215,6 @@ public class Tab implements TabCompleter {
                 case "givegem" -> suggestions.addAll(COMMON_AMOUNTS);
             }
         }
-
         else if (args.length == 5) {
             String sub = args[0].toLowerCase();
             if (sub.equals("consume")) {
@@ -246,20 +223,17 @@ public class Tab implements TabCompleter {
             else if (sub.equals("skill")) suggestions.addAll(COMMON_COOLDOWN);
             else if (sub.equals("gemstone")) suggestions.addAll(Bukkit.getOnlinePlayers().stream().map(Player::getName).collect(Collectors.toList()));
         }
-
         else if (args.length == 6) {
             String sub = args[0].toLowerCase();
             if (sub.equals("skill")) suggestions.addAll(COMMON_LEVEL);
             else if (sub.equals("gemstone")) suggestions.addAll(COMMON_AMOUNTS);
         }
-
         String currentArg = args[args.length - 1].toLowerCase();
         return suggestions.stream()
                 .filter(s -> s.toLowerCase().startsWith(currentArg))
                 .sorted(String.CASE_INSENSITIVE_ORDER)
                 .collect(Collectors.toList());
     }
-
     private List<String> getAllSkillNames() {
         List<String> allSkills = new ArrayList<>();
         allSkills.addAll(SkillManager.getSkillNamesByType("Weapon"));
@@ -267,11 +241,9 @@ public class Tab implements TabCompleter {
         allSkills.addAll(SkillManager.getSkillNamesByType("Mythicmob"));
         return allSkills;
     }
-
     private List<String> getPassiveIds() {
         List<String> ids = new ArrayList<>();
         java.io.File passiveFolder = new java.io.File(Main.getInstance().getDataFolder(), "Listener/Passives");
-
         if (passiveFolder.exists() && passiveFolder.isDirectory()) {
             java.io.File[] files = passiveFolder.listFiles((dir, name) -> name.toLowerCase().endsWith(".yml"));
             if (files != null) {
@@ -283,18 +255,14 @@ public class Tab implements TabCompleter {
         }
         return ids;
     }
-
     private List<String> getOwnerTagNames(CommandSender sender) {
         if (!(sender instanceof Player player)) return Collections.emptyList();
-
         ItemStack item = player.getInventory().getItemInMainHand();
         if (item == null || item.getType().isAir() || !item.hasItemMeta()) return Collections.emptyList();
-
         ItemMeta meta = item.getItemMeta();
         NamespacedKey ownerKey = new NamespacedKey(Main.getInstance(), "owner_tag");
         String owners = meta.getPersistentDataContainer().get(ownerKey, PersistentDataType.STRING);
         if (owners == null || owners.isEmpty()) return Collections.emptyList();
-
         List<String> names = new ArrayList<>();
         for (String owner : owners.split(",")) {
             String trimmed = owner.trim();
@@ -302,7 +270,6 @@ public class Tab implements TabCompleter {
         }
         return names;
     }
-
     private List<String> getItemDatabaseIds() {
         if (Main.getInstance().getItemDatabase() != null) {
             return Main.getInstance().getItemDatabase().getAllIds();

@@ -1,5 +1,4 @@
 package org.ThienNguyen.Command;
-
 import org.ThienNguyen.Main;
 import org.ThienNguyen.Stat.*;
 import org.ThienNguyen.Lore.StatsLore;
@@ -12,24 +11,19 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import java.util.ArrayList;
 import java.util.List;
-
 public class Stats {
-
     /**
      * Cập nhật lại toàn bộ Lore dựa trên PDC hiện có của item.
      */
     public void updateItemLore(ItemStack item) {
         org.ThienNguyen.Lore.StatsLore.updateLore(item);
     }
-
     /**
      * HÀM GỐC (2 tham số): Để tránh lỗi COMPILATION ERROR trong MyItemCommand hoặc các class cũ.
      */
     public void handleCommand(Player player, String[] args) {
-
         handleCommand(player, args, "any");
     }
-
     /**
      * HÀM MỚI (3 tham số): Hỗ trợ xử lý slot từ lệnh /mi stats <type> <value> [slot]
      */
@@ -38,58 +32,45 @@ public class Stats {
             player.sendMessage("§cSử dụng: /mi stats <loại> <giá trị> [slot]");
             return;
         }
-
         String type = args[1].toLowerCase();
         String rawValue = args[2];
-
         ItemStack item = player.getInventory().getItemInMainHand();
         if (item == null || item.getType().isAir()) {
             player.sendMessage("§cBạn phải cầm vật phẩm trên tay!");
             return;
         }
-
         if (type.equals("class_require")) {
             ClassRequire.set(item, rawValue);
         } else {
             try {
                 boolean isPercent = rawValue.endsWith("%");
                 double value;
-
                 if (isPercent) {
-
                     String numStr = rawValue.substring(0, rawValue.length() - 1);
                     value = Double.parseDouble(numStr);
                 } else {
                     value = Double.parseDouble(rawValue);
                 }
-
-
                 updatePDCNumeric(item, type, value, slot, isPercent);
             } catch (NumberFormatException e) {
                 player.sendMessage("§cGiá trị cho chỉ số này phải là một con số hoặc định dạng % (Ví dụ: 10 hoặc 10%)!");
                 return;
             }
         }
-
-
         updateItemLore(item);
-
         player.sendMessage("§8[§bMyItem§8] §e⚠ §7Updated §f" + type + " §7to §e" + rawValue + " §7(Slot: §b" + slot + "§7)");    }
-
     /**
      * Hàm vẽ Lore cũ: Giữ lại để đảm bảo tương thích ngược, không gây lỗi logic cũ.
      */
     public void updateItemLore(ItemStack item, String type, String value) {
         updateItemLore(item);
     }
-
     /**
      * Overload hàm updatePDCNumeric cũ để không làm lỗi các class khác khi gọi.
      */
     public void updatePDCNumeric(ItemStack item, String type, double value, String slot) {
         updatePDCNumeric(item, type, value, slot, false);
     }
-
     /**
      * Cập nhật chỉ số vào PDC, lưu tách biệt hoàn toàn giữa chỉ số cố định và phần trăm.
      */
@@ -97,25 +78,14 @@ public class Stats {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
         var pdc = meta.getPersistentDataContainer();
-
         if (isPercent) {
-
-
-
             NamespacedKey pctValueKey = new NamespacedKey(Main.getInstance(), "pct_" + type);
             pdc.set(pctValueKey, PersistentDataType.DOUBLE, value);
-
-
             NamespacedKey pctSlotKey = new NamespacedKey(Main.getInstance(), "slot_pct_" + type);
             pdc.set(pctSlotKey, PersistentDataType.STRING, slot.toLowerCase());
-
             item.setItemMeta(meta);
         } else {
-
-
-
             item.setItemMeta(meta);
-
             switch (type) {
                 case "damage" -> Damage.setDamage(item, value);
                 case "health" -> Health.setHealth(item, value);
@@ -161,10 +131,10 @@ public class Stats {
                 case "magic_defense" -> MagicDefense.set(item, value);
                 case "effect_resistance" -> EffectResistance.set(item, value);
                 case "cooldown_reduction" -> CooldownReduction.set(item, value);
+                case "deep_wound" -> DeepWound.set(item, value);
+                case "damage_reduction" -> DamageReduction.set(item, value);
                 default -> {}
             }
-
-
             meta = item.getItemMeta();
             if (meta != null) {
                 NamespacedKey slotKey = new NamespacedKey(Main.getInstance(), "slot_" + type);
@@ -173,7 +143,6 @@ public class Stats {
             }
         }
     }
-
     /**
      * Overload hàm updatePDCNumeric cũ để không lỗi các chỗ gọi khác.
      */

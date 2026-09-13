@@ -1,5 +1,4 @@
 package org.ThienNguyen.Listener;
-
 import io.lumine.mythic.lib.api.player.EquipmentSlot;
 import io.lumine.mythic.lib.api.stat.modifier.StatModifier;
 import io.lumine.mythic.lib.player.modifier.ModifierSource;
@@ -31,9 +30,7 @@ import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-
 import java.util.*;
-
 public class StatsListener implements Listener {
     private static StatsListener instance;
     public StatsListener() { instance = this; }
@@ -43,10 +40,7 @@ public class StatsListener implements Listener {
     private final UUID WINDY_ATTACK_SPEED_UUID = UUID.fromString("11111111-2222-3333-4444-555555555555");
     private final UUID WINDY_MOVEMENT_SPEED_UUID = UUID.fromString("66666666-7777-8888-9999-000000000000");
     private final NamespacedKey PARTICLE_KEY = new NamespacedKey(Main.getInstance(), "item_particle");
-
-    // Key lưu trữ thông tin chủ sở hữu (phải khớp với CacheListener.KEY_OWNER_TAG)
     private final NamespacedKey OWNER_TAG_KEY = new NamespacedKey(Main.getInstance(), "owner_tag");
-
     private final String MODIFIER_KEY = "windy_custom_stats";
     double totalHealthRegenPercent = Main.getInstance().getConfig().getDouble("regeneration.percent-per-second", 0.0);
     private final org.bukkit.inventory.EquipmentSlot[] VALID_PLAYER_SLOTS = {
@@ -57,16 +51,13 @@ public class StatsListener implements Listener {
             org.bukkit.inventory.EquipmentSlot.HAND,
             org.bukkit.inventory.EquipmentSlot.OFF_HAND
     };
-
     private static final Map<String, Attribute> ATTRIBUTE_CACHE = new HashMap<>();
-
     private static Attribute resolveAttribute(String modernKey, String... legacyFieldNames) {
         return ATTRIBUTE_CACHE.computeIfAbsent(modernKey, k -> {
             try {
                 Attribute attr = Registry.ATTRIBUTE.get(NamespacedKey.minecraft(modernKey));
                 if (attr != null) return attr;
             } catch (Throwable ignored) {}
-
             for (String fieldName : legacyFieldNames) {
                 try {
                     java.lang.reflect.Field field = Attribute.class.getField(fieldName);
@@ -77,65 +68,49 @@ public class StatsListener implements Listener {
             return null;
         });
     }
-
     private static Attribute maxHealthAttribute() {
         return resolveAttribute("max_health", "GENERIC_MAX_HEALTH");
     }
-
     private static Attribute attackSpeedAttribute() {
         return resolveAttribute("attack_speed", "GENERIC_ATTACK_SPEED");
     }
-
     private static Attribute movementSpeedAttribute() {
         return resolveAttribute("movement_speed", "GENERIC_MOVEMENT_SPEED");
     }
-
     private static Attribute armorAttribute() {
         return resolveAttribute("armor", "GENERIC_ARMOR");
     }
-
     /**
      * Kiểm tra xem người chơi có phải là chủ sở hữu của vật phẩm hay không.
      * Nếu vật phẩm không có Tag Owner -> Trả về true (cho phép xài).
      */
     private boolean isOwner(Player player, ItemStack item) {
         if (item == null || !item.hasItemMeta()) return true;
-
         ItemMeta meta = item.getItemMeta();
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
-
         if (!pdc.has(OWNER_TAG_KEY, PersistentDataType.STRING)) return true;
-
         String ownersString = pdc.get(OWNER_TAG_KEY, PersistentDataType.STRING);
         if (ownersString == null || ownersString.isEmpty()) return true;
-
         String playerName = player.getName().toLowerCase();
         for (String owner : ownersString.split(",")) {
             if (owner.trim().equalsIgnoreCase(playerName)) {
                 return true;
             }
         }
-
         return false;
     }
-
     public void updateGemBuffsOnly(Player player) {
         FileConfiguration gemConfig = Main.getInstance().getGemConfig();
-
         for (org.bukkit.inventory.EquipmentSlot slot : VALID_PLAYER_SLOTS) {
             try {
                 ItemStack item = player.getInventory().getItem(slot);
                 if (item == null || item.getType().isAir()) continue;
-
-                // Kiểm tra xem có phải chính chủ và có đủ điều kiện dùng không
                 if (!isOwner(player, item) || !org.ThienNguyen.Hook.MMOCORE.canUse(player, item)) continue;
-
                 for (String gemId : org.ThienNguyen.GemSocket.GemLogic.getGemsOnItem(item)) {
                     if (gemConfig.contains(gemId + ".apply.BUFF")) {
                         for (String buffLine : gemConfig.getStringList(gemId + ".apply.BUFF")) {
                             String[] parts = buffLine.split(":", 2);
                             if (parts.length < 2) continue;
-
                             PotionEffectType type = PotionEffectType.getByName(parts[0].trim().toUpperCase());
                             if (type != null) {
                                 try {
@@ -149,14 +124,11 @@ public class StatsListener implements Listener {
             } catch (Exception ignored) {}
         }
     }
-
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-
         Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
             if (!player.isOnline()) return;
-
             Attribute maxHealth = maxHealthAttribute();
             AttributeInstance hpAttr = maxHealth != null ? player.getAttribute(maxHealth) : null;
             if (hpAttr != null) {
@@ -164,13 +136,11 @@ public class StatsListener implements Listener {
             }
         }, 40L);
     }
-
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onRespawn(PlayerRespawnEvent event) {
         Player player = event.getPlayer();
         Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
             if (!player.isOnline()) return;
-
             Attribute maxHealth = maxHealthAttribute();
             AttributeInstance hpAttr = maxHealth != null ? player.getAttribute(maxHealth) : null;
             if (hpAttr != null) {
@@ -178,10 +148,8 @@ public class StatsListener implements Listener {
             }
         }, 2L);
     }
-
     public void updatePlayerStats(Player player) {
         if (player == null || !player.isOnline()) return;
-
         double totalHealth = 0;
         double totalMaxMana = 0;
         double totalManaRegen = 0;
@@ -189,7 +157,6 @@ public class StatsListener implements Listener {
         double totalMovementSpeed = 0;
         double totalHealthRegen = 0;
         double totalArmor = 0;
-
         double pctHealth = 0.0;
         double pctMaxMana = 0.0;
         double pctManaRegen = 0.0;
@@ -197,27 +164,20 @@ public class StatsListener implements Listener {
         double pctMovementSpeed = 0.0;
         double pctHealthRegen = 0.0;
         double pctArmor = 0.0;
-
         String foundParticleId = null;
         FileConfiguration config = Main.getInstance().getStatsSettingsConfig();
         FileConfiguration gemConfig = Main.getInstance().getGemConfig();
         FileConfiguration mainConfig = Main.getInstance().getConfig();
         UUID uuid = player.getUniqueId();
-
-        // 1. Quét trang bị chính (Armor + Mainhand + Offhand)
         for (org.bukkit.inventory.EquipmentSlot slot : VALID_PLAYER_SLOTS) {
             try {
                 ItemStack item = player.getInventory().getItem(slot);
                 if (item == null || item.getType().isAir()) continue;
-
-                // Nếu không phải chính chủ hoặc không đủ yêu cầu sử dụng -> Bỏ qua
                 if (!isOwner(player, item) || !MMOCORE.canUse(player, item)) continue;
-
                 if (foundParticleId == null && item.hasItemMeta()) {
                     String pId = item.getItemMeta().getPersistentDataContainer().get(PARTICLE_KEY, PersistentDataType.STRING);
                     if (pId != null) foundParticleId = pId;
                 }
-
                 if (isSlotAllowed(item, config, "health", slot)) totalHealth += Health.getHealth(item);
                 if (isSlotAllowed(item, config, "max_mana", slot)) totalMaxMana += MaxMana.get(item);
                 if (isSlotAllowed(item, config, "mana_regen", slot)) totalManaRegen += ManaRegen.get(item);
@@ -228,7 +188,6 @@ public class StatsListener implements Listener {
                     var pdc = item.getItemMeta().getPersistentDataContainer();
                     totalArmor += pdc.getOrDefault(new NamespacedKey(Main.getInstance(), "armor"), PersistentDataType.DOUBLE, 0.0);
                 }
-
                 if (item.hasItemMeta()) {
                     var pdc = item.getItemMeta().getPersistentDataContainer();
                     if (isAllowedPercent(item, config, "health", slot)) pctHealth += pdc.getOrDefault(new NamespacedKey(Main.getInstance(), "pct_health"), PersistentDataType.DOUBLE, 0.0);
@@ -239,7 +198,6 @@ public class StatsListener implements Listener {
                     if (isAllowedPercent(item, config, "health_regen", slot)) pctHealthRegen += pdc.getOrDefault(new NamespacedKey(Main.getInstance(), "pct_health_regen"), PersistentDataType.DOUBLE, 0.0);
                     if (isAllowedPercent(item, config, "armor", slot)) pctArmor += pdc.getOrDefault(new NamespacedKey(Main.getInstance(), "pct_armor"), PersistentDataType.DOUBLE, 0.0);
                 }
-
                 for (String gemId : org.ThienNguyen.GemSocket.GemLogic.getGemsOnItem(item)) {
                     if (gemConfig.contains(gemId + ".apply.stats")) {
                         for (String line : gemConfig.getStringList(gemId + ".apply.stats")) {
@@ -264,34 +222,26 @@ public class StatsListener implements Listener {
                 }
             } catch (Exception ignored) {}
         }
-
-        // 2. Quét trang sức (Jewelry)
         Map<Integer, ItemStack> guiJewelryMap = org.ThienNguyen.JewelryManager.getCachedJewelry(uuid);
         Set<Integer> jewelrySlotIndices = getJewelrySlots();
-
         for (int slotIdx : jewelrySlotIndices) {
             try {
                 ItemStack itemInSlot = player.getInventory().getItem(slotIdx);
                 ItemStack effectiveItem = null;
-
                 if (itemInSlot != null && !itemInSlot.getType().isAir() && !isPlaceholder(itemInSlot)) {
                     effectiveItem = itemInSlot;
                 }
                 else if (guiJewelryMap != null && guiJewelryMap.containsKey(slotIdx)) {
                     effectiveItem = guiJewelryMap.get(slotIdx);
                 }
-
                 if (effectiveItem != null && !effectiveItem.getType().isAir() && isJewelryMatch(effectiveItem, slotIdx)) {
-                    // Kiểm tra chính chủ + điều kiện xài cho Trang sức
                     if (!isOwner(player, effectiveItem) || !MMOCORE.canUse(player, effectiveItem)) continue;
-
                     totalHealth += Health.getHealth(effectiveItem);
                     totalMaxMana += MaxMana.get(effectiveItem);
                     totalManaRegen += ManaRegen.get(effectiveItem);
                     totalAttackSpeed += AttackSpeed.get(effectiveItem);
                     totalMovementSpeed += MovementSpeed.get(effectiveItem);
                     totalHealthRegen += HealthRegen.get(effectiveItem);
-
                     if (effectiveItem.hasItemMeta()) {
                         var pdc = effectiveItem.getItemMeta().getPersistentDataContainer();
                         pctHealth += pdc.getOrDefault(new NamespacedKey(Main.getInstance(), "pct_health"), PersistentDataType.DOUBLE, 0.0);
@@ -301,7 +251,6 @@ public class StatsListener implements Listener {
                         pctMovementSpeed += pdc.getOrDefault(new NamespacedKey(Main.getInstance(), "pct_movement_speed"), PersistentDataType.DOUBLE, 0.0);
                         pctHealthRegen += pdc.getOrDefault(new NamespacedKey(Main.getInstance(), "pct_health_regen"), PersistentDataType.DOUBLE, 0.0);
                     }
-
                     for (String gemId : org.ThienNguyen.GemSocket.GemLogic.getGemsOnItem(effectiveItem)) {
                         if (gemConfig.contains(gemId + ".apply.stats")) {
                             for (String line : gemConfig.getStringList(gemId + ".apply.stats")) {
@@ -325,8 +274,6 @@ public class StatsListener implements Listener {
                 }
             } catch (Exception ignored) {}
         }
-
-        // 3. Set Combo
         String comboId = org.ThienNguyen.Listener.ItemCombo.ComboListener.getFullSetComboId(player);
         if (comboId != null) {
             ConfigurationSection comboStats = Main.getInstance().getComboConfig().getConfigurationSection(comboId + ".stats");
@@ -343,12 +290,9 @@ public class StatsListener implements Listener {
                 }
             }
         }
-
-        // 4. Tăng/Giảm Stat Chั่ว thời (StatBoostAPI)
         for (Map.Entry<String, org.ThienNguyen.API.StatBoostAPI.StatBoost> entry : org.ThienNguyen.API.StatBoostAPI.getBoosts(uuid).entrySet()) {
             org.ThienNguyen.API.StatBoostAPI.StatBoost boost = entry.getValue();
             String statKey = boost.statKey();
-
             switch (statKey) {
                 case "health" -> {
                     if (boost.type() == org.ThienNguyen.API.StatBoostAPI.BoostType.FLAT) totalHealth += boost.value();
@@ -376,15 +320,12 @@ public class StatsListener implements Listener {
                 }
             }
         }
-
-        // Tính toán các chỉ số %
         double baseMinecraftHealth = 20.0;
         Attribute maxHealthAttr = maxHealthAttribute();
         org.bukkit.attribute.AttributeInstance hpInstance = maxHealthAttr != null ? player.getAttribute(maxHealthAttr) : null;
         if (hpInstance != null) {
             baseMinecraftHealth = hpInstance.getBaseValue();
         }
-
         totalHealth += baseMinecraftHealth;
         if (pctHealth != 0.0)        totalHealth        *= (1.0 + (pctHealth / 100.0));
         if (pctMaxMana != 0.0)       totalMaxMana       *= (1.0 + (pctMaxMana / 100.0));
@@ -393,48 +334,35 @@ public class StatsListener implements Listener {
         if (pctMovementSpeed != 0.0) totalMovementSpeed *= (1.0 + (pctMovementSpeed / 100.0));
         if (pctHealthRegen != 0.0)   totalHealthRegen   *= (1.0 + (pctHealthRegen / 100.0));
         totalHealth -= baseMinecraftHealth;
-
         PlayerCombatCache.getStats(uuid).totalAttackSpeed = totalAttackSpeed;
-
         double effectiveHealthBonus = PlayerCombatCache.getEffective(uuid, "health", totalHealth);
         totalHealth = effectiveHealthBonus;
-
         if (foundParticleId != null) org.ThienNguyen.Listener.Particle.ParticleManager.setEffect(player, foundParticleId);
         else org.ThienNguyen.Listener.Particle.ParticleManager.removeEffect(player);
-
         if (maxHealthAttr != null) applyVanillaAttribute(player, maxHealthAttr, WINDY_HEALTH_UUID, totalHealth);
         Attribute attackSpeedAttr = attackSpeedAttribute();
         double effectiveAttackSpeed = PlayerCombatCache.getEffective(uuid, "attack_speed", totalAttackSpeed);
         if (attackSpeedAttr != null) applyVanillaAttribute(player, attackSpeedAttr, WINDY_ATTACK_SPEED_UUID, (4.0 * effectiveAttackSpeed) / 100.0);
         Attribute movementSpeedAttr = movementSpeedAttribute();
         if (movementSpeedAttr != null) applyVanillaAttribute(player, movementSpeedAttr, WINDY_MOVEMENT_SPEED_UUID, (0.1 * totalMovementSpeed) / 100.0);
-
         if (pctArmor != 0.0) totalArmor *= (1.0 + (pctArmor / 100.0));
         player.setMetadata("windy_armor", new FixedMetadataValue(Main.getInstance(), totalArmor));
-
         player.setMetadata("windy_health_regen", new FixedMetadataValue(Main.getInstance(), totalHealthRegen));
         player.setMetadata("windy_health_regen_percent", new FixedMetadataValue(Main.getInstance(), pctHealthRegen));
-
         ManaManager.applyMana(player, totalMaxMana, totalManaRegen);
     }
-
     private boolean isPlaceholder(ItemStack item) {
         if (item == null || !item.hasItemMeta()) return false;
         return item.getItemMeta().getPersistentDataContainer().has(new NamespacedKey(Main.getInstance(), "is_placeholder"), PersistentDataType.BOOLEAN);
     }
-
     private boolean isSlotAllowed(ItemStack item, FileConfiguration config, String stat, org.bukkit.inventory.EquipmentSlot currentSlot) {
         if (item == null || !item.hasItemMeta()) return true;
-
         NamespacedKey key = new NamespacedKey(Main.getInstance(), "slot_" + stat.toLowerCase());
         String requiredSlot = item.getItemMeta().getPersistentDataContainer().get(key, PersistentDataType.STRING);
-
         if (requiredSlot != null) {
             String current = currentSlot.name().toLowerCase().replace("_", "");
             if (current.equals("hand")) current = "mainhand";
-
             if (requiredSlot.equalsIgnoreCase("any")) return true;
-
             String[] allowedParts = requiredSlot.split(",");
             for (String part : allowedParts) {
                 if (part.trim().equalsIgnoreCase(current)) {
@@ -443,69 +371,53 @@ public class StatsListener implements Listener {
             }
             return false;
         }
-
         if (config == null) return true;
         List<String> allowedSlots = config.getStringList("stats-slots." + stat);
-
         if (allowedSlots == null || allowedSlots.isEmpty()) return true;
         return allowedSlots.contains(currentSlot.name());
     }
-
     private boolean isAllowedPercent(ItemStack item, FileConfiguration config, String stat, org.bukkit.inventory.EquipmentSlot currentSlot) {
         if (item == null || !item.hasItemMeta()) return true;
-
         NamespacedKey key = new NamespacedKey(Main.getInstance(), "slot_pct_" + stat.toLowerCase());
         String requiredSlot = item.getItemMeta().getPersistentDataContainer().get(key, PersistentDataType.STRING);
-
         if (requiredSlot != null) {
             if (requiredSlot.equalsIgnoreCase("any")) return true;
             String current = currentSlot.name().toLowerCase().replace("_", "");
             if (current.equals("hand")) current = "mainhand";
-
             String[] allowedSlots = requiredSlot.split(",");
             for (String s : allowedSlots) {
                 if (s.trim().equalsIgnoreCase(current)) return true;
             }
             return false;
         }
-
         if (config == null) return true;
         List<String> list = config.getStringList("stats-slots." + stat);
         return list == null || list.isEmpty() || list.contains(currentSlot.name());
     }
-
     private void applyVanillaAttribute(Player player, Attribute attr, UUID uuid, double value) {
         AttributeInstance instance = player.getAttribute(attr);
         if (instance == null) return;
-
         instance.getModifiers().stream()
                 .filter(mod -> mod.getUniqueId().equals(uuid))
                 .forEach(instance::removeModifier);
-
         if (value != 0) {
             AttributeModifier mod = new AttributeModifier(uuid, MODIFIER_KEY, value, AttributeModifier.Operation.ADD_NUMBER);
             instance.addModifier(mod);
         }
-
         if (attr.equals(maxHealthAttribute()) && player.getHealth() > instance.getValue()) {
             player.setHealth(instance.getValue());
         }
     }
-
     private boolean isJewelryMatch(ItemStack item, int slotIdx) {
         if (item == null || item.getType().isAir()) return false;
-
         FileConfiguration config = Main.getInstance().getConfig();
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return false;
-
         String itemType = meta.getPersistentDataContainer().get(
                 new NamespacedKey(Main.getInstance(), "jewelry_type"), PersistentDataType.STRING);
         if (itemType == null) return false;
-
         String pSlotType = config.getString("jewelry.player-slots." + slotIdx + ".type");
         if (pSlotType != null && pSlotType.equalsIgnoreCase(itemType)) return true;
-
         ConfigurationSection groups = config.getConfigurationSection("jewelry.slots");
         if (groups != null && groups.contains(itemType)) {
             if (groups.isList(itemType)) {
@@ -522,14 +434,11 @@ public class StatsListener implements Listener {
                 if (groups.getInt(itemType + ".slot") == slotIdx) return true;
             }
         }
-
         return false;
     }
-
     private java.util.Set<Integer> getJewelrySlots() {
         java.util.Set<Integer> slots = new java.util.HashSet<>();
         FileConfiguration config = Main.getInstance().getConfig();
-
         ConfigurationSection pSlots = config.getConfigurationSection("jewelry.player-slots");
         if (pSlots != null) {
             for (String key : pSlots.getKeys(false)) {
@@ -538,7 +447,6 @@ public class StatsListener implements Listener {
                 } catch (Exception ignored) {}
             }
         }
-
         ConfigurationSection groups = config.getConfigurationSection("jewelry.slots");
         if (groups != null) {
             for (String type : groups.getKeys(false)) {

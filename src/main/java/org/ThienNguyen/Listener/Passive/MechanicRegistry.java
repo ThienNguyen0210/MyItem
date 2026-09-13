@@ -1,18 +1,11 @@
 package org.ThienNguyen.Listener.Passive;
-
 import org.ThienNguyen.Listener.Passive.Mechanics.*;
 import org.bukkit.configuration.ConfigurationSection;
-
-
 public final class MechanicRegistry {
-
     private MechanicRegistry() {}
-
-
     public static org.ThienNguyen.Listener.Passive.PassiveMechanic create(ConfigurationSection section) {
         if (section == null) return null;
         String type = section.getString("type", "").toUpperCase();
-
         return switch (type) {
             case "DAMAGE"    -> new DamageMechanic(section);
             case "DROP_ITEM" -> new DropItemMechanic(section);
@@ -45,7 +38,6 @@ public final class MechanicRegistry {
             case "CHECK_VALUE" -> new CheckValueMechanic(section);
             case "PROJECTILE_SHOT" -> new ProjectileShotMechanic(section);
             case "POTION_ZONE" -> new PotionZoneMechanic(section);
-
             default -> {
                 org.ThienNguyen.Main.getInstance().getLogger()
                         .warning("[Passive] Mechanic type không hợp lệ hoặc thiếu: '" + type + "'");

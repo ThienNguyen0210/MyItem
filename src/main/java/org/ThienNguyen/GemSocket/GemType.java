@@ -1,11 +1,8 @@
 package org.ThienNguyen.GemSocket;
-
 import org.ThienNguyen.Main;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
-
 public class GemType {
-
     /**
      * Tìm loại lỗ (socket type) mà 1 drillId thuộc về, dựa trên type.yml
      * (đã gộp DucLo.yml vào). Trả về null nếu không tìm thấy — KHÔNG fallback
@@ -21,7 +18,6 @@ public class GemType {
         }
         return null;
     }
-
     /**
      * Trả về đường dẫn config đầy đủ của 1 drillId trong type.yml
      * (vd: "legendary.drills.DRILL_LEGENDARY"), hoặc null nếu không tìm thấy.
@@ -33,7 +29,6 @@ public class GemType {
         String type = resolveSocketTypeForDrill(drillId);
         return type == null ? null : type + ".drills." + drillId;
     }
-
     /**
      * Liệt kê tất cả drillId có trong type.yml (gộp từ mọi loại lỗ).
      * Dùng cho tab-completion và các chỗ cần liệt kê toàn bộ mũi khoan.
@@ -50,24 +45,18 @@ public class GemType {
         }
         return ids;
     }
-
     public static String getSocketFormat(String socketData) {
         FileConfiguration config = Main.getInstance().getGemTypeConfig();
-
-
         if (socketData.startsWith("EMPTY_")) {
             String type = socketData.replace("EMPTY_", "");
             String format = config.getString(type + ".format", "&7[ ○ ] Lỗ trống");
             return ChatColor.translateAlternateColorCodes('&', format);
         }
-
-
         FileConfiguration gemConfig = Main.getInstance().getGemConfig();
         if (gemConfig.contains(socketData)) {
             String gemName = gemConfig.getString(socketData + ".display-name");
             return ChatColor.translateAlternateColorCodes('&', "&f[ ● ] " + gemName);
         }
-
         return "§8[ ○ ] Lỗ trống";
     }
 }

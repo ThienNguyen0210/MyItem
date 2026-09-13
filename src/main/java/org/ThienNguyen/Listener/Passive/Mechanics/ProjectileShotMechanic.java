@@ -1,5 +1,4 @@
 package org.ThienNguyen.Listener.Passive.Mechanics;
-
 import org.ThienNguyen.Listener.Passive.ExpressionResolver;
 import org.ThienNguyen.Listener.Passive.PassiveContext;
 import org.ThienNguyen.Listener.Passive.PassiveMechanic;
@@ -22,8 +21,6 @@ import org.bukkit.entity.Trident;
 import org.bukkit.entity.WitherSkull;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.util.Vector;
-
-
 /**
  * Bắn ra một hoặc nhiều projectile (snowball, egg, arrow, wither skull, ...)
  * theo hình quạt (fan) xoay quanh hướng nhìn của actor, mỗi projectile cách
@@ -46,22 +43,13 @@ import org.bukkit.util.Vector;
  * </pre>
  */
 public class ProjectileShotMechanic implements PassiveMechanic {
-
-
-
     public static final String DAMAGE_METADATA_KEY = "passive_projectile_damage";
-
-
-
     private final String rawProjectileType;
     private final String rawDamage;
     private final String rawAmount;
     private final String rawSpreadAngle;
     private final String rawSpeed;
     private final boolean gravity;
-
-
-
     public ProjectileShotMechanic(ConfigurationSection cfg) {
         this.rawProjectileType = cfg.getString("projectile", "SNOWBALL").trim().toUpperCase();
         this.rawDamage         = cfg.getString("damage", "0");
@@ -69,70 +57,46 @@ public class ProjectileShotMechanic implements PassiveMechanic {
         this.rawSpreadAngle    = cfg.getString("spread-angle", "10");
         this.rawSpeed          = cfg.getString("speed", "1.5");
         this.gravity           = cfg.getBoolean("gravity", true);
-
         if (resolveProjectileClass() == null) {
             Main.getInstance().getLogger()
                     .warning("[Passive] PROJECTILE_SHOT: loại projectile không hợp lệ trong config: '"
                             + rawProjectileType + "'. Mechanic này sẽ không bắn được gì cả.");
         }
     }
-
-
-
     @Override
     public boolean execute(PassiveContext ctx) {
         Player actor = ctx.getActor();
         if (actor == null) return false;
-
         Class<? extends Projectile> projClass = resolveProjectileClass();
         if (projClass == null) {
-
             return false;
         }
-
         int amount = ExpressionResolver.resolveInt(rawAmount, actor, 1);
         if (amount < 1) amount = 1;
-
         double spreadDeg = ExpressionResolver.resolve(rawSpreadAngle, actor, 10);
         double speed      = ExpressionResolver.resolve(rawSpeed, actor, 1.5);
         double damage     = ExpressionResolver.resolve(rawDamage, actor, 0);
-
         Location eye = actor.getEyeLocation();
         Vector baseDir = eye.getDirection().normalize();
-
-
         double startOffset = -spreadDeg * (amount - 1) / 2.0;
-
         boolean anySpawned = false;
-
         for (int i = 0; i < amount; i++) {
             double angleDeg = startOffset + (i * spreadDeg);
-
-
             Vector dir = baseDir.clone().rotateAroundY(Math.toRadians(angleDeg));
-
             Projectile proj = actor.launchProjectile(projClass, dir.multiply(speed));
             if (proj == null) continue;
-
             proj.setGravity(gravity);
             if (damage > 0) {
                 proj.setMetadata(DAMAGE_METADATA_KEY, new FixedMetadataValue(Main.getInstance(), damage));
             }
-
             anySpawned = true;
         }
-
         if (!anySpawned) {
             Main.getInstance().getLogger()
                     .fine("[Passive] PROJECTILE_SHOT: không có projectile nào được bắn ra (actor null hoặc launchProjectile thất bại).");
         }
-
         return anySpawned;
     }
-
-
-
-
     private Class<? extends Projectile> resolveProjectileClass() {
         return switch (rawProjectileType) {
             case "SNOWBALL"                     -> Snowball.class;

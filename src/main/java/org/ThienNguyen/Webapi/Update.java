@@ -1,5 +1,4 @@
 package org.ThienNguyen.Webapi;
-
 import org.ThienNguyen.Main;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
@@ -21,17 +20,12 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
-
 public class Update {
-
     private static final String DOWNLOAD_URL_TEMPLATE = "http://103.188.83.137/api/downloads/MyItem-%s.jar";
     public static NamespacedKey GUI_KEY;
-
-    
     public static void openVersionGUI(Player player, Main plugin) {
         GUI_KEY = new NamespacedKey(plugin, "update_gui_locked");
         Inventory gui = Bukkit.createInventory(null, 27, "§0MyItem - Plugin Version");
-
         ItemStack info = new ItemStack(Material.NETHER_STAR);
         ItemMeta meta = info.getItemMeta();
         meta.setDisplayName("§b§lThông tin phiên bản");
@@ -41,7 +35,6 @@ public class Update {
         meta.setLore(lore);
         meta.getPersistentDataContainer().set(GUI_KEY, PersistentDataType.BYTE, (byte) 1);
         info.setItemMeta(meta);
-
         ItemStack updateIcon = new ItemStack(Material.KNOWLEDGE_BOOK);
         ItemMeta upMeta = updateIcon.getItemMeta();
         upMeta.setDisplayName("§6§lCập nhật bản mới nhất");
@@ -50,18 +43,14 @@ public class Update {
         upLore.add("§7Tên file sẽ tải: §f" + getJarName(plugin));
         upMeta.setLore(upLore);
         upMeta.getPersistentDataContainer().set(GUI_KEY, PersistentDataType.BYTE, (byte) 1);
-        
         upMeta.getPersistentDataContainer().set(new NamespacedKey(plugin, "action_open_list"), PersistentDataType.BYTE, (byte) 1);
         updateIcon.setItemMeta(upMeta);
-
         gui.setItem(13, info);
         gui.setItem(26, updateIcon);
         player.openInventory(gui);
     }
-
     public static void openUpdateListGUI(Player player, Main plugin) {
         player.sendMessage("§e[MyItem] Đang kết nối tới máy chủ cập nhật...");
-
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
                 URL url = new URL("http://103.188.83.137/api/list-versions");
@@ -69,63 +58,46 @@ public class Update {
                 try (Scanner s = new Scanner(url.openStream(), "UTF-8")) {
                     while (s.hasNextLine()) jsonContent.append(s.nextLine());
                 }
-
                 String data = jsonContent.toString();
-
                 Bukkit.getScheduler().runTask(plugin, () -> {
-                    
                     Inventory gui = Bukkit.createInventory(null, 54, "§0MyItem - Danh sách Update");
-
                     try {
                         String cleanData = data.replace("\r", "").replace("\n", "").trim();
                         int startArr = cleanData.indexOf("[");
                         int endArr = cleanData.lastIndexOf("]");
-
                         if (startArr != -1 && endArr != -1) {
                             String versionsPart = cleanData.substring(startArr + 1, endArr);
                             String[] objects = versionsPart.split("\\}( ?), ?\\{");
-
-                            
                             int slot = 10;
                             for (String obj : objects) {
                                 if (slot >= 44) break; 
-
                                 String jsonObject = obj;
                                 if (!jsonObject.startsWith("{")) jsonObject = "{" + jsonObject;
                                 if (!jsonObject.endsWith("}")) jsonObject = jsonObject + "}";
-
                                 String ver = extractValue(jsonObject, "ver");
                                 String date = extractValue(jsonObject, "date");
                                 String changelog = extractValue(jsonObject, "changelog");
-
                                 ItemStack item = new ItemStack(Material.CLOCK);
                                 ItemMeta meta = item.getItemMeta();
                                 meta.setDisplayName("§a§lPhiên bản: §e" + ver);
-
                                 List<String> lore = new ArrayList<>();
                                 lore.add("§fNgày: §e" + date);
                                 lore.add("§fGhi chú:");
-
                                 String[] lines = changelog.split("\\||\n|\\\\n");
                                 for (String line : lines) {
                                     if (!line.trim().isEmpty()) {
                                         lore.add("  §7- " + org.bukkit.ChatColor.translateAlternateColorCodes('&', line.trim()));
                                     }
                                 }
-
                                 lore.add("");
                                 lore.add("§a▶ Click để tải MyItem/Update");
                                 meta.setLore(lore);
                                 meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "update_ver"), PersistentDataType.STRING, ver);
                                 item.setItemMeta(meta);
-
                                 gui.setItem(slot++, item);
-                                
                                 if (slot % 9 == 8) slot += 2;
                             }
                         }
-
-                        
                         ItemStack donate = new ItemStack(Material.PAPER);
                         ItemMeta dMeta = donate.getItemMeta();
                         dMeta.setDisplayName("§d§l❤ DONATE AUTHOR §d§l❤");
@@ -138,30 +110,24 @@ public class Update {
                         dLore.add("");
                         dLore.add("§d§oCảm ơn sự đóng góp của bạn!");
                         dMeta.setLore(dLore);
-                        
                         dMeta.getPersistentDataContainer().set(new NamespacedKey(plugin, "update_gui_locked"), PersistentDataType.BYTE, (byte) 1);
                         donate.setItemMeta(dMeta);
                         gui.setItem(53, donate);
-                        
-
                     } catch (Exception ex) {
                         player.sendMessage("§c[MyItem] Lỗi hiển thị: JSON không đúng định dạng!");
                     }
                     player.openInventory(gui);
                 });
-
             } catch (Exception e) {
                 player.sendMessage("§c[MyItem] Lỗi khi lấy danh sách: " + e.getMessage());
             }
         });
     }
-
     private static String extractValue(String input, String key) {
         try {
             String pattern = "\"" + key + "\":\"";
             int start = input.indexOf(pattern);
             if (start == -1) return "Không rõ";
-
             start += pattern.length();
             int end = input.indexOf("\"", start);
             return input.substring(start, end);
@@ -169,18 +135,14 @@ public class Update {
             return "Lỗi";
         }
     }
-    
     public static void downloadAndUpdate(Main plugin, String version, Player player) {
         String downloadUrl = String.format(DOWNLOAD_URL_TEMPLATE, version);
         player.sendMessage("§e[MyItem] Đang tiến hành tải bản " + version + "...");
-
         HttpClient client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();
         HttpRequest request = HttpRequest.newBuilder().uri(URI.create(downloadUrl)).build();
-
         client.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream())
                 .thenAccept(response -> {
                     if (response.statusCode() == 200) {
-                        
                         saveToUpdateFolder(plugin, response.body(), player, version);
                     } else {
                         player.sendMessage("§c[MyItem] Không thể tải! Lỗi API: " + response.statusCode());
@@ -191,21 +153,13 @@ public class Update {
                     return null;
                 });
     }
-
-    
     private static void saveToUpdateFolder(Main plugin, InputStream inputStream, Player player, String version) {
         try {
-            
             String jarName = "MyItem-" + version + ".jar";
-
             File updateFolder = new File(plugin.getDataFolder(), "Update");
             if (!updateFolder.exists()) updateFolder.mkdirs();
-
             File targetFile = new File(updateFolder, jarName);
-
-            
             Files.copy(inputStream, targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-
             player.sendMessage("");
             player.sendMessage("§b§l[MyItem] §a§lTẢI THÀNH CÔNG!");
             player.sendMessage("§fPhiên bản: §e" + version);
@@ -213,14 +167,10 @@ public class Update {
             player.sendMessage("§fVị trí: §7/plugins/MyItem/Update/");
             player.sendMessage("§c§nLưu ý:§f Hãy copy đè vào folder plugins và Restart.");
             player.sendMessage("");
-
         } catch (Exception e) {
             player.sendMessage("§c[MyItem] Lỗi khi lưu file: " + e.getMessage());
         }
     }
-
-
-
     private static String getJarName(Main plugin) {
         try {
             File file = new File(plugin.getClass().getProtectionDomain().getCodeSource().getLocation().toURI());

@@ -1,5 +1,4 @@
 package org.ThienNguyen.Listener.Passive.Mechanics;
-
 import org.ThienNguyen.Listener.Passive.AbstractMechanic;
 import org.ThienNguyen.Listener.Passive.ExpressionResolver;
 import org.ThienNguyen.Listener.Passive.MechanicRegistry;
@@ -10,34 +9,26 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.MemoryConfiguration;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-
 public class CheckValueMechanic extends AbstractMechanic {
-
     private enum Operator { GTE, GT, LTE, LT, EQ, NEQ }
-
     private final String key;
     private final String rawThreshold;
     private final Operator operator;
     private final boolean consume;
     private final String targetKeyRaw;
     private final List<PassiveMechanic> children;
-
     public CheckValueMechanic(ConfigurationSection cfg) {
         super(cfg);
         this.key          = cfg.getString("key", "");
-
         this.rawThreshold = cfg.getString("value", "1");
         this.operator     = parseOperator(cfg.getString("operator", ">="));
         this.consume      = cfg.getBoolean("consume", false);
         this.targetKeyRaw = cfg.getString("target", "VICTIM").toUpperCase();
         this.children     = parseChildren(cfg);
     }
-
     private Operator parseOperator(String raw) {
         return switch (raw.trim()) {
             case ">="       -> Operator.GTE;
@@ -49,16 +40,12 @@ public class CheckValueMechanic extends AbstractMechanic {
             default          -> Operator.GTE;
         };
     }
-
-
     private List<PassiveMechanic> parseChildren(ConfigurationSection cfg) {
         List<?> rawList = cfg.getList("actions");
         List<PassiveMechanic> result = new ArrayList<>();
         if (rawList == null) return result;
-
         for (Object obj : rawList) {
             ConfigurationSection childCfg = null;
-
             if (obj instanceof ConfigurationSection section) {
                 childCfg = section;
             } else if (obj instanceof Map<?, ?> map) {
@@ -68,14 +55,12 @@ public class CheckValueMechanic extends AbstractMechanic {
                 }
                 childCfg = mem;
             }
-
             if (childCfg == null) {
                 Main.getInstance().getLogger()
                         .warning("[Passive] CHECK_VALUE 'actions': 1 entry không phải ConfigurationSection lẫn Map (obj class = "
                                 + (obj == null ? "null" : obj.getClass().getName()) + ") → bỏ qua.");
                 continue;
             }
-
             String childType = childCfg.getString("type", "?");
             PassiveMechanic m = MechanicRegistry.create(childCfg);
             if (m == null) {
@@ -88,34 +73,25 @@ public class CheckValueMechanic extends AbstractMechanic {
         }
         return result;
     }
-
     @Override
     protected boolean doExecute(PassiveContext ctx) {
         if (key.isEmpty()) return false;
-
         LivingEntity target = resolveValueTarget(ctx);
         if (target == null) return false;
-
         String stored = PlayerValueStore.get(target.getUniqueId(), key);
         if (stored == null) return false;
-
         Player actor = ctx.getActor();
         double current   = parseNumber(stored);
         double threshold = ExpressionResolver.resolve(rawThreshold, actor, 1);
-
         if (!compare(current, threshold)) return false;
-
         if (consume) PlayerValueStore.remove(target.getUniqueId(), key);
-
         if (children.isEmpty()) return true;
-
         boolean anySuccess = false;
         for (PassiveMechanic m : children) {
             if (m.execute(ctx)) anySuccess = true;
         }
         return anySuccess;
     }
-
     private boolean compare(double current, double threshold) {
         return switch (operator) {
             case GTE -> current >= threshold;
@@ -126,7 +102,6 @@ public class CheckValueMechanic extends AbstractMechanic {
             case NEQ -> current != threshold;
         };
     }
-
     private double parseNumber(String raw) {
         if (raw == null) return 0.0;
         try {
@@ -135,7 +110,6 @@ public class CheckValueMechanic extends AbstractMechanic {
             return 0.0;
         }
     }
-
     private LivingEntity resolveValueTarget(PassiveContext ctx) {
         return switch (targetKeyRaw) {
             case "ACTOR", "SELF" -> ctx.getActor();

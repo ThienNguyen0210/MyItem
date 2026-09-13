@@ -1,5 +1,4 @@
 package org.ThienNguyen.EditItem;
-
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -10,32 +9,25 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
 public class ModelAndMaterial implements CommandExecutor, TabCompleter {
-
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (!(sender instanceof Player player)) {
             sender.sendMessage("§8[§bMyItem§8] §cOnly players can use this command!");
             return true;
         }
-
         if (!player.hasPermission("myitem.admin")) {
             player.sendMessage("§8[§bMyItem§8] §cYou do not have permission to use this command!");
             return true;
         }
-
         ItemStack item = player.getInventory().getItemInMainHand();
         if (item == null || item.getType().isAir()) {
             player.sendMessage("§8[§bMyItem§8] §cYou must hold an item in your hand!");
             return true;
         }
-
-
         if (command.getName().equalsIgnoreCase("setmodel")) {
             if (args.length < 1) {
                 player.sendMessage("§8[§bMyItem§8] §cUsage: /setmodel <id>");
@@ -53,8 +45,6 @@ public class ModelAndMaterial implements CommandExecutor, TabCompleter {
                 player.sendMessage("§8[§bMyItem§8] §cModel ID must be an integer!");
             }
         }
-
-
         else if (command.getName().equalsIgnoreCase("material")) {
             if (args.length < 1) {
                 player.sendMessage("§8[§bMyItem§8] §cUsage: /material <material>");
@@ -68,10 +58,8 @@ public class ModelAndMaterial implements CommandExecutor, TabCompleter {
             item.setType(mat);
             player.sendMessage("§8[§bMyItem§8] §aChanged item material to: §f" + mat.name());
         }
-
         return true;
     }
-
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
         if (command.getName().equalsIgnoreCase("material") && args.length == 1) {
@@ -84,11 +72,9 @@ public class ModelAndMaterial implements CommandExecutor, TabCompleter {
                     .filter(s -> s.startsWith(currentArg))
                     .collect(Collectors.toList());
         }
-
         if (command.getName().equalsIgnoreCase("setmodel") && args.length == 1) {
             return List.of("<id>");
         }
-
         return new ArrayList<>();
     }
 }

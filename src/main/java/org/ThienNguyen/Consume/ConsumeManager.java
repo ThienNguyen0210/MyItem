@@ -1,5 +1,4 @@
 package org.ThienNguyen.Consume;
-
 import org.ThienNguyen.Main;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -16,104 +15,70 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
-
 import java.util.*;
-
 public class ConsumeManager implements Listener {
-
     private static final String KEY_CONSUME = "consume_id";
     private final Random random = new Random();
-
-
     private final Map<UUID, Map<String, Long>> cooldownMap = new HashMap<>();
-
     public static ItemStack getConsumeItem(String id, int amount) {
         FileConfiguration config = Main.getInstance().getConsumeConfig();
         if (!config.contains(id)) return null;
-
         Material mat = Material.matchMaterial(config.getString(id + ".material", "PAPER"));
         ItemStack item = new ItemStack(mat != null ? mat : Material.PAPER, amount);
         ItemMeta meta = item.getItemMeta();
-
         if (meta != null) {
             meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', config.getString(id + ".display-name", "Consume Item")));
-
             List<String> lore = new ArrayList<>();
             for (String line : config.getStringList(id + ".lore")) {
                 lore.add(ChatColor.translateAlternateColorCodes('&', line));
             }
             meta.setLore(lore);
-
             if (config.contains(id + ".model-id")) {
                 meta.setCustomModelData(config.getInt(id + ".model-id"));
             }
-
             NamespacedKey key = new NamespacedKey(Main.getInstance(), KEY_CONSUME);
             meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, id);
-
             item.setItemMeta(meta);
         }
         return item;
     }
-
     @EventHandler
     public void onUse(PlayerInteractEvent e) {
-
         if (e.getAction() != Action.RIGHT_CLICK_AIR && e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
-
-
         if (e.getHand() != EquipmentSlot.HAND) return;
-
         ItemStack item = e.getItem();
         if (item == null || item.getType() == Material.AIR || !item.hasItemMeta()) return;
-
         NamespacedKey key = new NamespacedKey(Main.getInstance(), KEY_CONSUME);
         String id = item.getItemMeta().getPersistentDataContainer().get(key, PersistentDataType.STRING);
-
         if (id == null) return;
-
         e.setCancelled(true);
         Player player = e.getPlayer();
         FileConfiguration config = Main.getInstance().getConsumeConfig();
-
         if (!config.contains(id)) return;
-
-
         int cooldownSeconds = config.getInt(id + ".cooldown", 0);
         if (cooldownSeconds > 0) {
             long currentTime = System.currentTimeMillis();
             Map<String, Long> playerCooldowns = cooldownMap.computeIfAbsent(player.getUniqueId(), k -> new HashMap<>());
-
             if (playerCooldowns.containsKey(id)) {
                 long expireTime = playerCooldowns.get(id);
                 if (currentTime < expireTime) {
                     double timeLeft = (expireTime - currentTime) / 1000.0;
-
-
                     String msg = Main.getInstance().getLangManager().getMessage("consume-cooldown");
                     if (msg == null || msg.isEmpty()) msg = "&cBạn phải chờ %time%s nữa!";
-
                     player.sendMessage(ChatColor.translateAlternateColorCodes('&',
                             msg.replace("%time%", String.format("%.1f", timeLeft))));
                     return;
                 }
             }
-
             playerCooldowns.put(id, currentTime + (cooldownSeconds * 1000L));
         }
-
-
         if (item.getAmount() > 1) {
             item.setAmount(item.getAmount() - 1);
         } else {
-
             player.getInventory().setItemInMainHand(null);
         }
-
-
         List<String> commandsToRun = new ArrayList<>();
         if (config.contains(id + ".random-commands")) {
-
             List<?> groups = config.getList(id + ".random-commands");
             if (groups != null && !groups.isEmpty()) {
                 Object groupObj = groups.get(random.nextInt(groups.size()));
@@ -132,12 +97,10 @@ public class ConsumeManager implements Listener {
         } else {
             commandsToRun.addAll(config.getStringList(id + ".commands"));
         }
-
         for (String cmd : commandsToRun) {
             executeCommand(player, cmd);
         }
     }
-
     private void executeCommand(Player player, String cmd) {
         String finalCmd = cmd.replace("%player%", player.getName());
         if (finalCmd.startsWith("[console]")) {

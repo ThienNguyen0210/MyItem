@@ -1,22 +1,13 @@
 package org.ThienNguyen.Listener.Passive;
-
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.LivingEntity;
-
 import java.util.ArrayList;
 import java.util.List;
-
-
 public abstract class AbstractMechanic implements PassiveMechanic {
-
-    
     protected final String targetKey;
-
     private final List<PassiveMechanic> children;
-
     protected AbstractMechanic(ConfigurationSection cfg) {
         this.targetKey = cfg.getString("target", cfg.getString("location", "VICTIM")).toUpperCase();
-
         List<PassiveMechanic> built = new ArrayList<>();
         List<?> childList = cfg.getList("children");
         if (childList != null) {
@@ -29,30 +20,20 @@ public abstract class AbstractMechanic implements PassiveMechanic {
         }
         this.children = built;
     }
-
-    
     protected LivingEntity resolveTarget(PassiveContext ctx) {
         return "SELF".equals(targetKey) ? ctx.getActor() : ctx.getVictim();
     }
-
-    
     protected abstract boolean doExecute(PassiveContext ctx);
-
     @Override
     public final boolean execute(PassiveContext ctx) {
         boolean success = doExecute(ctx);
         if (success && !children.isEmpty()) {
             for (PassiveMechanic child : children) {
                 child.execute(ctx);
-                
-                
-                
             }
         }
         return success;
     }
-
-    
     @SuppressWarnings("unchecked")
     private ConfigurationSection toSection(Object obj) {
         if (obj instanceof ConfigurationSection section) {

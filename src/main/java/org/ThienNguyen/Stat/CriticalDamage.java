@@ -3,7 +3,6 @@ import org.ThienNguyen.Main;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
-
 public class CriticalDamage {
     private static final NamespacedKey KEY = new NamespacedKey(Main.getInstance(), "critical_damage");
     public static double get(ItemStack item) {

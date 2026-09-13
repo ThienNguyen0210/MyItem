@@ -1,5 +1,4 @@
 package org.ThienNguyen.EditItem;
-
 import net.md_5.bungee.api.ChatColor;
 import org.ThienNguyen.Lore.LoreGenerator;
 import org.ThienNguyen.Main;
@@ -16,51 +15,39 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 public class Essentials implements CommandExecutor, TabCompleter {
-
-
     private static List<String> copiedLore = null;
-
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (!(sender instanceof Player player)) return true;
-
         String cmd = command.getName().toLowerCase();
-
         switch (cmd) {
             case "setname" -> handleSetName(player, args);
             case "setlore" -> handleSetLore(player, args);
             case "unbreaking" -> handleUnbreaking(player);
         }
-
         return true;
     }
-
     private void handleUnbreaking(Player player) {
         if (!player.hasPermission("windycraft.unbreaking")) {
             player.sendMessage("§8[§bMyItem§8] §cYou do not have permission to use this command.");
             return;
         }
-
         ItemStack item = player.getInventory().getItemInMainHand();
         if (item.getType() == Material.AIR) {
             player.sendMessage("§8[§bMyItem§8] §cYou must hold an item in your hand!");
             return;
         }
-
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             boolean isUnbreakable = !meta.isUnbreakable();
             meta.setUnbreakable(isUnbreakable);
-
             if (isUnbreakable) {
                 meta.addItemFlags(ItemFlag.HIDE_UNBREAKABLE);
                 player.sendMessage("§8[§bMyItem§8] §aThe item is now §lUNBREAKABLE§a.");
@@ -68,16 +55,13 @@ public class Essentials implements CommandExecutor, TabCompleter {
                 meta.removeItemFlags(ItemFlag.HIDE_UNBREAKABLE);
                 player.sendMessage("§8[§bMyItem§8] §eThe item has returned to §lNORMAL§e status.");
             }
-
             item.setItemMeta(meta);
         }
     }
-
     private void handleSetName(Player player, String[] args) {
         if (args.length == 0) return;
         ItemStack item = player.getInventory().getItemInMainHand();
         if (item.getType() == Material.AIR) return;
-
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             meta.setDisplayName(translateColor(String.join(" ", args)));
@@ -85,26 +69,21 @@ public class Essentials implements CommandExecutor, TabCompleter {
             player.sendMessage("§8[§bMyItem§8] §aSuccessfully renamed the item!");
         }
     }
-
     private void handleSetLore(Player player, String[] args) {
         if (args.length < 1) {
             player.sendMessage("§8[§bMyItem§8] §cUsage: /setlore <add|set|remove|insert|copy|paste> [args...]");
             return;
         }
-
         ItemStack item = player.getInventory().getItemInMainHand();
         if (item.getType() == Material.AIR) {
             player.sendMessage("§8[§bMyItem§8] §cYou must hold an item in your hand!");
             return;
         }
-
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
-
         boolean formatDriven = isFormatDriven(meta);
         List<String> lore = new ArrayList<>(getEditableLoreLines(item, meta, formatDriven));
         String action = args[0].toLowerCase();
-
         switch (action) {
             case "add" -> {
                 if (args.length < 2) return;
@@ -143,8 +122,6 @@ public class Essentials implements CommandExecutor, TabCompleter {
                     return;
                 }
                 String content = translateColor(String.join(" ", Arrays.copyOfRange(args, 2, args.length)));
-
-
                 if (index >= lore.size()) {
                     lore.add(content);
                     player.sendMessage("§8[§bMyItem§8] §aInserted new line at the end!");
@@ -175,10 +152,8 @@ public class Essentials implements CommandExecutor, TabCompleter {
                 return;
             }
         }
-
         applyLoreLines(item, meta, formatDriven, lore);
     }
-
     /**
      * True if this item is rendered by the LoreRenderer/LoreGenerator format
      * system (has a "lore_format_id" tag). For these items, raw meta.setLore()
@@ -191,7 +166,6 @@ public class Essentials implements CommandExecutor, TabCompleter {
         String formatId = meta.getPersistentDataContainer().get(formatKey, PersistentDataType.STRING);
         return formatId != null;
     }
-
     /**
      * Returns the lines the player is currently editing:
      * - format-driven items: the stored external_lore lines (what {lore} renders)
@@ -204,10 +178,8 @@ public class Essentials implements CommandExecutor, TabCompleter {
             if (raw == null || raw.isEmpty()) return new ArrayList<>();
             return new ArrayList<>(Arrays.asList(raw.split("\\n", -1)));
         }
-
         return meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
     }
-
     /**
      * Writes the edited lines back:
      * - format-driven items: joins the lines and stores them via
@@ -221,11 +193,9 @@ public class Essentials implements CommandExecutor, TabCompleter {
             LoreGenerator.setExternalLore(item, joined);
             return;
         }
-
         meta.setLore(lore);
         item.setItemMeta(meta);
     }
-
     private int getIndex(String input, int maxAllowed) {
         if (input.equalsIgnoreCase("last")) return maxAllowed - 1;
         try {
@@ -235,24 +205,19 @@ public class Essentials implements CommandExecutor, TabCompleter {
             return -1;
         }
     }
-
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
         if (!(sender instanceof Player player)) return null;
         String cmd = command.getName().toLowerCase();
-
         if (cmd.equals("setlore")) {
             if (args.length == 1) {
                 return Arrays.asList("add", "set", "remove", "insert", "copy", "paste");
             }
-
             ItemStack item = player.getInventory().getItemInMainHand();
             if (item.getType() == Material.AIR || !item.hasItemMeta()) return null;
-
             ItemMeta meta = item.getItemMeta();
             boolean formatDriven = isFormatDriven(meta);
             List<String> lore = getEditableLoreLines(item, meta, formatDriven);
-
             if (args.length == 2) {
                 String action = args[0].toLowerCase();
                 if (action.equals("set") || action.equals("remove") || action.equals("insert")) {
@@ -265,7 +230,6 @@ public class Essentials implements CommandExecutor, TabCompleter {
                     return suggestions;
                 }
             }
-
             if (args.length == 3 && (args[0].equalsIgnoreCase("set") || args[0].equalsIgnoreCase("insert"))) {
                 int idx = getIndex(args[1], lore.size() + (args[0].equalsIgnoreCase("insert") ? 1 : 0));
                 if (idx != -1 && idx < lore.size()) {
@@ -273,7 +237,6 @@ public class Essentials implements CommandExecutor, TabCompleter {
                 }
             }
         }
-
         if (cmd.equals("setname") && args.length == 1) {
             ItemStack item = player.getInventory().getItemInMainHand();
             if (item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
@@ -282,7 +245,6 @@ public class Essentials implements CommandExecutor, TabCompleter {
         }
         return null;
     }
-
     private String translateColor(String message) {
         Pattern hexPattern = Pattern.compile("&#([A-Fa-f0-9]{6})");
         Matcher matcher = hexPattern.matcher(message);

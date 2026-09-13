@@ -1,5 +1,4 @@
 package org.ThienNguyen.Lore;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -7,7 +6,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 /**
  * LoreRenderer
  * ------------
@@ -33,36 +31,21 @@ import java.util.regex.Pattern;
  * so the existing placeholder system and public API are untouched.
  */
 public class LoreRenderer {
-
     /** Classic bracket placeholders: {stats}, {stats:foo}, {ability}, {bar}, {sbar}, {tier}, {sockets} ... */
     private static final Pattern BRACE_PLACEHOLDER = Pattern.compile("\\{([a-zA-Z0-9_]+)(:[a-zA-Z0-9_]+)?\\}");
-
     /** MMOItems-style placeholders: #item-type#, #required-level#, #profession-mining# ... */
     private static final Pattern HASH_PLACEHOLDER = Pattern.compile("#([a-zA-Z0-9_\\-]+)#");
-
     /**
      * Tokens that are purely decorative (dividers/bars). They use the same
      * {} syntax as real placeholders but never gate a group - they're
      * treated as STATIC even though they're technically "{...}".
      */
     private static final Set<String> DECORATIVE_TOKENS = Set.of("bar", "sbar");
-
-    //    /**
-//     * Resolves one placeholder occurrence into zero or more finished lore
-//     * lines (pre-colorize). Return null or an empty list to signal "this
-//     * placeholder has nothing to show" (e.g. the item lacks that stat).
-//     *
-//     * @param token    placeholder name, lower-cased (e.g. "stats", "item-type")
-//     * @param argument the ":xxx" argument for brace placeholders (e.g. "damage"), or null
-//     * @param rawLine  the untouched source line, in case a resolver needs full context
-//     */
     public interface PlaceholderResolver {
         List<String> resolve(String token, String argument, String rawLine);
     }
-
     private final PlaceholderResolver resolver;
     private final Function<String, String> decorativeRenderer;
-
     /**
      * @param resolver           resolves data placeholders ({@code #xxx#} / {@code {xxx}} / {@code {xxx:yyy}})
      * @param decorativeRenderer resolves purely visual tokens ("bar", "sbar") into their replacement text;
@@ -72,103 +55,73 @@ public class LoreRenderer {
         this.resolver = resolver;
         this.decorativeRenderer = decorativeRenderer;
     }
-
     /** One parsed section: its static header line(s) and the placeholder lines that follow. */
     private static class Group {
         final List<String> headerLines = new ArrayList<>();
         final List<String> placeholderLines = new ArrayList<>();
     }
-
     /**
      * Renders the full lore-format into final display lines, applying the
      * group-drop rule. This is the only entry point callers need.
      */
     public List<String> render(List<String> formatLines) {
         List<String> result = new ArrayList<>();
-
         for (Group group : parseGroups(formatLines)) {
-
-            // Decorative line ({bar}/{sbar}) luôn được render
             for (String header : group.headerLines) {
                 if (containsDecorativeToken(header)) {
                     result.add(renderStaticLine(header));
                 }
             }
-
             List<String> body = new ArrayList<>();
-
             for (String line : group.placeholderLines) {
                 List<String> rendered = renderPlaceholderLine(line);
-
                 if (rendered != null && !rendered.isEmpty()) {
                     body.addAll(rendered);
                 }
             }
-
-            // Nếu không có placeholder nào render được
-            // thì chỉ giữ lại các dòng decorative
             if (body.isEmpty()) {
                 continue;
             }
-
             for (String header : group.headerLines) {
                 if (!containsDecorativeToken(header)) {
                     result.add(renderStaticLine(header));
                 }
             }
-
             result.addAll(body);
         }
-
         return result;
     }
-
-    // ------------------------------------------------------------------
-    // Grouping
-    // ------------------------------------------------------------------
-
     private List<Group> parseGroups(List<String> formatLines) {
         List<Group> groups = new ArrayList<>();
         Group current = new Group();
         boolean currentHasPlaceholders = false;
-
         for (String line : formatLines) {
             if (line == null) continue;
-
             if (isDynamicPlaceholderLine(line)) {
                 current.placeholderLines.add(line);
                 currentHasPlaceholders = true;
             } else {
                 if (currentHasPlaceholders) {
-                    // The current group already collected placeholders - this
-                    // static line is the anchor header for a brand new group.
                     groups.add(current);
                     current = new Group();
                     currentHasPlaceholders = false;
                 }
-                // Still in the "header accumulation" phase for the group
-                // that hasn't found its first placeholder yet.
                 current.headerLines.add(line);
             }
         }
-
         if (!current.headerLines.isEmpty() || !current.placeholderLines.isEmpty()) {
             groups.add(current);
         }
-
         return groups;
     }
     private boolean containsDecorativeToken(String line) {
         Matcher matcher = BRACE_PLACEHOLDER.matcher(line);
-
         while (matcher.find()) {
             String token = matcher.group(1).toLowerCase();
-
             if (DECORATIVE_TOKENS.contains(token)) {
                 return true;
             }
         }
-
         return false;
     }
     /**
@@ -176,14 +129,11 @@ public class LoreRenderer {
      * real data placeholder: any {@code #xxx#} token, or a {@code {xxx}}/
      * {@code {xxx:yyy}} token that is NOT decorative (bar/sbar).
      */
-
     private boolean isDynamicPlaceholderLine(String line) {
         if (HASH_PLACEHOLDER.matcher(line).find()) return true;
-
         Matcher brace = BRACE_PLACEHOLDER.matcher(line);
         while (brace.find()) {
             String token = brace.group(1).toLowerCase();
-            // NẾU TOKEN LÀ bar HOẶC sbar, TA BỎ QUA KHÔNG TÍNH LÀ DÒNG ĐỘNG
             if (DECORATIVE_TOKENS.contains(token)) {
                 continue;
             }
@@ -191,17 +141,11 @@ public class LoreRenderer {
         }
         return false;
     }
-
-    // ------------------------------------------------------------------
-    // Rendering individual lines
-    // ------------------------------------------------------------------
-
     /** Renders a header/static line: resolves decorative {bar}/{sbar} tokens, then colorizes. */
     private String renderStaticLine(String line) {
         Matcher brace = BRACE_PLACEHOLDER.matcher(line);
         StringBuilder sb = new StringBuilder();
         int last = 0;
-
         while (brace.find()) {
             String token = brace.group(1).toLowerCase();
             sb.append(line, last, brace.start());
@@ -213,10 +157,8 @@ public class LoreRenderer {
             last = brace.end();
         }
         sb.append(line.substring(last));
-
         return LoreGenerator.colorize(sb.toString());
     }
-
     /**
      * Renders one placeholder-bearing line.
      * - If the *entire* (trimmed) line is a single placeholder, that
@@ -230,39 +172,31 @@ public class LoreRenderer {
      */
     private List<String> renderPlaceholderLine(String line) {
         String trimmed = line.trim();
-
         Matcher soloHash = HASH_PLACEHOLDER.matcher(trimmed);
         if (soloHash.matches()) {
             return colorizeAll(resolve(soloHash.group(1), null, line));
         }
-
         Matcher soloBrace = BRACE_PLACEHOLDER.matcher(trimmed);
         if (soloBrace.matches() && !DECORATIVE_TOKENS.contains(soloBrace.group(1).toLowerCase())) {
             String token = soloBrace.group(1).toLowerCase();
             String arg = soloBrace.group(2) != null ? soloBrace.group(2).substring(1) : null;
             return colorizeAll(resolve(token, arg, line));
         }
-
         boolean[] resolvedAny = {false};
         String working = replaceTokens(line, HASH_PLACEHOLDER, resolvedAny);
         working = replaceTokens(working, BRACE_PLACEHOLDER, resolvedAny);
-
         if (!resolvedAny[0]) return Collections.emptyList();
-
         List<String> out = new ArrayList<>();
         out.add(LoreGenerator.colorize(working));
         return out;
     }
-
     private String replaceTokens(String line, Pattern pattern, boolean[] resolvedAny) {
         Matcher m = pattern.matcher(line);
         StringBuilder sb = new StringBuilder();
         int last = 0;
-
         while (m.find()) {
             String token;
             String arg = null;
-
             if (pattern == BRACE_PLACEHOLDER) {
                 token = m.group(1).toLowerCase();
                 if (DECORATIVE_TOKENS.contains(token)) continue; // handled elsewhere, leave as-is
@@ -270,10 +204,8 @@ public class LoreRenderer {
             } else {
                 token = m.group(1);
             }
-
             List<String> resolved = resolve(token, arg, line);
             sb.append(line, last, m.start());
-
             if (resolved != null && !resolved.isEmpty()) {
                 sb.append(resolved.get(0));
                 resolvedAny[0] = true;
@@ -285,7 +217,6 @@ public class LoreRenderer {
         sb.append(line.substring(last));
         return sb.toString();
     }
-
     private List<String> resolve(String token, String arg, String rawLine) {
         if (resolver == null) return null;
         try {
@@ -295,7 +226,6 @@ public class LoreRenderer {
             return null;
         }
     }
-
     private List<String> colorizeAll(List<String> raw) {
         if (raw == null || raw.isEmpty()) return Collections.emptyList();
         List<String> out = new ArrayList<>();

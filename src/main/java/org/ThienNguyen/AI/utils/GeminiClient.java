@@ -1,56 +1,37 @@
 package org.ThienNguyen.AI.utils;
-
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.ThienNguyen.Main;
 import org.json.JSONArray;
 import org.json.JSONObject;
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-
 public class GeminiClient {
-
-    
     private final String HARDCODED_API_KEY = "AIzaSyAOwahO33Ue7n1Ao1gCAJdCSY_CQ1S_j_Y";
-
-    
     private String getApiKey() {
         FileConfiguration aiCfg = Main.getInstance().getAIConfig();
-
         if (aiCfg != null) {
             String userKey = aiCfg.getString("api-key", "").trim();
-
-            
             if (!userKey.isEmpty() && !userKey.equals("YOUR_API_KEY_HERE") && !userKey.equals("AIzaSy...")) {
                 Bukkit.getLogger().info("[WindyAI] Đang sử dụng API Key tùy chỉnh từ AIConfig.yml");
                 return userKey;
             }
         }
-
-        
         Bukkit.getLogger().info("[WindyAI] Không tìm thấy API Key từ config → Sử dụng hard-coded key");
         return HARDCODED_API_KEY;
     }
-
-    
     private String getGeminiUrl() {
         String apiKey = getApiKey();
-        
         return "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=" + apiKey;
     }
-
     public String callGemini(String prompt) throws Exception {
         String url = getGeminiUrl();
-
         HttpClient client = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(20))
                 .build();
-
-        
         StringBuilder styleGuide = new StringBuilder(
                 "QUY TẮC TRANG TRÍ LORE (BẮT BUỘC):\n" +
                         "- Sử dụng kí tự đặc biệt đẹp: ✦ ✧ ✪ ❖ ❈ ❂ ❁ ⫷ ⫸ ▣ ◈ ✹ ✵ ☠ ⚔\n" +
@@ -65,10 +46,7 @@ public class GeminiClient {
                         "- các line như chỉ số, hiệu ứng,  ability , element v.v chỉ ghi đơn giản thôi không màu mè nhé\n" +
                         "- Không dùng text thô đơn giản\n\n"
         );
-
         FileConfiguration aiCfg = Main.getInstance().getAIConfig();
-
-        
         if (aiCfg != null && aiCfg.getBoolean("ai.tiny_font_enabled", false)) {
             styleGuide.append(
                     "- Nếu lore có flavor text, quote cuối, hoặc tiêu đề phụ nghệ thuật, bạn CÓ THỂ dùng small caps unicode (hybrid) để tăng tính thẩm mỹ.\n" +
@@ -76,20 +54,15 @@ public class GeminiClient {
                             "- CHỈ dùng ở phần văn bản nghệ thuật / quote / mô tả, TUYỆT ĐỐI KHÔNG dùng cho stats, effect, ability, element.\n\n"
             );
         }
-
         boolean isLevelRequireEnabled = aiCfg != null && aiCfg.getBoolean("ai.level_require", false);
         boolean isUnbreaking = aiCfg != null && aiCfg.getBoolean("ai.unbreaking", false);
-
         String validStats = "[damage, health, armor, pve_damage, pvp_damage, pve_defense, pvp_defense, critical_chance, critical_damage, lifesteal, dodge_rate, block_rate, penetration, level_require, true_damage, thorns, max_mana, mana_regen, exp_bonus, attack_speed, movement_speed, health_regen, armor_pen, all_damage, all_defense, bow_damage, knockback_resistance, death_damage, UNBREAKING, magic_damage, magic_defense]";
         String finalStats = isLevelRequireEnabled
                 ? validStats.replace("]", ", level_require]")
                 : validStats;
-
         String validAbilities = "[LIGHTNING, POISON, WEAK, HUNGER, TIRED, CONFUSE, WITHER, BLIND, SLOWNESS, AIR_SHOCK, CURSE, BUBBLE, BLEED, FIRE_VORTEX, FREEZE, DISARM, EXPLODE, FLAME_PULSE, ANGEL, SHADOW_DEVOUR, SONIC_WAVE, FIRE_RAIN, STAR_RITUAL, FIRE_TRIPLE_SHOT, STAR_FALL, SUN_STRIKE_AOE, BLACK_HOLE, SHADOW_WAVE, FAIRY_CHAIN, LILAC_BLOOM_BOMB, LEAF_STORM, SPIRIT_WOLF, PLAGUE_SPREAD, WIND_TORNADO, FIRE_ORB, PLASMA_ORB, ELECTRIC_BLADE, FIRST_STRIKE, TNT_STUCK, BadLuck, Bubble_Deflector, DARK_FLAME, DARK_IMPACT, ROOTS, VAMPIRISM, VENOM_SPREAD]";
         String validElements = getDynamicElements();
         String validEffect = "[SPEED, FAST_DIGGING, INCREASE_DAMAGE, JUMP, REGENERATION, DAMAGE_RESISTANCE, FIRE_RESISTANCE, WATER_BREATHING, HEALTH_BOOST, ABSORPTION, NIGHT_VISION, LUCK]";
-
-        
         String systemInstruction = styleGuide.toString() +
                 "Bạn là chuyên gia thiết kế Template Item RPG cho Minecraft Plugin.\n" +
                 "NHIỆM VỤ: Trả về DUY NHẤT mã YAML thô, KHÔNG giải thích, KHÔNG thêm text ngoài YAML.\n\n" +
@@ -139,61 +112,46 @@ public class GeminiClient {
                 " - '&f &f &f &f&6&l|⟦&e&l亗&6&l⟧|&f&l Kĩ Năng'\n" +
                 " - '{ability:LIGHTNING}'\n" +
                 " - '&6&l|⟦&e&l亗&6&l⟧|&8◥◣︿◢◤&6&l|⟦&e&l亗&6&l⟧|&f&l Kết Thúc &6&l|⟦&e&l亗&6&l⟧|&8◥◣︿◢◤&6&l|⟦&e&l亗&6&l⟧|'\n";
-
-        
         JSONObject body = new JSONObject();
         JSONArray parts = new JSONArray();
         parts.put(new JSONObject().put("text", systemInstruction));
         parts.put(new JSONObject().put("text", "Yêu cầu từ người chơi: " + prompt));
-
         JSONObject content = new JSONObject().put("parts", parts);
         JSONArray contents = new JSONArray().put(content);
         body.put("contents", contents);
-
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
                 .build();
-
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
         JSONObject resJson = new JSONObject(response.body());
-
         if (resJson.has("error")) {
             String errorMsg = resJson.getJSONObject("error").getString("message");
             Bukkit.getLogger().warning("[WindyAI] Gemini API Error: " + errorMsg);
             throw new Exception("Google API Error: " + errorMsg);
         }
-
-        
         String rawText = resJson.getJSONArray("candidates")
                 .getJSONObject(0)
                 .getJSONObject("content")
                 .getJSONArray("parts")
                 .getJSONObject(0)
                 .getString("text");
-
         String cleanText = rawText.replaceAll("(?i)```yaml", "")
                 .replaceAll("(?i)```", "")
                 .trim();
-
-        
         if (!cleanText.contains("display_name:") && cleanText.contains(":")) {
             int startIndex = cleanText.lastIndexOf("\n", cleanText.indexOf(":"));
             if (startIndex != -1) {
                 cleanText = cleanText.substring(startIndex).trim();
             }
         }
-
         if (!cleanText.toLowerCase().contains("display_name")) {
             Bukkit.getLogger().warning("[WindyAI] AI trả về nội dung không đúng định dạng:\n" + rawText);
             throw new Exception("AI không tạo đúng cấu trúc MyItem. Hãy thử mô tả kỹ hơn.");
         }
-
         return cleanText;
     }
-
     private String getDynamicElements() {
         try {
             FileConfiguration elementConfig = Main.getInstance().getElementConfig();

@@ -1,5 +1,4 @@
 package org.ThienNguyen.Webapi;
-
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.ThienNguyen.Main;
@@ -18,7 +17,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -26,23 +24,18 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-
+/* Dự án này đã ngưng hoạt động...  cảm ơn vì tất cả*/
 public class Web {
-
     private static final String API_URL = "http://103.188.83.137/api/get-item/";
-
     public static void connectItem(Player player, String code) {
         player.sendMessage("§e[MyItem] Đang kết nối tới máy chủ thiết kế...");
-
         HttpClient client = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(5))
                 .build();
-
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(API_URL + code))
                 .GET()
                 .build();
-
         client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenAccept(response -> {
                     if (response.statusCode() == 200) {
@@ -60,19 +53,14 @@ public class Web {
                     return null;
                 });
     }
-
     private static void giveItem(Player player, JsonObject json) {
         try {
-            
             String matName = json.has("material") ? json.get("material").getAsString().toUpperCase() : "DIAMOND_SWORD";
             Material mat = Material.matchMaterial(matName);
             if (mat == null) mat = Material.STONE;
-
             ItemStack item = new ItemStack(mat);
             ItemMeta meta = item.getItemMeta();
             if (meta == null) return;
-
-            
             if (json.has("name")) meta.setDisplayName(formatColor(json.get("name").getAsString()));
             if (json.has("modelId") && !json.get("modelId").getAsString().isEmpty()) {
                 try {
@@ -80,9 +68,6 @@ public class Web {
                 } catch (Exception ignored) {}
             }
             item.setItemMeta(meta);
-
-            
-            
             if (json.has("stats")) {
                 JsonObject statsJson = json.get("stats").getAsJsonObject();
                 for (String type : statsJson.keySet()) {
@@ -94,7 +79,6 @@ public class Web {
                     }
                 }
             }
-
             if (json.has("abilities")) {
                 JsonObject abJson = json.get("abilities").getAsJsonObject();
                 for (String abName : abJson.keySet()) {
@@ -107,7 +91,6 @@ public class Web {
                     }
                 }
             }
-
             if (json.has("effects")) {
                 JsonObject effJson = json.get("effects").getAsJsonObject();
                 for (String effName : effJson.keySet()) {
@@ -117,7 +100,6 @@ public class Web {
                     }
                 }
             }
-
             if (json.has("elements")) {
                 JsonObject eleJson = json.get("elements").getAsJsonObject();
                 for (String eleId : eleJson.keySet()) {
@@ -128,12 +110,8 @@ public class Web {
                     }
                 }
             }
-
-            
             if (json.has("lore_template")) {
                 String template = json.get("lore_template").getAsString();
-
-                
                 if (json.has("stats")) {
                     JsonObject statsJson = json.get("stats").getAsJsonObject();
                     for (String type : statsJson.keySet()) {
@@ -146,8 +124,6 @@ public class Web {
                         }
                     }
                 }
-
-                
                 if (json.has("abilities")) {
                     JsonObject abJson = json.get("abilities").getAsJsonObject();
                     for (String abName : abJson.keySet()) {
@@ -160,8 +136,6 @@ public class Web {
                         }
                     }
                 }
-
-                
                 if (json.has("elements")) {
                     JsonObject eleJson = json.get("elements").getAsJsonObject();
                     for (String eleId : eleJson.keySet()) {
@@ -172,7 +146,6 @@ public class Web {
                             if (el != null && !el.getAsString().isEmpty()) {
                                 int level = el.getAsInt();
                                 if (level > 0) {
-                                    
                                     replacement = org.ThienNguyen.Lore.ElementLore.getFormattedElement(eleId, level);
                                 }
                             }
@@ -180,8 +153,6 @@ public class Web {
                         }
                     }
                 }
-
-                
                 if (json.has("effects")) {
                     JsonObject effJson = json.get("effects").getAsJsonObject();
                     for (String effName : effJson.keySet()) {
@@ -192,8 +163,6 @@ public class Web {
                         }
                     }
                 }
-
-                
                 List<String> finalLore = new ArrayList<>();
                 for (String line : template.split("\n")) {
                     String formatted = formatColor(line);
@@ -201,25 +170,19 @@ public class Web {
                         finalLore.add(formatted);
                     }
                 }
-
                 ItemMeta finalMeta = item.getItemMeta();
                 if (finalMeta != null) {
                     finalMeta.setLore(finalLore);
                     item.setItemMeta(finalMeta);
                 }
             }
-
-            
             player.getInventory().addItem(item);
             player.sendMessage("§a[MyItem] §fKết nối thành công: " + item.getItemMeta().getDisplayName());
-
         } catch (Exception e) {
             player.sendMessage("§c[MyItem] Lỗi cấu trúc dữ liệu");
             e.printStackTrace();
         }
     }
-
-    
     private static String formatColor(String text) {
         if (text == null || text.isEmpty()) return text;
         java.util.regex.Pattern hexPattern = java.util.regex.Pattern.compile("&#([A-Fa-f0-9]{6})");
@@ -236,16 +199,12 @@ public class Web {
         matcher.appendTail(sb);
         return ChatColor.translateAlternateColorCodes('&', sb.toString());
     }
-
     public static String getFormattedAbility(String key, int level, double chance) {
         FileConfiguration config = Main.getInstance().getAbilityConfig();
         List<String> template = config.getStringList("abilities." + key + ".lore");
         boolean useRoman = config.getBoolean("settings.use-roman", false);
-
         if (template.isEmpty()) return "§7- " + key + " Lv." + level;
-
         String levelToDisplay = useRoman ? toRoman(level) : String.valueOf(level);
-
         List<String> lines = new ArrayList<>();
         for (String line : template) {
             String formatted = line
@@ -253,10 +212,8 @@ public class Web {
                     .replace("{chance}", String.valueOf(chance));
             lines.add(formatColor(formatted)); 
         }
-
         return String.join("\n", lines);
     }
-
     private static String getFormattedElement(String eleId, int level) {
         FileConfiguration config = Main.getInstance().getElementLoreConfig();
         String format = config.getString(eleId, "&7" + eleId + ": {value}");
@@ -264,22 +221,14 @@ public class Web {
         String val = useRoman ? toRoman(level) : String.valueOf(level);
         return formatColor(format.replace("{value}", val));
     }
-
     public static String getFormattedEffect(String key, int level) {
         FileConfiguration config = Main.getInstance().getEffectConfig();
-
         String displayName = config.getString("display-names." + key, key);
         boolean useRoman = config.getBoolean("use-roman", true);
         String levelStr = useRoman ? toRoman(level) : String.valueOf(level);
-
-        
         String result = "§7" + displayName + " §f" + levelStr;
-        
-        
-
         return formatColor(result);
     }
-
     private static final java.util.TreeMap<Integer, String> romanMap = new java.util.TreeMap<>();
     static {
         romanMap.put(1000, "M"); romanMap.put(900, "CM"); romanMap.put(500, "D");
@@ -288,7 +237,6 @@ public class Web {
         romanMap.put(9, "IX"); romanMap.put(5, "V"); romanMap.put(4, "IV");
         romanMap.put(1, "I");
     }
-
     private static String toRoman(int number) {
         if (number <= 0) return String.valueOf(number);
         Integer l = romanMap.floorKey(number);
@@ -296,7 +244,6 @@ public class Web {
         if (number == l) return romanMap.get(number);
         return romanMap.get(l) + toRoman(number - l);
     }
-
     private static void applyStatByCase(ItemStack item, String type, double value) {
         if (value <= 0) return;
         switch (type.toLowerCase()) {
@@ -330,12 +277,9 @@ public class Web {
             case "UNBREAKING" -> {
                 ItemMeta meta = item.getItemMeta();
                 if (meta instanceof org.bukkit.inventory.meta.Damageable damageable) {
-                    
                     var pdc = meta.getPersistentDataContainer();
                     pdc.set(new NamespacedKey(Main.getInstance(), "UNBREAKING"), PersistentDataType.DOUBLE, value);
                     pdc.set(new NamespacedKey(Main.getInstance(), "max_UNBREAKING"), PersistentDataType.DOUBLE, value);
-
-                    
                     damageable.setDamage(0); 
                     item.setItemMeta(damageable);
                 }

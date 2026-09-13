@@ -1,5 +1,4 @@
 package org.ThienNguyen.Skill;
-
 import org.ThienNguyen.Main;
 import org.ThienNguyen.Skill.TypeSkill.MythicMobsSkill;
 import org.ThienNguyen.Skill.TypeSkill.SkillCommand;
@@ -7,23 +6,18 @@ import org.ThienNguyen.Skill.TypeSkill.ScriptSkill;
 import org.ThienNguyen.Skill.TypeSkill.Weapon.*;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 public class SkillManager {
     private static final Map<String, ISkill> skills = new HashMap<>();
     private static final Map<String, Integer> manaCosts = new HashMap<>();
-
     public static void loadSkills() {
         skills.clear();
         manaCosts.clear();
-
-        
         register(new SongAm());
         register(new LightningStrike());
         register(new FireballExplosionSkill());
@@ -44,24 +38,16 @@ public class SkillManager {
         register(new ThousandSwordsSkill());
         register(new DeathMarkSkill());
         register(new OmniSwordRainSkill());
-
-        
         loadWeaponSkills();
         loadCommandSkills();
         loadMythicLibSkills();
-
-        
         loadScriptSkills();
-
     }
-
     private static void loadScriptSkills() {
         File folder = new File(Main.getInstance().getDataFolder(), "Skript/Skill");
         if (!folder.exists()) folder.mkdirs();
-
         File[] files = folder.listFiles((dir, name) -> name.endsWith(".yml"));
         if (files == null) return;
-
         for (File file : files) {
             try {
                 FileConfiguration config = YamlConfiguration.loadConfiguration(file);
@@ -69,7 +55,6 @@ public class SkillManager {
                 String trigger = config.getString("trigger", "RIGHT_CLICK");
                 String code = config.getString("code", "");
                 int mana = config.getInt("mana", 0);
-
                 if (!code.isEmpty()) {
                     register(new ScriptSkill(id, trigger, code));
                     manaCosts.put(id.toUpperCase(), mana);
@@ -79,7 +64,6 @@ public class SkillManager {
             }
         }
     }
-
     private static void loadWeaponSkills() {
         File file = getConfigFile("SkillWeapon.yml");
         FileConfiguration config = YamlConfiguration.loadConfiguration(file);
@@ -91,7 +75,6 @@ public class SkillManager {
             }
         }
     }
-
     private static void loadCommandSkills() {
         File file = getConfigFile("SkillCommand.yml");
         FileConfiguration config = YamlConfiguration.loadConfiguration(file);
@@ -101,7 +84,6 @@ public class SkillManager {
             manaCosts.put(key.toUpperCase(), mana);
         }
     }
-
     private static void loadMythicLibSkills() {
         File file = getConfigFile("SkillMythicMob.yml");
         FileConfiguration config = YamlConfiguration.loadConfiguration(file);
@@ -111,7 +93,6 @@ public class SkillManager {
             manaCosts.put(key.toUpperCase(), mana);
         }
     }
-
     private static File getConfigFile(String fileName) {
         File folder = new File(Main.getInstance().getDataFolder(), "Listener");
         if (!folder.exists()) folder.mkdirs();
@@ -125,28 +106,23 @@ public class SkillManager {
         }
         return file;
     }
-
     private static void register(ISkill skill) {
         if (skill == null || skill.getName() == null) return;
         skills.put(skill.getName().toUpperCase(), skill);
     }
-
     public static int getManaCost(String skillName) {
         if (skillName == null) return 0;
         return manaCosts.getOrDefault(skillName.toUpperCase(), 0);
     }
-
     public static ISkill getSkill(String name) {
         if (name == null) return null;
         return skills.get(name.toUpperCase());
     }
-
     public static List<ISkill> getSkillsByType(String type) {
         return skills.values().stream()
                 .filter(s -> s.getType().equalsIgnoreCase(type))
                 .collect(Collectors.toList());
     }
-
     public static List<String> getSkillNamesByType(String type) {
         FileConfiguration config = null;
         if (type.equalsIgnoreCase("Mythicmob")) {
@@ -154,7 +130,6 @@ public class SkillManager {
         } else if (type.equalsIgnoreCase("Command")) {
             config = YamlConfiguration.loadConfiguration(getConfigFile("SkillCommand.yml"));
         } else if (type.equalsIgnoreCase("Script")) {
-            
             File folder = new File(Main.getInstance().getDataFolder(), "Skript/Skill");
             if (folder.exists()) {
                 File[] files = folder.listFiles((dir, name) -> name.endsWith(".yml"));
@@ -165,15 +140,12 @@ public class SkillManager {
                 }
             }
         }
-
         if (config != null) return new ArrayList<>(config.getKeys(false));
-
         return skills.values().stream()
                 .filter(s -> s.getType().equalsIgnoreCase(type))
                 .map(ISkill::getName)
                 .collect(Collectors.toList());
     }
-
     public static List<String> getSkillNames() {
         return skills.values().stream()
                 .map(ISkill::getName)
