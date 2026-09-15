@@ -1,7 +1,6 @@
 package org.ThienNguyen.Command.GUI;
 import org.ThienNguyen.Main;
 import org.ThienNguyen.Listener.CacheListener;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -19,6 +18,15 @@ import java.util.List;
 import java.util.Map;
 /**
  * GUI cho phép chọn 1 chỉ số (stat) để chỉnh sửa NGAY TRÊN vật phẩm đang cầm ở tay chính.
+ *
+ * Lớp này extends {@link AbstractPaginatedGui}, nên KHÔNG tự lo layout/phân trang nữa —
+ * phần đó do lớp cha xử lý (header ở slot 0-8, nội dung phân trang 36 ô/trang, footer có nút
+ * Trang Trước/Trang Sau/Đóng). GUIStats chỉ còn lo đúng phần "nghiệp vụ" của riêng nó:
+ * danh sách stat nào tồn tại, vẽ từng ô ra sao, và click vào 1 stat thì làm gì.
+ *
+ * Đây cũng là "mẫu" để các GUI tương lai (GUIElement cho buff nguyên tố, GUIAbility cho
+ * kỹ năng, ...) đi theo: chỉ cần extends AbstractPaginatedGui<T> với T phù hợp và implement
+ * 3 hàm loadEntries/renderEntry/onEntryClick, không cần viết lại logic phân trang hay layout.
  *
  * Lớp này KHÔNG tự implements Listener và KHÔNG cần registerEvents() riêng.
  * Toàn bộ sự kiện (click GUI, nhập giá trị qua chat) đều đi qua GUIListener dùng chung.
@@ -56,7 +64,7 @@ import java.util.Map;
  *       return true;
  *   }
  */
-public class GUIStats implements IGuiHandler {
+public class GUIStats extends AbstractPaginatedGui<String> {
     private static final String GUI_TITLE = ChatColor.DARK_PURPLE + "" + ChatColor.BOLD + "Stats";
     private static final String CANCEL_KEYWORD = "cancel";
     private static final String KEY_CLASS_REQUIRE = "class_require";
@@ -66,9 +74,16 @@ public class GUIStats implements IGuiHandler {
     static {
         GUIListener.registerHandler(GUI_TITLE, INSTANCE);
     }
+    private GUIStats() {
+        super(GUI_TITLE);
+    }
     private static IStatsHandler statsHandler;
     public static void setStatsHandler(IStatsHandler handler) {
         statsHandler = handler;
+    }
+    /** Mở GUI ở đúng trang người chơi đang xem lần gần nhất (giữ tương thích với code cũ). */
+    public static void openGuiStats(Player player) {
+        INSTANCE.open(player);
     }
     private static final Map<String, String> flatSlotPref = new HashMap<>();
     private static final Map<String, String> pctSlotPref = new HashMap<>();
@@ -137,25 +152,18 @@ public class GUIStats implements IGuiHandler {
         STAT_INFO.put("damage_reduction", new StatInfo(Material.NETHERITE_CHESTPLATE, "Giảm Thiệt Hại", "Giảm sát thương nhận vào."));
         STAT_INFO.put("deep_wound", new StatInfo(Material.SPLASH_POTION, "Vết Thương Sâu", "Giảm khả năng hồi phục của mục tiêu."));
     }
-    private static final int SLOT_CLOSE = 0;
     private static final int SLOT_HELD_ITEM = 4;
-    private static final int STATS_START_SLOT = 9;
-    private static final int STATS_END_SLOT_EXCLUSIVE = 54; // tối đa slot 53
-    /**
-     * Mở GUI chọn stat cho người chơi, hiển thị sẵn vật phẩm đang cầm ở tay chính.
-     */
-    public static void openGuiStats(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 54, GUI_TITLE);
-        ItemStack border = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
-        ItemMeta borderMeta = border.getItemMeta();
-        if (borderMeta != null) {
-            borderMeta.setDisplayName(" ");
-            border.setItemMeta(borderMeta);
-        }
-        for (int i = 0; i < 9; i++) {
-            if (i == SLOT_HELD_ITEM) continue; // Bỏ qua ô hiển thị item đang cầm, còn lại phủ viền hết
-            inv.setItem(i, border);
-        }
+
+    // ================== IMPLEMENT KHUNG CỦA AbstractPaginatedGui ==================
+
+    @Override
+    protected List<String> loadEntries(Player player) {
+        return new ArrayList<>(STAT_INFO.keySet());
+    }
+
+    @Override
+    protected void renderHeader(Inventory inv, Player player) {
+        super.renderHeader(inv, player); // phủ viền mặc định trước, rồi ghi đè slot hiển thị item
         ItemStack heldItem = player.getInventory().getItemInMainHand();
         boolean hasItem = heldItem != null && heldItem.getType() != Material.AIR;
         if (!hasItem) {
@@ -173,24 +181,79 @@ public class GUIStats implements IGuiHandler {
         } else {
             inv.setItem(SLOT_HELD_ITEM, heldItem.clone());
         }
-        int slot = STATS_START_SLOT;
-        for (Map.Entry<String, StatInfo> entry : STAT_INFO.entrySet()) {
-            if (slot >= STATS_END_SLOT_EXCLUSIVE) break; // an toàn nếu sau này thêm quá nhiều stat
-            String key = entry.getKey();
-            StatInfo info = entry.getValue();
-            ItemStack refItem = hasItem ? heldItem : null;
-            boolean isClassRequire = key.equals(KEY_CLASS_REQUIRE);
-            String flatSlot = isClassRequire ? "any" : getFlatSlot(player, key, refItem);
-            String pctSlot = isClassRequire ? "any" : getPctSlot(player, key, refItem);
-            inv.setItem(slot, buildStatItem(refItem, key, info, flatSlot, pctSlot));
-            slot++;
-        }
-        while (slot < STATS_END_SLOT_EXCLUSIVE) {
-            inv.setItem(slot, border);
-            slot++;
-        }
-        player.openInventory(inv);
     }
+
+    @Override
+    protected ItemStack renderEntry(Player player, String statKey) {
+        ItemStack heldItem = player.getInventory().getItemInMainHand();
+        boolean hasItem = heldItem != null && heldItem.getType() != Material.AIR;
+        ItemStack refItem = hasItem ? heldItem : null;
+        StatInfo info = STAT_INFO.get(statKey);
+        boolean isClassRequire = statKey.equals(KEY_CLASS_REQUIRE);
+        String flatSlot = isClassRequire ? "any" : getFlatSlot(player, statKey, refItem);
+        String pctSlot = isClassRequire ? "any" : getPctSlot(player, statKey, refItem);
+        return buildStatItem(refItem, statKey, info, flatSlot, pctSlot);
+    }
+
+    @Override
+    protected void onEntryClick(Player player, String statKey, InventoryClickEvent event) {
+        StatInfo info = STAT_INFO.get(statKey);
+        if (!info.supported) {
+            player.sendMessage(ChatColor.RED + "Chỉ số " + ChatColor.WHITE + info.displayName
+                    + ChatColor.RED + " chưa được plugin hỗ trợ, không thể chỉnh sửa.");
+            return;
+        }
+        ItemStack heldItem = player.getInventory().getItemInMainHand();
+        if (heldItem == null || heldItem.getType() == Material.AIR) {
+            player.sendMessage(ChatColor.RED + "Bạn cần cầm 1 vật phẩm ở tay chính trước khi chỉnh sửa!");
+            return;
+        }
+        boolean isClassRequire = statKey.equals(KEY_CLASS_REQUIRE);
+        if (event.isRightClick()) {
+            if (isClassRequire) {
+                player.sendMessage(ChatColor.YELLOW + "Yêu Cầu Lớp Nhân Vật không áp dụng theo slot, không thể đổi.");
+                return;
+            }
+            boolean isPctSlotEdit = event.isShiftClick();
+            player.closeInventory();
+            String kindLabel = isPctSlotEdit ? "phần trăm (%)" : "số thường (flat)";
+            player.sendMessage(ChatColor.GREEN + "» Nhập slot áp dụng cho giá trị " + kindLabel + " của "
+                    + ChatColor.AQUA + info.displayName + ChatColor.GREEN + " vào khung chat.");
+            player.sendMessage(ChatColor.GRAY + "Slot hợp lệ: " + ChatColor.WHITE
+                    + "any, chest, feet, head, legs, mainhand, offhand");
+            player.sendMessage(ChatColor.GRAY + "Có thể ghép nhiều slot bằng dấu phẩy, VD: "
+                    + ChatColor.WHITE + "offhand,mainhand");
+            player.sendMessage(ChatColor.GRAY + "Gõ " + ChatColor.RED + CANCEL_KEYWORD + ChatColor.GRAY + " để huỷ.");
+            GUIListener.requestChatInput(player, CANCEL_KEYWORD,
+                    message -> handleSlotInput(player, statKey, message, isPctSlotEdit),
+                    () -> {
+                        player.sendMessage(ChatColor.RED + "Đã huỷ đổi slot.");
+                        INSTANCE.open(player);
+                    });
+            return;
+        }
+        player.closeInventory();
+        if (isClassRequire) {
+            player.sendMessage(ChatColor.GREEN + "» Nhập tên lớp nhân vật yêu cầu (VD: Warrior) vào khung chat.");
+        } else {
+            String flatSlot = getFlatSlot(player, statKey, heldItem);
+            String pctSlot = getPctSlot(player, statKey, heldItem);
+            player.sendMessage(ChatColor.GREEN + "» Nhập giá trị mới cho " + ChatColor.AQUA + info.displayName
+                    + ChatColor.GREEN + " vào khung chat.");
+            player.sendMessage(ChatColor.GRAY + "Số thường (VD: 10) → slot: " + ChatColor.WHITE + flatSlot);
+            player.sendMessage(ChatColor.GRAY + "Kèm % (VD: 10%) → slot: " + ChatColor.WHITE + pctSlot);
+        }
+        player.sendMessage(ChatColor.GRAY + "Gõ " + ChatColor.RED + CANCEL_KEYWORD + ChatColor.GRAY + " để huỷ.");
+        GUIListener.requestChatInput(player, CANCEL_KEYWORD,
+                message -> handleValueInput(player, statKey, message),
+                () -> {
+                    player.sendMessage(ChatColor.RED + "Đã huỷ nhập giá trị.");
+                    INSTANCE.open(player);
+                });
+    }
+
+    // ================== PHẦN NGHIỆP VỤ GIỮ NGUYÊN NHƯ CŨ ==================
+
     private static ItemStack buildStatItem(ItemStack heldItem, String statKey, StatInfo info,
                                            String flatSlot, String pctSlot) {
         ItemStack item = new ItemStack(info.icon);
@@ -253,103 +316,23 @@ public class GUIStats implements IGuiHandler {
         }
         return sb.toString();
     }
-    private static ItemStack navItem(Material material, String name, String desc) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            meta.setDisplayName(name);
-            meta.setLore(List.of(ChatColor.GRAY + desc));
-            item.setItemMeta(meta);
-        }
-        return item;
-    }
-    /**
-     * Được GUIListener gọi khi người chơi click vào GUI này (đã setCancelled sẵn).
-     */
-    @Override
-    public void onClick(Player player, InventoryClickEvent event) {
-        int slot = event.getRawSlot();
-        if (slot == SLOT_CLOSE) {
-            player.closeInventory();
-            return;
-        }
-        if (slot == SLOT_HELD_ITEM) return; // chỉ để xem, không thao tác gì
-        if (slot < STATS_START_SLOT || slot >= STATS_END_SLOT_EXCLUSIVE) return; // slot viền/trống
-        ItemStack clicked = event.getCurrentItem();
-        if (clicked == null || clicked.getType() == Material.AIR) return;
-        String statKey = getStatKeyBySlot(slot);
-        if (statKey == null) return; // rơi vào vùng viền lấp cuối inventory
-        StatInfo info = STAT_INFO.get(statKey);
-        if (!info.supported) {
-            player.sendMessage(ChatColor.RED + "Chỉ số " + ChatColor.WHITE + info.displayName
-                    + ChatColor.RED + " chưa được plugin hỗ trợ, không thể chỉnh sửa.");
-            return;
-        }
-        ItemStack heldItem = player.getInventory().getItemInMainHand();
-        if (heldItem == null || heldItem.getType() == Material.AIR) {
-            player.sendMessage(ChatColor.RED + "Bạn cần cầm 1 vật phẩm ở tay chính trước khi chỉnh sửa!");
-            return;
-        }
-        boolean isClassRequire = statKey.equals(KEY_CLASS_REQUIRE);
-        if (event.isRightClick()) {
-            if (isClassRequire) {
-                player.sendMessage(ChatColor.YELLOW + "Yêu Cầu Lớp Nhân Vật không áp dụng theo slot, không thể đổi.");
-                return;
-            }
-            boolean isPctSlotEdit = event.isShiftClick();
-            player.closeInventory();
-            String kindLabel = isPctSlotEdit ? "phần trăm (%)" : "số thường (flat)";
-            player.sendMessage(ChatColor.GREEN + "» Nhập slot áp dụng cho giá trị " + kindLabel + " của "
-                    + ChatColor.AQUA + info.displayName + ChatColor.GREEN + " vào khung chat.");
-            player.sendMessage(ChatColor.GRAY + "Slot hợp lệ: " + ChatColor.WHITE
-                    + "any, chest, feet, head, legs, mainhand, offhand");
-            player.sendMessage(ChatColor.GRAY + "Có thể ghép nhiều slot bằng dấu phẩy, VD: "
-                    + ChatColor.WHITE + "offhand,mainhand");
-            player.sendMessage(ChatColor.GRAY + "Gõ " + ChatColor.RED + CANCEL_KEYWORD + ChatColor.GRAY + " để huỷ.");
-            GUIListener.requestChatInput(player, CANCEL_KEYWORD,
-                    message -> handleSlotInput(player, statKey, message, isPctSlotEdit),
-                    () -> {
-                        player.sendMessage(ChatColor.RED + "Đã huỷ đổi slot.");
-                        openGuiStats(player);
-                    });
-            return;
-        }
-        player.closeInventory();
-        if (isClassRequire) {
-            player.sendMessage(ChatColor.GREEN + "» Nhập tên lớp nhân vật yêu cầu (VD: Warrior) vào khung chat.");
-        } else {
-            String flatSlot = getFlatSlot(player, statKey, heldItem);
-            String pctSlot = getPctSlot(player, statKey, heldItem);
-            player.sendMessage(ChatColor.GREEN + "» Nhập giá trị mới cho " + ChatColor.AQUA + info.displayName
-                    + ChatColor.GREEN + " vào khung chat.");
-            player.sendMessage(ChatColor.GRAY + "Số thường (VD: 10) → slot: " + ChatColor.WHITE + flatSlot);
-            player.sendMessage(ChatColor.GRAY + "Kèm % (VD: 10%) → slot: " + ChatColor.WHITE + pctSlot);
-        }
-        player.sendMessage(ChatColor.GRAY + "Gõ " + ChatColor.RED + CANCEL_KEYWORD + ChatColor.GRAY + " để huỷ.");
-        GUIListener.requestChatInput(player, CANCEL_KEYWORD,
-                message -> handleValueInput(player, statKey, message),
-                () -> {
-                    player.sendMessage(ChatColor.RED + "Đã huỷ nhập giá trị.");
-                    openGuiStats(player);
-                });
-    }
     private static void handleValueInput(Player player, String statKey, String message) {
         boolean isClassRequire = statKey.equals(KEY_CLASS_REQUIRE);
         if (!isClassRequire && !isValidNumericInput(message)) {
             player.sendMessage(ChatColor.RED + "Giá trị không hợp lệ! Vui lòng nhập một con số (VD: 10 hoặc 10%).");
-            openGuiStats(player);
+            INSTANCE.open(player);
             return;
         }
         ItemStack heldItem = player.getInventory().getItemInMainHand();
         if (heldItem == null || heldItem.getType() == Material.AIR) {
             player.sendMessage(ChatColor.RED + "Bạn không còn cầm vật phẩm nào, đã huỷ thao tác.");
-            openGuiStats(player);
+            INSTANCE.open(player);
             return;
         }
         if (statsHandler == null) {
             player.sendMessage(ChatColor.RED + "Lỗi: GUIStats chưa được liên kết với statsHandler."
                     + " Hãy gọi GUIStats.setStatsHandler(statsHandler::handleCommand).");
-            openGuiStats(player);
+            INSTANCE.open(player);
             return;
         }
         String targetSlot;
@@ -368,14 +351,14 @@ public class GUIStats implements IGuiHandler {
                 + ChatColor.GREEN + " = " + ChatColor.WHITE + message
                 + ChatColor.GREEN + " (slot: " + ChatColor.WHITE + targetSlot + ChatColor.GREEN
                 + ") cho vật phẩm đang cầm.");
-        openGuiStats(player);
+        INSTANCE.open(player);
     }
     private static void handleSlotInput(Player player, String statKey, String rawInput, boolean isPct) {
         String normalized = normalizeSlotInput(rawInput);
         if (normalized == null) {
             player.sendMessage(ChatColor.RED + "Slot không hợp lệ! Giá trị cho phép: any, chest, feet, head, legs, "
                     + "mainhand, offhand (có thể ghép nhiều bằng dấu phẩy, VD: offhand,mainhand).");
-            openGuiStats(player);
+            INSTANCE.open(player);
             return;
         }
         String key = prefKey(player, statKey);
@@ -388,7 +371,7 @@ public class GUIStats implements IGuiHandler {
         String displayName = (info != null) ? info.displayName : statKey;
         player.sendMessage(ChatColor.LIGHT_PURPLE + "Đã đặt slot (" + (isPct ? "%" : "thường") + ") cho "
                 + ChatColor.AQUA + displayName + ChatColor.LIGHT_PURPLE + " thành: " + ChatColor.WHITE + normalized);
-        openGuiStats(player);
+        INSTANCE.open(player);
     }
     /**
      * Kiểm tra + chuẩn hoá chuỗi slot người chơi nhập: cho phép ghép nhiều token bằng dấu phẩy,
@@ -484,16 +467,6 @@ public class GUIStats implements IGuiHandler {
         } catch (NumberFormatException ex) {
             return false;
         }
-    }
-    private static String getStatKeyBySlot(int slot) {
-        int index = slot - STATS_START_SLOT;
-        if (index < 0) return null;
-        int i = 0;
-        for (String key : STAT_INFO.keySet()) {
-            if (i == index) return key;
-            i++;
-        }
-        return null;
     }
     /**
      * Thông tin hiển thị cho từng stat trong GUI.

@@ -4,8 +4,11 @@
 # với 0 là khoảng cách từ value tới tên stats
 # --- Chỉ số cơ bản ---
 damage: "⚔ &fSát Thương &#C1E1C1+{value:0}"
+pct_damage: "⚔ &fSát Thương &#7FFFD4+{value:0}%"
 health: "❤ &fMáu Tối Đa &#C1E1C1+{value:0}"
+pct_health: "❤ &fMáu Tối Đa &#7FFFD4+{value:0}%"
 armor: "🛡 &fGiáp Vật Lý &#C1E1C1+{value:0}"
+pct_armor: "🛡 &fGiáp Vật Lý &#7FFFD4+{value:0}%"
 
 # --- Chỉ số tấn công ---
 pve_damage: "🗡 &fSát Thương PvE &#C1E1C1+{value:0}%"
@@ -13,10 +16,13 @@ pvp_damage: "⚔ &fSát Thương PvP &#C1E1C1+{value:0}%"
 critical_chance: "💥 &fTỷ Lệ Chí Mạng &#C1E1C1+{value:0}%"
 critical_damage: "🔥 &fSát Thương Chí Mạng &#C1E1C1+{value:0}%"
 true_damage: "⚡ &fSát Thương Chuẩn &#C1E1C1+{value:0}"
+pct_true_damage: "⚡ &fSát Thương Chuẩn &#7FFFD4+{value:0}%"
 attack_speed: "⚡ &fTốc Độ Tấn Công &#C1E1C1+{value:0}%"
 all_damage: "🌟 &fSát Thương Toàn Phần &#C1E1C1+{value:0}%"
 bow_damage: "🏹 &fSát Thương Cung Tên &#C1E1C1+{value:0}"
+pct_bow_damage: "🏹 &fSát Thương Cung Tên &#7FFFD4+{value:0}%"
 magic_damage: "🔮 &fSức Mạnh Phép Thuật &#C1E1C1+{value:0}"
+pct_magic_damage: "🔮 &fSức Mạnh Phép Thuật &#7FFFD4+{value:0}%"
 death_damage: "☠ &fSát Thương Tử Thần &#C1E1C1+{value:0}%"
 Accuracy: "🎯 &fĐộ Chính Xác &#C1E1C1+{value:0}%"
 
@@ -24,6 +30,7 @@ Accuracy: "🎯 &fĐộ Chính Xác &#C1E1C1+{value:0}%"
 pve_defense: "🛡 &fPhòng Thủ PvE &#C1E1C1+{value:0}%"
 pvp_defense: "🛡 &fPhòng Thủ PvP &#C1E1C1+{value:0}%"
 magic_defense: "🔮 &fKháng Phép &#C1E1C1+{value:0}"
+pct_magic_defense: "🔮 &fKháng Phép &#7FFFD4+{value:0}%"
 dodge_rate: "💨 &fTỷ Lệ Né Tránh &#C1E1C1+{value:0}%"
 block_rate: "🛡 &fTỷ Lệ Chặn Đòn &#C1E1C1+{value:0}%"
 thorns: "🌵 &fPhản Sát Thương &#C1E1C1+{value:0}%"
@@ -36,13 +43,17 @@ effect_resistance: "✨ &fKháng Hiệu Ứng Xấu &#C1E1C1+{value:0}%"
 # --- Xuyên thấu & Đặc biệt ---
 penetration: "🎯 &fXuyên Giáp &#C1E1C1+{value:0}%"
 armor_pen: "🗡 &fSát Lực &#C1E1C1+{value:0}"
+pct_armor_pen: "🗡 &fSát Lực &#7FFFD4+{value:0}%"
 lifesteal: "❤ &fHút Máu &#C1E1C1+{value:0}%"
 deep_wound: "🩸 &fVết Thương Sâu &#C1E1C1+{value:0}%"
 
 # --- Năng lượng & Hồi phục ---
 max_mana: "💧 &fNăng Lượng Tối Đa &#C1E1C1+{value:0}"
+pct_max_mana: "💧 &fNăng Lượng Tối Đa &#7FFFD4+{value:0}%"
 mana_regen: "💧 &fHồi Năng Lượng &#C1E1C1+{value:0}/s"
+pct_mana_regen: "💧 &fHồi Năng Lượng &#7FFFD4+{value:0}%/s"
 health_regen: "💖 &fHồi Phục Máu &#C1E1C1+{value:0}/s"
+pct_health_regen: "💖 &fHồi Phục Máu &#7FFFD4+{value:0}%/s"
 cooldown_reduction: "⏳ &fGiảm Hồi Chiêu &#C1E1C1+{value:0}%"
 
 # --- Hệ thống & Khác ---
@@ -51,4 +62,5 @@ class_require: "📜 &fYêu Cầu Nghề Nghiệp &7{value:0}"
 exp_bonus: "✨ &fExp Bonus &#C1E1C1+{value:0}%"
 movement_speed: "🏃 &fTốc Độ Di Chuyển &#C1E1C1+{value:0}%"
 durability: "⚒ &fĐộ Bền &#C1E1C1+{value:0}"
+pct_durability: "⚒ &fĐộ Bền &#7FFFD4+{value:0}%"
 UNBREAKING: "💎 &fKhông Thể Phá Hủy &#C1E1C1+{value:0}"

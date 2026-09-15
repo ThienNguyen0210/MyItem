@@ -252,9 +252,7 @@ public class MyItemCommand implements CommandExecutor {
             case "element" -> {
                 if (!(sender instanceof Player player)) return true;
                 if (args.length < 4) {
-                    player.sendMessage(PFX + "Usage:");
-                    player.sendMessage("  §f/mi element attack <id> <level> §7— Add attack element");
-                    player.sendMessage("  §f/mi element defense <id> <level> §7— Add defense element");
+                    org.ThienNguyen.Command.GUI.GUIElement.openGuiElement(player);
                     return true;
                 }
                 ItemStack item = player.getInventory().getItemInMainHand();
@@ -410,7 +408,7 @@ public class MyItemCommand implements CommandExecutor {
             case "ability" -> {
                 if (!(sender instanceof Player player)) return true;
                 if (args.length < 4) {
-                    player.sendMessage(PFX_ERR + "Usage: §f/mi ability <name> <level> <chance%>");
+                    org.ThienNguyen.Command.GUI.GUIAbility.openGuiAbility(player);
                     return true;
                 }
                 ItemStack item = player.getInventory().getItemInMainHand();
@@ -431,7 +429,7 @@ public class MyItemCommand implements CommandExecutor {
                 if (!(sender instanceof Player player)) return true;
                 if (!checkAdmin(player)) return true;
                 if (args.length < 3) {
-                    player.sendMessage(PFX_ERR + "Usage: §f/mi " + subCommand + " <effect_name> <level>");
+                    org.ThienNguyen.Command.GUI.GUIEffect.openGuiEffect(player);
                     return true;
                 }
                 ItemStack item = player.getInventory().getItemInMainHand();

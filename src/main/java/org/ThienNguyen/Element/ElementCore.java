@@ -144,6 +144,69 @@ public class ElementCore {
         return getSafeInt(item.getItemMeta().getPersistentDataContainer(), LEVEL_KEY);
     }
     public static Map<String, Integer> getItemDefenses(ItemStack item) {
-        return getAllDefenses(item); 
+        return getAllDefenses(item);
+    }
+
+    /**
+     * Đặt (ghi đè) cấp độ TẤN CÔNG tuyệt đối cho 1 nguyên tố — dùng cho GUI chỉnh sửa.
+     * Khác với {@link #addElement}, hàm này KHÔNG cộng dồn mà thay thế trực tiếp.
+     * level <= 0 sẽ xoá hẳn chỉ số tấn công của nguyên tố đó khỏi PDC.
+     */
+    public static void setElementLevel(ItemStack item, String elementId, int level) {
+        if (item == null || item.getType().isAir()) return;
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return;
+        PersistentDataContainer pdc = meta.getPersistentDataContainer();
+        NamespacedKey key = new NamespacedKey(Main.getInstance(), ATK_PREFIX + elementId.toLowerCase());
+        if (level <= 0) {
+            pdc.remove(key);
+        } else {
+            pdc.set(key, PersistentDataType.INTEGER, level);
+        }
+        // Dọn dữ liệu nguyên tố kiểu cũ (single-element ELEMENT_KEY/LEVEL_KEY) nếu trùng ID,
+        // tránh việc getAllElements() lấy max() giữa giá trị cũ và giá trị vừa đặt.
+        String oldId = pdc.get(ELEMENT_KEY, PersistentDataType.STRING);
+        if (oldId != null && oldId.equalsIgnoreCase(elementId)) {
+            pdc.remove(ELEMENT_KEY);
+            pdc.remove(LEVEL_KEY);
+        }
+        item.setItemMeta(meta);
+    }
+
+    /**
+     * Đặt (ghi đè) cấp độ PHÒNG THỦ tuyệt đối cho 1 nguyên tố — dùng cho GUI chỉnh sửa.
+     * Khác với {@link #addDefenseElement}, hàm này KHÔNG cộng dồn mà thay thế trực tiếp.
+     * level <= 0 sẽ xoá hẳn chỉ số phòng thủ của nguyên tố đó khỏi PDC.
+     */
+    public static void setDefenseLevel(ItemStack item, String elementId, int level) {
+        if (item == null || item.getType().isAir()) return;
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return;
+        NamespacedKey key = new NamespacedKey(Main.getInstance(), DEF_PREFIX + elementId.toLowerCase());
+        if (level <= 0) {
+            meta.getPersistentDataContainer().remove(key);
+        } else {
+            meta.getPersistentDataContainer().set(key, PersistentDataType.INTEGER, level);
+        }
+        item.setItemMeta(meta);
+    }
+
+    /**
+     * Xoá hoàn toàn 1 nguyên tố (cả tấn công lẫn phòng thủ, kể cả dữ liệu kiểu cũ nếu trùng ID)
+     * khỏi vật phẩm — dùng cho thao tác Shift+Click trong GUI.
+     */
+    public static void removeElement(ItemStack item, String elementId) {
+        if (item == null || item.getType().isAir()) return;
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return;
+        PersistentDataContainer pdc = meta.getPersistentDataContainer();
+        pdc.remove(new NamespacedKey(Main.getInstance(), ATK_PREFIX + elementId.toLowerCase()));
+        pdc.remove(new NamespacedKey(Main.getInstance(), DEF_PREFIX + elementId.toLowerCase()));
+        String oldId = pdc.get(ELEMENT_KEY, PersistentDataType.STRING);
+        if (oldId != null && oldId.equalsIgnoreCase(elementId)) {
+            pdc.remove(ELEMENT_KEY);
+            pdc.remove(LEVEL_KEY);
+        }
+        item.setItemMeta(meta);
     }
 }

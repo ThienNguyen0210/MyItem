@@ -5,6 +5,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
@@ -19,12 +21,17 @@ import java.util.function.Consumer;
  *   GUIListener.init(this);
  *
  * Sau đó, mỗi lớp GUI mới (GUIStats, GUIEffect, GUIElement, ...) chỉ cần:
- *   1. implements IGuiHandler
+ *   1. extends AbstractPaginatedGui (khuyến nghị, có sẵn phân trang) HOẶC implements IGuiHandler trực tiếp
  *   2. Gọi GUIListener.registerHandler("Tiêu Đề GUI", this); (thường đặt trong static block)
  * mà KHÔNG cần tự implements Listener hay gọi registerEvents() thêm lần nào nữa.
  *
  * Ngoài ra GUIListener còn xử lý sẵn cơ chế "đóng GUI, chờ người chơi gõ chat để nhập giá trị,
  * rồi trả kết quả về qua callback" dùng chung cho mọi GUI, thông qua requestChatInput(...).
+ *
+ * VỀ VIỆC NGĂN LẤY/THẢ ITEM: mọi inventory đã registerHandler() đều được bảo vệ ở CẢ HAI lớp:
+ *   - InventoryClickEvent  -> luôn setCancelled(true) (không lấy/đặt item qua click hay shift-click).
+ *   - InventoryDragEvent   -> huỷ luôn nếu vùng kéo chạm vào inventory của GUI (không lách qua kéo-thả).
+ * Lớp GUI con không cần và không nên tự xử lý lại phần này.
  */
 public class GUIListener implements Listener {
     private static Plugin plugin;
@@ -52,7 +59,7 @@ public class GUIListener implements Listener {
      * đúng từ khoá huỷ, onCancel sẽ được gọi thay vào đó.
      */
     public static void requestChatInput(Player player, String cancelKeyword,
-                                         Consumer<String> onInput, Runnable onCancel) {
+                                        Consumer<String> onInput, Runnable onCancel) {
         awaitingChat.put(player.getUniqueId(), new ChatInputRequest(cancelKeyword, onInput, onCancel));
     }
     /**
@@ -70,6 +77,18 @@ public class GUIListener implements Listener {
         if (!(event.getWhoClicked() instanceof Player)) return;
         Player player = (Player) event.getWhoClicked();
         handler.onClick(player, event);
+    }
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onInventoryDrag(InventoryDragEvent event) {
+        String title = event.getView().getTitle();
+        if (!handlers.containsKey(title)) return; // không phải GUI do hệ thống này quản lý -> bỏ qua
+        // Nếu vùng kéo-thả chạm vào bất kỳ slot nào thuộc inventory trên (GUI), huỷ toàn bộ thao tác
+        // để không ai lách qua click-cancel bằng cách kéo item vào/ra khỏi GUI.
+        int topSize = event.getView().getTopInventory().getSize();
+        boolean touchesTop = event.getRawSlots().stream().anyMatch(slot -> slot < topSize);
+        if (touchesTop) {
+            event.setCancelled(true);
+        }
     }
     @EventHandler(priority = EventPriority.HIGH)
     public void onPlayerChat(AsyncPlayerChatEvent event) {
@@ -90,6 +109,15 @@ public class GUIListener implements Listener {
             Bukkit.getScheduler().runTask(plugin, task);
         } else {
             task.run();
+        }
+    }
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+        String title = event.getView().getTitle();
+        IGuiHandler handler = handlers.get(title);
+        if (handler == null) return; // không phải GUI do hệ thống này quản lý -> bỏ qua
+        if (event.getPlayer() instanceof Player) {
+            handler.onClose((Player) event.getPlayer());
         }
     }
     @EventHandler

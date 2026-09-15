@@ -16,7 +16,7 @@ public class StatsLore {
     private static int getCharWidth(char c) {
         if ("i!|;:,.".indexOf(c) != -1) return 2;
         if ("l'".indexOf(c) != -1) return 3;
-        if ("tI[] ".indexOf(c) != -1) return 4; 
+        if ("tI[] ".indexOf(c) != -1) return 4;
         if ("fk<>()*".indexOf(c) != -1) return 5;
         return 6;
     }
@@ -28,12 +28,6 @@ public class StatsLore {
         }
         return width;
     }
-    /**
-     * Cập nhật Lore của vật phẩm dựa trên các chỉ số trong PersistentDataContainer.
-     * * @param item Vật phẩm cần cập nhật.
-     * @param allowRebuild Nếu là true, sẽ ưu tiên gọi LoreGenerator để xây dựng lại lore theo template.
-     * Nếu là false, sẽ bỏ qua template và chỉ cập nhật trực tiếp các dòng chỉ số.
-     */
     public static void updateLore(ItemStack item, boolean allowRebuild) {
         if (item == null || !item.hasItemMeta()) return;
         ItemMeta meta = item.getItemMeta();
@@ -46,41 +40,61 @@ public class StatsLore {
         List<String> lore = meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
         FileConfiguration statsConfig = Main.getInstance().getStatsConfig();
         if (statsConfig == null) return;
+
         for (String key : statsConfig.getKeys(false)) {
             NamespacedKey nKey = new NamespacedKey(Main.getInstance(), key);
             Object rawValue = getRawValue(pdc, nKey);
             String format = statsConfig.getString(key);
             if (format == null) continue;
-            String keyword = ChatColor.stripColor(formatColor(format.split("\\{")[0]))
-                    .replace("+", "")
-                    .trim();
-            if (keyword.isEmpty()) continue;
-            boolean replaced = false;
-            String newLine = getFormattedLoreFromConfig(statsConfig, key, rawValue, pdc);
+
+            // Dòng "khung" của stat này ở cấu trúc hiện tại: dùng giá trị thật nếu có,
+            // hoặc 0 làm giá trị mẫu chỉ để dò phần chữ/màu tĩnh (không quan tâm con số).
+            Object sampleValue = (rawValue != null) ? rawValue : 0.0;
+            String skeletonLine = getFormattedLoreFromConfig(statsConfig, key, sampleValue, pdc);
+
+            int foundIndex = -1;
+            for (int i = 0; i < lore.size(); i++) {
+                if (sameLineIgnoringNumbers(lore.get(i), skeletonLine)) { foundIndex = i; break; }
+            }
+
             if (rawValue != null) {
-                for (int i = 0; i < lore.size(); i++) {
-                    String currentLineRaw = lore.get(i);
-                    String currentLineStripped = ChatColor.stripColor(currentLineRaw);
-                    if (currentLineStripped.contains(keyword)) {
-                        int keywordIndexInStripped = currentLineStripped.indexOf(keyword);
-                        if (keywordIndexInStripped > 0) {
-                            lore.set(i, currentLineRaw.substring(0, findIndexInColorRaw(currentLineRaw, keyword)) + newLine);
-                        } else {
-                            lore.set(i, newLine);
-                        }
-                        replaced = true;
-                        break;
-                    }
-                }
-                if (!replaced && isValidToAdd(key, rawValue)) {
+                String newLine = getFormattedLoreFromConfig(statsConfig, key, rawValue, pdc);
+                if (foundIndex != -1) {
+                    lore.set(foundIndex, newLine);
+                } else if (isValidToAdd(key, rawValue)) {
                     lore.add(newLine);
                 }
-            } else {
-                lore.removeIf(line -> ChatColor.stripColor(line).contains(keyword));
+            } else if (foundIndex != -1) {
+                lore.remove(foundIndex);
             }
         }
+
         meta.setLore(lore);
         item.setItemMeta(meta);
+    }
+
+    /**
+     * So sánh hai dòng lore theo từng ký tự: mọi ký tự không phải số (chữ, icon, mã màu
+     * §..., kể cả mã hex) phải khớp CHÍNH XÁC theo đúng thứ tự; các đoạn số liên tiếp
+     * (kể cả dấu chấm thập phân) được coi là khớp bất kể nội dung/độ dài khác nhau.
+     * Nhờ vậy dòng flat (màu &#C1E1C1) và dòng percent (màu &#7FFFD4) của cùng một
+     * label không bao giờ bị nhận nhầm là cùng một dòng, vì phần mã màu (không phải số)
+     * đã khác nhau ngay từ đầu.
+     */
+    private static boolean sameLineIgnoringNumbers(String a, String b) {
+        int i = 0, j = 0;
+        while (i < a.length() && j < b.length()) {
+            char ca = a.charAt(i);
+            char cb = b.charAt(j);
+            if (Character.isDigit(ca) && Character.isDigit(cb)) {
+                while (i < a.length() && (Character.isDigit(a.charAt(i)) || a.charAt(i) == '.')) i++;
+                while (j < b.length() && (Character.isDigit(b.charAt(j)) || b.charAt(j) == '.')) j++;
+                continue;
+            }
+            if (ca != cb) return false;
+            i++; j++;
+        }
+        return i == a.length() && j == b.length();
     }
     /**
      * Hàm Overload để giữ tương thích với các lệnh gọi cũ.
@@ -101,7 +115,7 @@ public class StatsLore {
             if (currentStrippedPos == indexInStripped) return i;
             char c = raw.charAt(i);
             if (c == '§' || c == '&') {
-                i++; 
+                i++;
             } else {
                 currentStrippedPos++;
             }
@@ -161,7 +175,7 @@ public class StatsLore {
             StringBuilder sb = new StringBuilder();
             while (pixelNeeded > 0) {
                 sb.append(" ");
-                pixelNeeded -= 4; 
+                pixelNeeded -= 4;
             }
             if (format.contains("+" + matcher.group(0))) {
                 format = format.replace("+" + matcher.group(0), sb.toString() + "+" + displayValue);
@@ -175,7 +189,7 @@ public class StatsLore {
     }
     private static String getDisplayValue(String statType, Object value, PersistentDataContainer pdc) {
         if (value == null) {
-            return "0"; 
+            return "0";
         }
         if (value instanceof String) {
             return (String) value;
